@@ -1,3 +1,7 @@
+using ExaminationSystemWebAPI.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +9,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Database
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options
+    .UseSqlServer(connectionString)
+    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+    .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
+    .EnableSensitiveDataLogging();
+});
 
 var app = builder.Build();
 
