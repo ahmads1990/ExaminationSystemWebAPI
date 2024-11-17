@@ -1,4 +1,5 @@
 using ExaminationSystemWebAPI.Data;
+using ExaminationSystemWebAPI.Data.GenericRepo;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
@@ -9,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// DI
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
