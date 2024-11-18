@@ -45,16 +45,8 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void SaveInclude(Entity entity, params string[] properties)
     {
-        var entry = _entities.Local.FindEntry(entity.ID);
+        var entry = _entities.Local.FindEntry(entity.ID) ?? _entities.Entry(entity);
 
-        if (entry is null)
-            entry = _entities.Entry(entity);
-        else
-        {
-            //entry = _dbcontext.ChangeTracker
-            //        .Entries<Entity>()
-            //        .First(x => x.Entity.ID == entity.ID);
-        }
         foreach (var property in entry.Properties)
         {
             if (properties.Contains(property.Metadata.Name))
