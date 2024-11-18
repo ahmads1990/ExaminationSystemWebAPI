@@ -32,4 +32,9 @@ public class ChoiceService : IChoiceService
     {
         _choiceRepo.Delete(choice);
     }
+
+    public void SaveChanges()
+    {
+        _choiceRepo.SaveChanges();
+    }
 }

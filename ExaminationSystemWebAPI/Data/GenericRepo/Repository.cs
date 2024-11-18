@@ -32,6 +32,9 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void Add(Entity entity)
     {
+        entity.ID = Guid.NewGuid().ToString();
+        entity.CreatedDate = DateTime.Now;
+
         _entities.Add(entity);
     }
 
