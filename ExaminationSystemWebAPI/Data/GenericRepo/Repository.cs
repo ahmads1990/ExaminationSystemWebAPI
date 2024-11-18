@@ -59,7 +59,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         {
             if (properties.Contains(property.Metadata.Name))
             {
-                property.CurrentValue = entry.GetType().GetProperty(property.Metadata.Name).GetValue(entity);
+                property.CurrentValue = entity.GetType().GetProperty(property.Metadata.Name).GetValue(entity);
                 property.IsModified = true;
             }
         }
