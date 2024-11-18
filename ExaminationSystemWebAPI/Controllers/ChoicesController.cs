@@ -45,6 +45,17 @@ public class ChoicesController : ControllerBase
         return Ok();
     }
 
+    [HttpPatch]
+    public IActionResult UpdateBody(UpdateChoiceBodyViewModel viewModel)
+    {
+        var choice = viewModel.Adapt<Choice>();
+
+        _choiceService.UpdateTextBody(choice);
+
+        _choiceService.SaveChanges();
+        return Ok();
+    }
+
     [HttpDelete]
     public IActionResult Delete([FromQuery] string id)
     {

@@ -20,12 +20,16 @@ public class ChoiceService : IChoiceService
 
     public async Task<Choice?> GetByID(string id)
     {
-       return await _choiceRepo.GetByID(id);
+        return await _choiceRepo.GetByID(id);
     }
 
     public void Add(Choice choice)
     {
         _choiceRepo.Add(choice);
+    }
+    public void UpdateTextBody(Choice choice)
+    {
+        _choiceRepo.SaveInclude(choice, nameof(Choice.TextBody));
     }
 
     public void Delete(Choice choice)
