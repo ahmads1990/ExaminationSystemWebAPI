@@ -1,5 +1,7 @@
 using ExaminationSystemWebAPI.Data;
 using ExaminationSystemWebAPI.Data.GenericRepo;
+using ExaminationSystemWebAPI.Services;
+using ExaminationSystemWebAPI.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
@@ -13,6 +15,9 @@ builder.Services.AddSwaggerGen();
 
 // DI
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
+// Services
+builder.Services.AddScoped<IChoiceService, ChoiceService>();
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
