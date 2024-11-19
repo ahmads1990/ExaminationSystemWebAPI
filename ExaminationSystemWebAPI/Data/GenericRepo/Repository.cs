@@ -45,6 +45,10 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void SaveInclude(Entity entity, params string[] properties)
     {
+        properties = properties
+            .Concat([nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy)])
+            .ToArray();
+
         var entry = _entities.Local.FindEntry(entity.ID) ?? _entities.Entry(entity);
 
         foreach (var property in entry.Properties)
@@ -59,6 +63,10 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void SaveExclude(Entity entity, params string[] properties)
     {
+        properties = properties
+            .Concat([nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy)])
+            .ToArray();
+
         var entry = _entities.Local.FindEntry(entity.ID) ?? _entities.Entry(entity);
 
         foreach (var property in entry.Properties)
@@ -73,6 +81,10 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void SaveExclude2(Entity entity, params string[] properties)
     {
+        properties = properties
+            .Concat([nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy)])
+            .ToArray();
+
         _dbContext.Update(entity);
 
         var entry = _entities.Local.FindEntry(entity.ID);
