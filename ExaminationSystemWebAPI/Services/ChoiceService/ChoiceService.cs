@@ -1,8 +1,7 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Models;
-using ExaminationSystemWebAPI.Services.Interfaces;
 
-namespace ExaminationSystemWebAPI.Services;
+namespace ExaminationSystemWebAPI.Services.ChoiceService;
 
 public class ChoiceService : IChoiceService
 {

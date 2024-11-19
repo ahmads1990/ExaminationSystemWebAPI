@@ -1,6 +1,6 @@
 ﻿using ExaminationSystemWebAPI.Models;
 
-namespace ExaminationSystemWebAPI.Services.Interfaces;
+namespace ExaminationSystemWebAPI.Services.ChoiceService;
 
 public interface IChoiceService
 {
@@ -8,6 +8,6 @@ public interface IChoiceService
     Task<Choice?> GetByID(string id);
     void Add(Choice choice);
     void UpdateTextBody(Choice choice);
-    void Delete(Choice choice); 
+    void Delete(Choice choice);
     void SaveChanges();
 }

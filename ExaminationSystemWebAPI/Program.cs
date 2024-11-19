@@ -1,7 +1,6 @@
 using ExaminationSystemWebAPI.Data;
 using ExaminationSystemWebAPI.Data.GenericRepo;
-using ExaminationSystemWebAPI.Services;
-using ExaminationSystemWebAPI.Services.Interfaces;
+using ExaminationSystemWebAPI.Services.Choice;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
