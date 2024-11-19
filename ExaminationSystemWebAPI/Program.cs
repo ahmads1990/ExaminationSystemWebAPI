@@ -1,8 +1,10 @@
 using ExaminationSystemWebAPI.Data;
 using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Services.ChoiceService;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
     .EnableSensitiveDataLogging();
 });
+
+// Mapster
+// Tell Mapster to scan this assambly searching for the Mapster.IRegister classes and execute them
+TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
 
 var app = builder.Build();
 
