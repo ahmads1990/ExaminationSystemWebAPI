@@ -22,7 +22,9 @@ public class ChoicesController : ControllerBase
     {
         var result = _choiceService
             .GetAll()
+            .ProjectToType<ChoiceViewModel>()
             .ToList();
+
         return Ok(result);
     }
     [HttpGet]
