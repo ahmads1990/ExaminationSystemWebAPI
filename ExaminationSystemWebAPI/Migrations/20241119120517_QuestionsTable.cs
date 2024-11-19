@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ExaminationSystemWebAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class QuestionTable : Migration
+    public partial class QuestionsTable : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,8 +15,7 @@ namespace ExaminationSystemWebAPI.Migrations
                 name: "QuestionID",
                 table: "Choices",
                 type: "nvarchar(450)",
-                nullable: false,
-                defaultValue: "");
+                nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "Questions",
@@ -47,8 +46,7 @@ namespace ExaminationSystemWebAPI.Migrations
                 table: "Choices",
                 column: "QuestionID",
                 principalTable: "Questions",
-                principalColumn: "ID",
-                onDelete: ReferentialAction.Cascade);
+                principalColumn: "ID");
         }
 
         /// <inheritdoc />

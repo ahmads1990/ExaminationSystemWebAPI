@@ -41,7 +41,6 @@ namespace ExaminationSystemWebAPI.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("QuestionID")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("TextBody")
@@ -101,9 +100,7 @@ namespace ExaminationSystemWebAPI.Migrations
                 {
                     b.HasOne("ExaminationSystemWebAPI.Models.Question", "Question")
                         .WithMany("Choices")
-                        .HasForeignKey("QuestionID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("QuestionID");
 
                     b.Navigation("Question");
                 });

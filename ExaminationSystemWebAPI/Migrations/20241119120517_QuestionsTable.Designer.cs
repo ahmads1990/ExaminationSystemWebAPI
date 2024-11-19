@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExaminationSystemWebAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241119113614_QuestionTable")]
-    partial class QuestionTable
+    [Migration("20241119120517_QuestionsTable")]
+    partial class QuestionsTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,7 +44,6 @@ namespace ExaminationSystemWebAPI.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("QuestionID")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("TextBody")
@@ -104,9 +103,7 @@ namespace ExaminationSystemWebAPI.Migrations
                 {
                     b.HasOne("ExaminationSystemWebAPI.Models.Question", "Question")
                         .WithMany("Choices")
-                        .HasForeignKey("QuestionID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("QuestionID");
 
                     b.Navigation("Question");
                 });
