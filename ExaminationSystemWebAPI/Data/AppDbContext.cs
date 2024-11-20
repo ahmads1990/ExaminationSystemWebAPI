@@ -1,10 +1,12 @@
 ﻿using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.Models.Joins;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExaminationSystemWebAPI.Data;
 
 public class AppDbContext : DbContext
 {
+    public DbSet<Exam> Exams { get; set; }
     public DbSet<Question> Questions { get; set; }
     public DbSet<Choice> Choices { get; set; }
 
@@ -19,5 +21,18 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<Choice>()
             .Property(c => c.ChoiceOrder)
             .HasConversion<byte>();
+
+        modelBuilder.Entity<Exam>()
+          .Property(e => e.ExamType)
+          .HasConversion<byte>();
+
+        // Exam <-> Questions
+        modelBuilder.Entity<ExamQuestions>()
+            .HasKey(eq => eq.ID);
+
+        modelBuilder.Entity<Exam>()
+            .HasMany(e => e.Questions)
+            .WithMany(q => q.Exams)
+            .UsingEntity<ExamQuestions>();
     }
 }
