@@ -38,6 +38,17 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         _entities.Add(entity);
     }
 
+    public void AddRange(IEnumerable<Entity> entities)
+    {
+        foreach (var entity in entities)
+        {
+            entity.ID = Guid.NewGuid().ToString();
+            entity.CreatedDate = DateTime.Now;
+        }
+
+        _entities.AddRange();
+    }
+
     public void Update(Entity entity)
     {
         _entities.Update(entity);
