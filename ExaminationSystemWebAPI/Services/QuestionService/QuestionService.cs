@@ -26,7 +26,26 @@ public class QuestionService : IQuestionService
     {
         _questionRepo.Add(question);
     }
-
+    public void UpdateQuestion(Question question)
+    {
+        _questionRepo.SaveInclude(question, 
+            nameof(Question.QuestionLevel),
+            nameof(Question.TextBody),
+            nameof(Question.Score)
+            );
+    }
+    public void UpdateLevel(Question question)
+    {
+        _questionRepo.SaveInclude(question, nameof(Question.QuestionLevel));
+    }
+    public void UpdateBody(Question question)
+    {
+        _questionRepo.SaveInclude(question, nameof(Question.TextBody));
+    }
+    public void UpdateScore(Question question)
+    {
+        _questionRepo.SaveInclude(question, nameof(Question.Score));
+    }
     public void Delete(Question question)
     {
         _questionRepo.Delete(question);

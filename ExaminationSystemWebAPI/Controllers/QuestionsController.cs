@@ -56,26 +56,46 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpPut]
-    public IActionResult UpdateQuestion()
+    public IActionResult UpdateQuestion(UpdateQuestionViewModel viewModel)
     {
+        var question = viewModel.Adapt<Question>();
+
+        _questionService.UpdateQuestion(question);
+
+        _questionService.SaveChanges();
         return Ok();
     }
 
     [HttpPatch]
-    public IActionResult UpdateLevel()
+    public IActionResult UpdateLevel(UpdateQuestionLevelViewModel viewModel)
     {
+        var question = viewModel.Adapt<Question>();
+
+        _questionService.UpdateLevel(question);
+
+        _questionService.SaveChanges();
         return Ok();
     }
 
     [HttpPatch]
-    public IActionResult UpdateBody()
+    public IActionResult UpdateBody(UpdateQuestionBodyViewModel viewModel)
     {
+        var question = viewModel.Adapt<Question>();
+
+        _questionService.UpdateBody(question);
+
+        _questionService.SaveChanges();
         return Ok();
     }
 
     [HttpPatch]
-    public IActionResult UpdateScore()
+    public IActionResult UpdateScore(UpdateQuestionScoreViewModel viewModel)
     {
+        var question = viewModel.Adapt<Question>();
+
+        _questionService.UpdateScore(question);
+
+        _questionService.SaveChanges();
         return Ok();
     }
 
