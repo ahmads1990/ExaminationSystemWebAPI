@@ -6,6 +6,7 @@ namespace ExaminationSystemWebAPI.Data.GenericRepo;
 public interface IRepository<Entity> where Entity : BaseModel
 {
     IQueryable<Entity> GetAll();
+    IQueryable<Entity> GetAllWithoutDeleted();
     IQueryable<Entity> GetByCondition(Expression<Func<Entity, bool>> expression);
     Task<Entity?> GetByID(string id);
     void Add(Entity entity);
@@ -15,6 +16,7 @@ public interface IRepository<Entity> where Entity : BaseModel
     void SaveExclude(Entity entity, params string[] properties);
     void SaveExclude2(Entity entity, params string[] properties);
     void Delete(Entity entity);
+    void SoftDelete(Entity entity);
     void SaveChanges();
     Task SaveChangesAsync();
 }

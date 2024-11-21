@@ -20,6 +20,11 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         return _entities;
     }
 
+    public IQueryable<Entity> GetAllWithoutDeleted()
+    {
+        return _entities.Where(x => !x.Deleted);
+    }
+
     public IQueryable<Entity> GetByCondition(Expression<Func<Entity, bool>> expression)
     {
         return GetAll().Where(expression);
@@ -111,6 +116,11 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
     public void Delete(Entity entity)
     {
         _entities.Remove(entity);
+    }
+    public void SoftDelete(Entity entity)
+    {
+        entity.Deleted = true;
+        SaveInclude(entity, nameof(BaseModel.Deleted));
     }
 
     public void SaveChanges()
