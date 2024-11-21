@@ -1,6 +1,7 @@
 using ExaminationSystemWebAPI.Data;
 using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Services.ChoiceService;
+using ExaminationSystemWebAPI.Services.ExamService;
 using ExaminationSystemWebAPI.Services.QuestionService;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 // Services
 builder.Services.AddScoped<IChoiceService, ChoiceService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
+builder.Services.AddScoped<IExamService, ExamService>();
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
