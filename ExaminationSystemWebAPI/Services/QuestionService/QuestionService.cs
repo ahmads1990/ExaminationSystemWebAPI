@@ -1,15 +1,18 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.Services.ChoiceService;
 
 namespace ExaminationSystemWebAPI.Services.QuestionService;
 
 public class QuestionService : IQuestionService
 {
     private readonly IRepository<Question> _questionRepo;
+    private readonly IChoiceService _choiceService;
 
-    public QuestionService(IRepository<Question> questionRepo)
+    public QuestionService(IRepository<Question> questionRepo, IChoiceService choiceService)
     {
         _questionRepo = questionRepo;
+        _choiceService = choiceService;
     }
 
     public IQueryable<Question> GetAll()
@@ -26,6 +29,22 @@ public class QuestionService : IQuestionService
     {
         _questionRepo.Add(question);
     }
+
+    public IEnumerable<Question> AddMultipleQuestions(IEnumerable<Question> questions)
+    {
+        // Vaildat maybe questions number??
+
+        foreach (var question in questions)
+        {
+            if (question.Choices.Count() > 4)
+                throw new Exception($"Question is allowed to have only 4 or less choices you have {question.Choices.Count()}");
+
+            var choices = _choiceService.AddMultipleChoices(question.Choices);
+            question.Choices = choices;
+        }
+        return _questionRepo.AddRange(questions);
+    }
+
     public void UpdateQuestion(Question question)
     {
         _questionRepo.SaveInclude(question, 

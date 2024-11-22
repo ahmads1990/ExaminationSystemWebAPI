@@ -2,7 +2,7 @@
 
 public class ExamQuestions
 {
-    public string ID { get; set; } = string.Empty;
+    public string ID { get; set; } = Guid.NewGuid().ToString();
     public int Order { get; set; }
 
     public string ExamID { get; set; } = string.Empty;

@@ -26,6 +26,18 @@ public class ChoiceService : IChoiceService
     {
         _choiceRepo.Add(choice);
     }
+
+    public IEnumerable<Choice> AddMultipleChoices(IEnumerable<Choice> choices)
+    {
+        // Validate that each choice has a different order number (a or b etc..)
+        // enum sum from 0,1,2,3 = 6
+        //int orderCount = 6 - choices.Sum(c => (int)c.ChoiceOrder);
+        //if (orderCount != 0)
+        //    throw new Exception("Each chocie should have a different number");
+
+        return _choiceRepo.AddRange(choices);
+    }
+
     public void UpdateTextBody(Choice choice)
     {
         _choiceRepo.SaveInclude(choice, nameof(Choice.TextBody));

@@ -6,7 +6,8 @@ public interface IExamService
 {
     IQueryable<Exam> GetAll();
     Task<Exam?> GetByID(string id);
-    void Add(Exam exam);
+    void AddExam(Exam exam);
+    void AddFullExam(Exam exam);
     void UpdateExam(Exam exam);
     void UpdateExamType(Exam exam);
     void UpdateMaxDuration(Exam exam);

@@ -43,7 +43,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         _entities.Add(entity);
     }
 
-    public void AddRange(IEnumerable<Entity> entities)
+    public IEnumerable<Entity> AddRange(IEnumerable<Entity> entities)
     {
         foreach (var entity in entities)
         {
@@ -52,6 +52,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         }
 
         _entities.AddRange();
+        return entities;
     }
 
     public void Update(Entity entity)

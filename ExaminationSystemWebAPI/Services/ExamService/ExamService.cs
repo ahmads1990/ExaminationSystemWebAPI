@@ -1,15 +1,18 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.Services.QuestionService;
 
 namespace ExaminationSystemWebAPI.Services.ExamService;
 
 public class ExamService : IExamService
 {
     private readonly IRepository<Exam> _examRepo;
+    private readonly IQuestionService _questionService;
 
-    public ExamService(IRepository<Exam> examRepo)
+    public ExamService(IRepository<Exam> examRepo, IQuestionService questionService)
     {
         _examRepo = examRepo;
+        this._questionService = questionService;
     }
 
     public IQueryable<Exam> GetAll()
@@ -21,10 +24,24 @@ public class ExamService : IExamService
     {
         return await _examRepo.GetByID(id);
     }
-
-    public void Add(Exam exam)
+    public void AddExam(Exam exam)
     {
+        // Check total grade
+        if (exam.Questions.Count > 0)
+        {
+            var questionsScore = exam.Questions.Sum(q => q.Score);
+            if (questionsScore != exam.TotalGrade)
+                throw new Exception($"Wrong questions Score :{questionsScore} is not equal to exam Total Grade {exam.TotalGrade}");
+        }
+
         _examRepo.Add(exam);
+    }
+
+    public void AddFullExam(Exam exam)
+    {
+        exam.Questions = (ICollection<Question>)_questionService.AddMultipleQuestions(exam.Questions);
+
+        AddExam(exam);
     }
 
     public void UpdateExam(Exam exam)
