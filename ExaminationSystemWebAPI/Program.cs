@@ -1,5 +1,6 @@
 using ExaminationSystemWebAPI.Data;
 using ExaminationSystemWebAPI.Data.GenericRepo;
+using ExaminationSystemWebAPI.Middlewares;
 using ExaminationSystemWebAPI.Services.ChoiceService;
 using ExaminationSystemWebAPI.Services.ExamService;
 using ExaminationSystemWebAPI.Services.QuestionService;
@@ -53,5 +54,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<GlobalErrorHandlerMiddleware>();
 
 app.Run();
