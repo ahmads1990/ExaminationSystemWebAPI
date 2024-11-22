@@ -5,6 +5,7 @@ using ExaminationSystemWebAPI.Services.ChoiceService;
 using ExaminationSystemWebAPI.Services.ExamService;
 using ExaminationSystemWebAPI.Services.QuestionService;
 using Mapster;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Reflection;
@@ -40,7 +41,27 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Tell Mapster to scan this assambly searching for the Mapster.IRegister classes and execute them
 TypeAdapterConfig.GlobalSettings.Scan(Assembly.GetExecutingAssembly());
 
+// Response Compression
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.EnableForHttps = true;
+    opts.Providers.Add<GzipCompressionProvider>();
+    opts.Providers.Add<BrotliCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(opts =>
+{
+    opts.Level = System.IO.Compression.CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(opts =>
+{
+    opts.Level = System.IO.Compression.CompressionLevel.Optimal;
+});
+
 var app = builder.Build();
+
+app.UseResponseCompression();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
