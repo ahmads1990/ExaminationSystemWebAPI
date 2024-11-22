@@ -1,9 +1,10 @@
 ﻿using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.ViewModels.Questions;
 using System.ComponentModel.DataAnnotations;
 
 namespace ExaminationSystemWebAPI.ViewModels.Exams;
 
-public class AddExamViewModel
+public class AddFullExamViewModel
 {
     [Range(0, 1)]
     public ExamType ExamType { get; set; }
@@ -12,4 +13,6 @@ public class AddExamViewModel
     public int PassMark { get; set; }
     public bool IsPublished { get; set; }
     public DateTime DeadlineDate { get; set; }
+
+    public ICollection<AddQuestionViewModel> Questions { get; set; } = new List<AddQuestionViewModel>();
 }
