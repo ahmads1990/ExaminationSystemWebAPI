@@ -1,10 +1,12 @@
 using ExaminationSystemWebAPI.Data;
 using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Middlewares;
+using ExaminationSystemWebAPI.Models.Users;
 using ExaminationSystemWebAPI.Services.ChoiceService;
 using ExaminationSystemWebAPI.Services.ExamService;
 using ExaminationSystemWebAPI.Services.QuestionService;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
@@ -31,11 +33,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options
-    .UseSqlServer(connectionString)
-    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-    .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
-    .EnableSensitiveDataLogging();
+        .UseSqlServer(connectionString)
+        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+        .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
+        .EnableSensitiveDataLogging();
 });
+
+// Security
+
+// add Identity with options configuration
+builder.Services.AddIdentity<AppUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>();
 
 // Mapster
 // Tell Mapster to scan this assambly searching for the Mapster.IRegister classes and execute them
@@ -72,6 +80,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

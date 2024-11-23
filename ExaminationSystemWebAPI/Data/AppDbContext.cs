@@ -1,10 +1,12 @@
 ﻿using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.Models.Users;
 using ExaminationSystemWebAPI.Models.Joins;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace ExaminationSystemWebAPI.Data;
 
-public class AppDbContext : DbContext
+public class AppDbContext : IdentityDbContext<AppUser>
 {
     public DbSet<Exam> Exams { get; set; }
     public DbSet<Question> Questions { get; set; }
