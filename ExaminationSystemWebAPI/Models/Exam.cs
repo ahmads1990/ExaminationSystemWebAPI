@@ -1,6 +1,4 @@
-﻿using ExaminationSystemWebAPI.Models.Joins;
-
-namespace ExaminationSystemWebAPI.Models;
+﻿namespace ExaminationSystemWebAPI.Models;
 
 public class Exam : BaseModel
 {
@@ -10,6 +8,9 @@ public class Exam : BaseModel
     public int PassMark { get; set; }
     public bool IsPublished { get; set; }
     public DateTime DeadlineDate { get; set; }
+
+    public string CourseID { get; set; } = string.Empty;
+    public Course Course { get; set; } = default!;
 
     public ICollection<Question> Questions { get; set; } = new List<Question>();
 }
