@@ -3,6 +3,7 @@ using ExaminationSystemWebAPI.Models.Users;
 using ExaminationSystemWebAPI.Models.Joins;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using ExaminationSystemWebAPI.Data.Config;
 
 namespace ExaminationSystemWebAPI.Data;
 
@@ -22,21 +23,10 @@ public class AppDbContext : IdentityDbContext<AppUser>
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Choice>()
-            .Property(c => c.ChoiceOrder)
-            .HasConversion<byte>();
-
-        modelBuilder.Entity<Exam>()
-          .Property(e => e.ExamType)
-          .HasConversion<byte>();
+        modelBuilder.ConfigureChoice();
+        modelBuilder.ConfigureExam();
 
         // Exam <-> Questions
-        modelBuilder.Entity<ExamQuestions>()
-            .HasKey(eq => eq.ID);
-
-        modelBuilder.Entity<Exam>()
-            .HasMany(e => e.Questions)
-            .WithMany(q => q.Exams)
-            .UsingEntity<ExamQuestions>();
+        modelBuilder.ConfigureExamQusetions();
     }
 }
