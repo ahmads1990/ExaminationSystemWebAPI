@@ -62,10 +62,6 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void SaveInclude(Entity entity, params string[] properties)
     {
-        properties = properties
-            .Concat([nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy)])
-            .ToArray();
-
         var entry = _entities.Local.FindEntry(entity.ID) ?? _entities.Entry(entity);
 
         foreach (var property in entry.Properties)

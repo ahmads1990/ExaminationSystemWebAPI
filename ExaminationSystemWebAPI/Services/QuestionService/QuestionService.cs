@@ -1,6 +1,7 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Models;
 using ExaminationSystemWebAPI.Services.ChoiceService;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ExaminationSystemWebAPI.Services.QuestionService;
 
@@ -47,6 +48,14 @@ public class QuestionService : IQuestionService
 
     public void UpdateQuestion(Question question)
     {
+        if (!question.Choices.IsNullOrEmpty())
+        {
+            foreach (var choice in question.Choices)
+            {
+                _choiceService.UpdateTextBody(choice);
+            }
+        }
+
         _questionRepo.SaveInclude(question, 
             nameof(Question.QuestionLevel),
             nameof(Question.TextBody),
