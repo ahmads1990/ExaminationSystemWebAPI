@@ -20,6 +20,11 @@ public class CourseService : ICourseService
         return _courseRepo.GetAll();
     }
 
+    public bool CourseExistsByID(string id)
+    {
+        return _courseRepo.CheckExistsByID(id);
+    }
+
     public void AddCourse(Course course)
     {
         var instructorExists = _instructorService.InstructorExistsByID(course.InstructorID);

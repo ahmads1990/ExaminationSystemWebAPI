@@ -12,4 +12,6 @@ public class AddExamViewModel
     public int PassMark { get; set; }
     public bool IsPublished { get; set; }
     public DateTime DeadlineDate { get; set; }
+
+    public string CourseID { get; set; } = string.Empty;
 }

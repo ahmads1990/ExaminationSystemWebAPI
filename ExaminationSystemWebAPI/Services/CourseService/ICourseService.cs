@@ -6,5 +6,6 @@ namespace ExaminationSystemWebAPI.Services.CourseService;
 public interface ICourseService
 {
     IQueryable GetAll();
+    bool CourseExistsByID(string id);
     void AddCourse(Course course);
 }

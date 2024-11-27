@@ -1,5 +1,6 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.Services.CourseService;
 using ExaminationSystemWebAPI.Services.QuestionService;
 
 namespace ExaminationSystemWebAPI.Services.ExamService;
@@ -8,11 +9,13 @@ public class ExamService : IExamService
 {
     private readonly IRepository<Exam> _examRepo;
     private readonly IQuestionService _questionService;
+    private readonly ICourseService _courseService;
 
-    public ExamService(IRepository<Exam> examRepo, IQuestionService questionService)
+    public ExamService(IRepository<Exam> examRepo, IQuestionService questionService, ICourseService courseService)
     {
         _examRepo = examRepo;
-        this._questionService = questionService;
+        _questionService = questionService;
+        _courseService = courseService;
     }
 
     public IQueryable<Exam> GetAll()
@@ -32,6 +35,14 @@ public class ExamService : IExamService
             var questionsScore = exam.Questions.Sum(q => q.Score);
             if (questionsScore != exam.TotalGrade)
                 throw new Exception($"Wrong questions Score :{questionsScore} is not equal to exam Total Grade {exam.TotalGrade}");
+        }
+
+        // Check course exists
+        var courseExists = _courseService.CourseExistsByID(exam.CourseID);
+
+        if (!courseExists) 
+        {
+            throw new Exception($"Course does not exist");
         }
 
         _examRepo.Add(exam);
