@@ -1,5 +1,6 @@
 ﻿using ExaminationSystemWebAPI.Data.Config;
 using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.Models.Joins;
 using ExaminationSystemWebAPI.Models.Users;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
     public DbSet<Choice> Choices { get; set; }
     public DbSet<Instructor> Instructors { get; set; }
     public DbSet<Student> Students { get; set; }
+    public DbSet<StudentExamsAnswers> StudentExamsAnswers { get; set; }
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -30,5 +32,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
 
         // Students <-> Courses
         modelBuilder.ConfigureStudentCourses();
+
+        // Student <-> Exam <-> Question <-> Choice
     }
 }
