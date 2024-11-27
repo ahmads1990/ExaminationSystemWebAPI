@@ -1,6 +1,7 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Models;
 using ExaminationSystemWebAPI.Services.ChoiceService;
+using Mapster;
 using Microsoft.IdentityModel.Tokens;
 
 namespace ExaminationSystemWebAPI.Services.QuestionService;
@@ -28,6 +29,9 @@ public class QuestionService : IQuestionService
 
     public void Add(Question question)
     {
+        var choices = question.Choices.Adapt<IEnumerable<Choice>>();
+        question.Choices = _choiceService.AddMultipleChoices(choices);
+
         _questionRepo.Add(question);
     }
 

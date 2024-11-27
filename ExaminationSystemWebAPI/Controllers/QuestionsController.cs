@@ -12,12 +12,10 @@ namespace ExaminationSystemWebAPI.Controllers;
 public class QuestionsController : ControllerBase
 {
     private readonly IQuestionService _questionService;
-    private readonly IChoiceService _choiceService;
 
-    public QuestionsController(IQuestionService questionService, IChoiceService choiceService)
+    public QuestionsController(IQuestionService questionService)
     {
         _questionService = questionService;
-        _choiceService = choiceService;
     }
 
     [HttpGet]
@@ -43,11 +41,6 @@ public class QuestionsController : ControllerBase
     public IActionResult Create(AddQuestionViewModel viewModel)
     {
         var question = viewModel.Adapt<Question>();
-
-        foreach (var choice in question.Choices)
-        {
-            _choiceService.Add(choice);
-        }
 
         _questionService.Add(question);
         _questionService.SaveChanges();
