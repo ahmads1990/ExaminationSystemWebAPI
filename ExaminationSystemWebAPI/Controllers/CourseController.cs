@@ -21,7 +21,9 @@ public class CourseController : ControllerBase
     public IActionResult GetAll()
     {
         var courses = _courseService
-            .GetAll();
+            .GetAll()
+            .ProjectToType<CourseViewModel>()
+            .ToList();
 
         return Ok(courses);
     }
