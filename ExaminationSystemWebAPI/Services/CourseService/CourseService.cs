@@ -4,6 +4,7 @@ using ExaminationSystemWebAPI.Models.Joins;
 using ExaminationSystemWebAPI.Services.InstructorService;
 using ExaminationSystemWebAPI.Services.StudentService;
 using ExaminationSystemWebAPI.ViewModels.Course;
+using Mapster;
 
 namespace ExaminationSystemWebAPI.Services.CourseService;
 
@@ -50,11 +51,7 @@ public class CourseService : ICourseService
         if (!_studentService.StudentExistsByID(viewModel.StudentID))
             throw new InvalidOperationException($"Student with ID {viewModel.StudentID} does not exist.");
 
-        var studentCourse = new StudentCourses
-        {
-            CourseID = viewModel.CourseID,
-            StudentID = viewModel.StudentID,
-        };
+        var studentCourse = viewModel.Adapt<StudentCourses>();
 
         _studentCoursesRepo.Add(studentCourse);
     }
