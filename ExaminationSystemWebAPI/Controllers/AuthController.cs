@@ -33,7 +33,7 @@ public class AuthController : ControllerBase
             return BadRequest(authResult.Message);
 
         var studentModel = studentViewModel.Adapt<Student>();
-        studentModel.AppUserID = authResult.UserID;
+        studentModel.ID = authResult.UserID;
 
         _studentService.AddStudent(studentModel);
 
@@ -49,7 +49,7 @@ public class AuthController : ControllerBase
             return BadRequest(authResult.Message);
 
         var instructorModel = instructorViewModel.Adapt<Instructor>();
-        instructorModel.AppUserID = authResult.UserID;
+        instructorModel.ID = authResult.UserID;
 
         _instructorService.AddInstructor(instructorModel);
 
