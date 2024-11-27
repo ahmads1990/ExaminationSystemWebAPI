@@ -10,4 +10,6 @@ public class Course : BaseModel
 
     public string InstructorID { get; set; } = string.Empty;
     public Instructor Instructor { get; set; } = default!;
+
+    public ICollection<Student> Students { get; set; } = new List<Student>();
 }

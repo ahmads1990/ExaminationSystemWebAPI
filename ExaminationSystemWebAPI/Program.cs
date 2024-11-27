@@ -6,6 +6,7 @@ using ExaminationSystemWebAPI.Middlewares;
 using ExaminationSystemWebAPI.Models.Users;
 using ExaminationSystemWebAPI.Services.AuthService;
 using ExaminationSystemWebAPI.Services.ChoiceService;
+using ExaminationSystemWebAPI.Services.CourseService;
 using ExaminationSystemWebAPI.Services.ExamService;
 using ExaminationSystemWebAPI.Services.InstructorService;
 using ExaminationSystemWebAPI.Services.QuestionService;
@@ -34,6 +35,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IChoiceService, ChoiceService>();
 builder.Services.AddScoped<IQuestionService, QuestionService>();
 builder.Services.AddScoped<IExamService, ExamService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IStudentService, StudentService>();

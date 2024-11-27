@@ -12,6 +12,12 @@ public class StudentService : IStudentService
     {
         _studentRepo = studentRepo;
     }
+
+    public bool StudentExistsByID(string userID)
+    {
+        return _studentRepo.CheckExistsByID(userID);
+    }
+
     public void AddStudent(Student student)
     {
         _studentRepo.Add(student);

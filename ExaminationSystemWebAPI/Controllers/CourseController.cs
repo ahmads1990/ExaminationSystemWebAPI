@@ -29,6 +29,14 @@ public class CourseController : ControllerBase
     }
 
     [HttpPost]
+    public IActionResult AssignStudent(AssignStudentToCourseViewModel viewModel)
+    {
+        _courseService.AssignStudent(viewModel);
+
+        return Ok();
+    }
+
+    [HttpPost]
     public IActionResult AddCourse(AddCourseViewModel viewModel)
     {
         var course = viewModel.Adapt<Course>();

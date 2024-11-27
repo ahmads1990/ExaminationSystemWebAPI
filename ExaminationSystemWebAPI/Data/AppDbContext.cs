@@ -27,6 +27,9 @@ public class AppDbContext : IdentityDbContext<AppUser>
         modelBuilder.ConfigureExam();
 
         // Exam <-> Questions
-        modelBuilder.ConfigureExamQusetions();
+        modelBuilder.ConfigureExamQusetions(); 
+
+        // Students <-> Courses
+        modelBuilder.ConfigureStudentCourses();
     }
 }
