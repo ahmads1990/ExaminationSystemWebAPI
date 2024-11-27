@@ -56,6 +56,6 @@ public class CourseService : ICourseService
             StudentID = viewModel.StudentID,
         };
 
-         _studentCoursesRepo.Add(studentCourse);
+        _studentCoursesRepo.Add(studentCourse);
     }
 }

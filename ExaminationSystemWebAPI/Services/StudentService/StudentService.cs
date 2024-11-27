@@ -1,6 +1,5 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
 using ExaminationSystemWebAPI.Models.Users;
-using ExaminationSystemWebAPI.ViewModels.Student;
 
 namespace ExaminationSystemWebAPI.Services.StudentService;
 

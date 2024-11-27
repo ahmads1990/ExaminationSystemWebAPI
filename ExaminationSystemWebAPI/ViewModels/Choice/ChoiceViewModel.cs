@@ -1,6 +1,4 @@
-﻿using ExaminationSystemWebAPI.Models;
-
-namespace ExaminationSystemWebAPI.ViewModels.Choice;
+﻿namespace ExaminationSystemWebAPI.ViewModels.Choice;
 
 public class ChoiceViewModel
 {

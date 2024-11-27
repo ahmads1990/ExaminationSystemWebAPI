@@ -1,5 +1,4 @@
 ﻿using ExaminationSystemWebAPI.Models.Users;
-using ExaminationSystemWebAPI.ViewModels.Instructor;
 
 namespace ExaminationSystemWebAPI.Services.InstructorService;
 

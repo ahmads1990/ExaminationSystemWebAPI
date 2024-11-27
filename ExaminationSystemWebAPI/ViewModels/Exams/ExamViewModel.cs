@@ -1,5 +1,4 @@
-﻿using ExaminationSystemWebAPI.Models;
-using ExaminationSystemWebAPI.ViewModels.Questions;
+﻿using ExaminationSystemWebAPI.ViewModels.Questions;
 
 namespace ExaminationSystemWebAPI.ViewModels.Exams;
 

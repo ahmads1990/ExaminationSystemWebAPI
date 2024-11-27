@@ -1,6 +1,4 @@
-﻿using ExaminationSystemWebAPI.Models.Joins;
-
-namespace ExaminationSystemWebAPI.Models;
+﻿namespace ExaminationSystemWebAPI.Models;
 
 public class Question : BaseModel
 {

@@ -2,7 +2,7 @@
 
 public class GlobalErrorHandlerMiddleware
 {
-    RequestDelegate _nextAction; 
+    RequestDelegate _nextAction;
     ILogger<GlobalErrorHandlerMiddleware> _logger;
 
     public GlobalErrorHandlerMiddleware(RequestDelegate nextAction, ILogger<GlobalErrorHandlerMiddleware> logger)
@@ -23,7 +23,7 @@ public class GlobalErrorHandlerMiddleware
             _logger.LogError(ex.Message);
 
             //context.Response.StatusCode = 500;
-           await context.Response.WriteAsJsonAsync("Exception");
+            await context.Response.WriteAsJsonAsync("Exception");
         }
 
         //return Task.CompletedTask;

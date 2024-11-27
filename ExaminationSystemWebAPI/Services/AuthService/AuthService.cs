@@ -38,8 +38,8 @@ public class AuthService : IAuthService
         var user = new AppUser();
         registerViewModel.Adapt(user);
 
-        var result = await _userManager.CreateAsync(user, registerViewModel.Password); 
-        
+        var result = await _userManager.CreateAsync(user, registerViewModel.Password);
+
         if (!result.Succeeded)
         {
             string errorMessage = string.Empty;

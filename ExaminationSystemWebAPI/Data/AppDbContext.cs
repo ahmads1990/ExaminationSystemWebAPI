@@ -1,9 +1,8 @@
-﻿using ExaminationSystemWebAPI.Models;
+﻿using ExaminationSystemWebAPI.Data.Config;
+using ExaminationSystemWebAPI.Models;
 using ExaminationSystemWebAPI.Models.Users;
-using ExaminationSystemWebAPI.Models.Joins;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using ExaminationSystemWebAPI.Data.Config;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExaminationSystemWebAPI.Data;
 
@@ -27,7 +26,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
         modelBuilder.ConfigureExam();
 
         // Exam <-> Questions
-        modelBuilder.ConfigureExamQusetions(); 
+        modelBuilder.ConfigureExamQusetions();
 
         // Students <-> Courses
         modelBuilder.ConfigureStudentCourses();

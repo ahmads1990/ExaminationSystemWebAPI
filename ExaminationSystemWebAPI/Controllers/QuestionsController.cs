@@ -1,5 +1,4 @@
 ﻿using ExaminationSystemWebAPI.Models;
-using ExaminationSystemWebAPI.Services.ChoiceService;
 using ExaminationSystemWebAPI.Services.QuestionService;
 using ExaminationSystemWebAPI.ViewModels.Questions;
 using Mapster;
@@ -30,7 +29,7 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetByID([FromQuery]string id)
+    public async Task<IActionResult> GetByID([FromQuery] string id)
     {
         var result = await _questionService.GetByID(id);
 

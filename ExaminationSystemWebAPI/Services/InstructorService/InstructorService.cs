@@ -1,7 +1,5 @@
 ﻿using ExaminationSystemWebAPI.Data.GenericRepo;
-using ExaminationSystemWebAPI.Models;
 using ExaminationSystemWebAPI.Models.Users;
-using ExaminationSystemWebAPI.ViewModels.Instructor;
 
 namespace ExaminationSystemWebAPI.Services.InstructorService;
 
@@ -17,7 +15,7 @@ public class InstructorService : IInstructorService
     {
         return _instructorRepo.CheckExistsByID(userID);
     }
-    
+
     public void AddInstructor(Instructor instructor)
     {
         _instructorRepo.Add(instructor);

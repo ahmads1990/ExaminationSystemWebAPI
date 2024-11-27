@@ -1,6 +1,4 @@
-﻿using ExaminationSystemWebAPI.Models;
-using ExaminationSystemWebAPI.ViewModels.Choice;
-using Mapster;
+﻿using Mapster;
 
 namespace ExaminationSystemWebAPI.Helpers.Config;
 

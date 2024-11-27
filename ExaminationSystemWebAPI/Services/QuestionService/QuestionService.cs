@@ -60,7 +60,7 @@ public class QuestionService : IQuestionService
             }
         }
 
-        _questionRepo.SaveInclude(question, 
+        _questionRepo.SaveInclude(question,
             nameof(Question.QuestionLevel),
             nameof(Question.TextBody),
             nameof(Question.Score)

@@ -1,5 +1,5 @@
-﻿using ExaminationSystemWebAPI.Models.Joins;
-using ExaminationSystemWebAPI.Models;
+﻿using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.Models.Joins;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExaminationSystemWebAPI.Data.Config;
@@ -12,8 +12,8 @@ public static class StudentCoursesConfig
            .HasKey(eq => eq.ID);
 
         modelBuilder.Entity<Course>()
-            .HasMany(c=>c.Students)
-            .WithMany(s=>s.Courses)
+            .HasMany(c => c.Students)
+            .WithMany(s => s.Courses)
             .UsingEntity<StudentCourses>();
     }
 }

@@ -40,7 +40,7 @@ public class ExamService : IExamService
         // Check course exists
         var courseExists = _courseService.CourseExistsByID(exam.CourseID);
 
-        if (!courseExists) 
+        if (!courseExists)
         {
             throw new Exception($"Course does not exist");
         }
@@ -57,7 +57,7 @@ public class ExamService : IExamService
 
     public void UpdateExam(Exam exam)
     {
-        
+
     }
 
     public void UpdateExamType(Exam exam)

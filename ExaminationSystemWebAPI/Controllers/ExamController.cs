@@ -60,7 +60,7 @@ public class ExamController : ControllerBase
         //{
         //    _questionService.Add(question);
         //}
-   
+
         _examService.AddFullExam(exam);
         _examService.SaveChanges();
         return Ok();
