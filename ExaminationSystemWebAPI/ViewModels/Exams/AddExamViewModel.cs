@@ -1,4 +1,5 @@
 ﻿using ExaminationSystemWebAPI.Models;
+using ExaminationSystemWebAPI.ViewModels.Questions;
 using System.ComponentModel.DataAnnotations;
 
 namespace ExaminationSystemWebAPI.ViewModels.Exams;
@@ -14,4 +15,5 @@ public class AddExamViewModel
     public DateTime DeadlineDate { get; set; }
 
     public string CourseID { get; set; } = string.Empty;
+    public ICollection<AddQuestionViewModel>? Questions { get; set; }
 }

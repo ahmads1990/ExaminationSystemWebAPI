@@ -29,14 +29,6 @@ public class ExamService : IExamService
     }
     public void AddExam(Exam exam)
     {
-        // Check total grade
-        if (exam.Questions.Count > 0)
-        {
-            var questionsScore = exam.Questions.Sum(q => q.Score);
-            if (questionsScore != exam.TotalGrade)
-                throw new Exception($"Wrong questions Score :{questionsScore} is not equal to exam Total Grade {exam.TotalGrade}");
-        }
-
         // Check course exists
         var courseExists = _courseService.CourseExistsByID(exam.CourseID);
 
@@ -45,14 +37,19 @@ public class ExamService : IExamService
             throw new Exception($"Course does not exist");
         }
 
+        // Check total grade
+        if (exam.Questions is not null && exam.Questions.Count > 0)
+        {
+            // Validate
+            var questionsScore = exam.Questions.Sum(q => q.Score);
+            if (questionsScore != exam.TotalGrade)
+                throw new Exception($"Wrong questions Score :{questionsScore} is not equal to exam Total Grade {exam.TotalGrade}");
+
+            // Add questions
+            exam.Questions = (ICollection<Question>)_questionService.AddMultipleQuestions(exam.Questions);
+        }
+
         _examRepo.Add(exam);
-    }
-
-    public void AddFullExam(Exam exam)
-    {
-        exam.Questions = (ICollection<Question>)_questionService.AddMultipleQuestions(exam.Questions);
-
-        AddExam(exam);
     }
 
     public void UpdateExam(Exam exam)

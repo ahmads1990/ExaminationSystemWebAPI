@@ -51,21 +51,6 @@ public class ExamController : ControllerBase
         return Ok();
     }
 
-    [HttpPost]
-    public IActionResult CreateFullExam(AddFullExamViewModel viewModel)
-    {
-        var exam = viewModel.Adapt<Exam>();
-
-        //foreach (var question in exam.Questions)
-        //{
-        //    _questionService.Add(question);
-        //}
-
-        _examService.AddFullExam(exam);
-        _examService.SaveChanges();
-        return Ok();
-    }
-
     [HttpDelete]
     public IActionResult Delete([FromQuery] string id)
     {
