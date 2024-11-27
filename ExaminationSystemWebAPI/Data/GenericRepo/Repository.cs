@@ -35,7 +35,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         return await GetByCondition(x => x.ID == id).FirstOrDefaultAsync();
     }
 
-    bool CheckExistsByID(string id)
+    public bool CheckExistsByID(string id)
     {
         return _entities.Any(x => x.ID == id);
     }

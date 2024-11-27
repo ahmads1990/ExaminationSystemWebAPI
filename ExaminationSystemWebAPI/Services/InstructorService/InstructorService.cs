@@ -13,7 +13,11 @@ public class InstructorService : IInstructorService
     {
         _instructorRepo = instructorRepo;
     }
-
+    public bool InstructorExistsByID(string userID)
+    {
+        return _instructorRepo.CheckExistsByID(userID);
+    }
+    
     public void AddInstructor(Instructor instructor)
     {
         _instructorRepo.Add(instructor);
