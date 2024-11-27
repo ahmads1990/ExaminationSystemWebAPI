@@ -14,7 +14,6 @@ public interface IRepository<Entity> where Entity : BaseModel
     void Update(Entity entity);
     void SaveInclude(Entity entity, params string[] properties);
     void SaveExclude(Entity entity, params string[] properties);
-    void SaveExclude2(Entity entity, params string[] properties);
     void Delete(Entity entity);
     void SoftDelete(Entity entity);
     void SaveChanges();

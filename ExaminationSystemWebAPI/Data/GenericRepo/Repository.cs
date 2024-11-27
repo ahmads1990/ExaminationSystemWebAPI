@@ -92,28 +92,11 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         }
     }
 
-    public void SaveExclude2(Entity entity, params string[] properties)
-    {
-        properties = properties
-            .Concat([nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy)])
-            .ToArray();
-
-        _dbContext.Update(entity);
-
-        var entry = _entities.Local.FindEntry(entity.ID);
-
-        foreach (var property in properties)
-        {
-            entry.Properties
-                .First(p => p.Metadata.Name == property)
-                .IsModified = false;
-        }
-    }
-
     public void Delete(Entity entity)
     {
         _entities.Remove(entity);
     }
+
     public void SoftDelete(Entity entity)
     {
         entity.Deleted = true;
