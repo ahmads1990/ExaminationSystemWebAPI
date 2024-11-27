@@ -1,4 +1,6 @@
-﻿namespace ExaminationSystemWebAPI.Models;
+﻿using ExaminationSystemWebAPI.Helpers.Enums;
+
+namespace ExaminationSystemWebAPI.Models;
 
 public class Question : BaseModel
 {
@@ -8,11 +10,4 @@ public class Question : BaseModel
     public ChoiceOrder Answer { get; set; }
     public IEnumerable<Choice> Choices { get; set; } = default!;
     public ICollection<Exam> Exams { get; set; } = new List<Exam>();
-}
-
-public enum QuestionLevel
-{
-    Easy = 0,
-    Medium,
-    Hard
 }

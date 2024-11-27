@@ -1,4 +1,4 @@
-﻿using ExaminationSystemWebAPI.Models;
+﻿using ExaminationSystemWebAPI.Helpers.Enums;
 
 namespace ExaminationSystemWebAPI.ViewModels.Questions;
 

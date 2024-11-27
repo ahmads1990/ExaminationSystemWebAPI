@@ -1,4 +1,6 @@
-﻿namespace ExaminationSystemWebAPI.Models;
+﻿using ExaminationSystemWebAPI.Helpers.Enums;
+
+namespace ExaminationSystemWebAPI.Models;
 
 public class Exam : BaseModel
 {
@@ -14,9 +16,3 @@ public class Exam : BaseModel
 
     public ICollection<Question> Questions { get; set; } = new List<Question>();
 }
-
-public enum ExamType
-{
-    Quiz = 0,
-    Final
-};

@@ -1,4 +1,4 @@
-﻿using ExaminationSystemWebAPI.Models;
+﻿using ExaminationSystemWebAPI.Helpers.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace ExaminationSystemWebAPI.ViewModels.Choice;

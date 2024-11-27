@@ -1,4 +1,6 @@
-﻿namespace ExaminationSystemWebAPI.ViewModels;
+﻿using ExaminationSystemWebAPI.Helpers.Enums;
+
+namespace ExaminationSystemWebAPI.ViewModels;
 
 public class ResponseViewModel<T>
 {
@@ -29,8 +31,3 @@ public class FailureResponseViewModel<T> : ResponseViewModel<T>
         ErrorCode = errorCode;
     }
 }
-public enum ErrorCode
-{
-    None = 0,
-}
-
