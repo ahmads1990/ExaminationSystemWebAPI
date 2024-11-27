@@ -42,7 +42,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void Add(Entity entity)
     {
-        entity.ID ??= Guid.NewGuid().ToString();
+        entity.ID = string.IsNullOrEmpty(entity.ID) ? Guid.NewGuid().ToString() : entity.ID;
         entity.CreatedDate = DateTime.Now;
 
         _entities.Add(entity);
@@ -52,7 +52,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
     {
         foreach (var entity in entities)
         {
-            entity.ID ??= Guid.NewGuid().ToString();
+            entity.ID = string.IsNullOrEmpty(entity.ID) ? Guid.NewGuid().ToString() : entity.ID;
             entity.CreatedDate = DateTime.Now;
         }
 
