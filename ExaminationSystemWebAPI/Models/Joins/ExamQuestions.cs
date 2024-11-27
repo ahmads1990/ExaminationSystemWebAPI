@@ -1,8 +1,7 @@
 ﻿namespace ExaminationSystemWebAPI.Models.Joins;
 
-public class ExamQuestions
+public class ExamQuestions : BaseModel
 {
-    public string ID { get; set; } = Guid.NewGuid().ToString();
     public int Order { get; set; }
 
     public string ExamID { get; set; } = string.Empty;
