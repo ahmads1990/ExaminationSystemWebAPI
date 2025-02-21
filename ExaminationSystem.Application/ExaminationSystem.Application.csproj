@@ -15,4 +15,8 @@
     <Folder Include="Validators\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ExaminationSystem.Domain\ExaminationSystem.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
