@@ -27,5 +27,7 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ConfigureQuestionChoices();
+        modelBuilder.ConfigureStudentCourses();
+        modelBuilder.ConfigureStudentExamsAnswers();
     }
 }

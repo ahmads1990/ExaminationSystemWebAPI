@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ExaminationSystem.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialSetup : Migration
+    public partial class InitialTables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -167,8 +167,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         name: "FK_StudentCourses_Students_StudentID",
                         column: x => x.StudentID,
                         principalTable: "Students",
-                        principalColumn: "ID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "ID");
                 });
 
             migrationBuilder.CreateTable(
@@ -271,8 +270,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         name: "FK_StudentExamsAnswers_Choices_ChoiceID",
                         column: x => x.ChoiceID,
                         principalTable: "Choices",
-                        principalColumn: "ID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "ID");
                     table.ForeignKey(
                         name: "FK_StudentExamsAnswers_Exams_ExamID",
                         column: x => x.ExamID,
@@ -283,14 +281,12 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         name: "FK_StudentExamsAnswers_Questions_QuestionID",
                         column: x => x.QuestionID,
                         principalTable: "Questions",
-                        principalColumn: "ID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "ID");
                     table.ForeignKey(
                         name: "FK_StudentExamsAnswers_Students_StudentID",
                         column: x => x.StudentID,
                         principalTable: "Students",
-                        principalColumn: "ID",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "ID");
                 });
 
             migrationBuilder.CreateIndex(
@@ -369,8 +365,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                 table: "Choices",
                 column: "QuestionId",
                 principalTable: "Questions",
-                principalColumn: "ID",
-                onDelete: ReferentialAction.Cascade);
+                principalColumn: "ID");
         }
 
         /// <inheritdoc />

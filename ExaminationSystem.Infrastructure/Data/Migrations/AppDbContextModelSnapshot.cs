@@ -446,7 +446,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.HasOne("ExaminationSystem.Domain.Entities.Question", "Question")
                         .WithMany("Choices")
                         .HasForeignKey("QuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Question");
@@ -537,7 +537,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.HasOne("ExaminationSystem.Domain.Entities.Student", "Student")
                         .WithMany("StudentCourses")
                         .HasForeignKey("StudentID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Course");
@@ -550,7 +550,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.HasOne("ExaminationSystem.Domain.Entities.Choice", "Choice")
                         .WithMany()
                         .HasForeignKey("ChoiceID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("ExaminationSystem.Domain.Entities.Exam", "Exam")
@@ -562,13 +562,13 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.HasOne("ExaminationSystem.Domain.Entities.Question", "Question")
                         .WithMany()
                         .HasForeignKey("QuestionID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("ExaminationSystem.Domain.Entities.Student", "Student")
                         .WithMany("StudentExamsAnswers")
                         .HasForeignKey("StudentID")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Choice");
