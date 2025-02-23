@@ -1,3 +1,4 @@
+using ExaminationSystem.Application;
 using ExaminationSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
@@ -8,6 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add all services and Mapster configuration
+builder.Services
+    .AddApplicationServices()
+    .AddMapsterConfiguration();
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
