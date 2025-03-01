@@ -7,7 +7,7 @@ namespace ExaminationSystem.API.Controllers;
 [Route("[controller]/[action]")]
 public class BaseController : ControllerBase
 {
-    private readonly IMapper _mapper;
+    protected readonly IMapper _mapper;
 
     public BaseController(IMapper mapper)
     {

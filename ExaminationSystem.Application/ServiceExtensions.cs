@@ -1,4 +1,8 @@
-﻿using Mapster;
+﻿using ExaminationSystem.Application.Interfaces;
+using ExaminationSystem.Application.Services;
+using ExaminationSystem.Domain.Interfaces;
+using ExaminationSystem.Infrastructure.Data.Repositories;
+using Mapster;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -9,6 +13,9 @@ public static class ServiceExtensions
 {
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IQuestionService, QuestionService>();
+        services.AddScoped<IChoiceService, ChoiceService>();
 
         return services;
     }
