@@ -63,7 +63,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("AppUsers");
+                    b.ToTable("AppUsers", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Choice", b =>
@@ -100,7 +100,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Choices");
+                    b.ToTable("Choices", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Course", b =>
@@ -144,7 +144,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("InstructorID");
 
-                    b.ToTable("Courses");
+                    b.ToTable("Courses", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Exam", b =>
@@ -195,7 +195,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("CourseID");
 
-                    b.ToTable("Exams");
+                    b.ToTable("Exams", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.ExamQuestion", b =>
@@ -233,7 +233,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("ExamQuestion");
+                    b.ToTable("ExamQuestion", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Instructor", b =>
@@ -266,7 +266,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("AppUserId");
 
-                    b.ToTable("Instructors");
+                    b.ToTable("Instructors", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Question", b =>
@@ -310,7 +310,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.HasIndex("AnswerId")
                         .IsUnique();
 
-                    b.ToTable("Questions");
+                    b.ToTable("Questions", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>
@@ -346,7 +346,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("AppUserId");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.StudentCourses", b =>
@@ -390,7 +390,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentID");
 
-                    b.ToTable("StudentCourses");
+                    b.ToTable("StudentCourses", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.StudentExamsAnswers", b =>
@@ -438,7 +438,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentID");
 
-                    b.ToTable("StudentExamsAnswers");
+                    b.ToTable("StudentExamsAnswers", (string)null);
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Choice", b =>

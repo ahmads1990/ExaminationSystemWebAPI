@@ -8,5 +8,5 @@ public class AddQuestionDto
     public int Score { get; set; }
     public byte QuestionLevel { get; set; }
     public byte AnswerOrder { get; set; }
-    public IEnumerable<AddChoiceDto> Choices { get; set; } = new List<AddChoiceDto>();
+    public ICollection<AddChoiceDto> Choices { get; set; } = new List<AddChoiceDto>();
 }

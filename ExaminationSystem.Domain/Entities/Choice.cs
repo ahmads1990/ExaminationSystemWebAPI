@@ -4,6 +4,6 @@ public class Choice : BaseModel
 {
     public string Body { get; set; } = string.Empty;
 
-    public int QuestionId { get; set; } 
-    public Question Question { get; set; } = default!;
+    public int QuestionId { get; set; }
+    public required Question Question { get; set; }
 }

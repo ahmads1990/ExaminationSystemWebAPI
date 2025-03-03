@@ -8,7 +8,7 @@ public interface IChoiceService
     //IQueryable<Choice> GetAll();
     //Task<Choice?> GetByID(int id);
     Task<Choice> Add(AddChoiceDto choiceDto);
-    Task<IEnumerable<Choice>> AddRange(IEnumerable<AddChoiceDto> choiceDtos);
+    Task<ICollection<Choice>> AddRange(ICollection<AddChoiceDto> choiceDtos);
     //void UpdateTextBody(Choice choice);
     //void Delete(Choice choice);
     //void SaveChanges();

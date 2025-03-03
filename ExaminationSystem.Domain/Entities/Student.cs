@@ -5,7 +5,7 @@ public class Student : BaseModel
     public byte Grade { get; set; }
 
     public int AppUserId { get; set; }
-    public AppUser AppUser { get; set; } = default!;
+    public required AppUser AppUser { get; set; }
     public ICollection<StudentCourses> StudentCourses { get; set; } = new List<StudentCourses>();
     public ICollection<StudentExamsAnswers> StudentExamsAnswers { get; set; } = new List<StudentExamsAnswers>();
 }

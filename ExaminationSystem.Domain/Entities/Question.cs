@@ -7,7 +7,7 @@ public class Question : BaseModel
     public QuestionLevel QuestionLevel { get; set; }
 
     public int AnswerId { get; set; }
-    public Choice Answer { get; set; } = default!;
-    public IEnumerable<Choice> Choices { get; set; } = new List<Choice>();
+    public required Choice Answer { get; set; }
+    public ICollection<Choice> Choices { get; set; } = new List<Choice>();
     public IEnumerable<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
 }

@@ -24,9 +24,9 @@ public class ChoiceService : IChoiceService
         return choice;
     }
 
-    public async Task<IEnumerable<Choice>> AddRange(IEnumerable<AddChoiceDto> choiceDtos)
+    public async Task<ICollection<Choice>> AddRange(ICollection<AddChoiceDto> choiceDtos)
     {
-        var choices = _mapper.Map<IEnumerable<Choice>>(choiceDtos);
+        var choices = _mapper.Map<ICollection<Choice>>(choiceDtos);
         await _repository.AddRange(choices);
         return choices;
     }

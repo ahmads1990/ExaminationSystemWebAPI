@@ -3,5 +3,5 @@
 public class Instructor : BaseModel
 {
     public int AppUserId { get; set; }
-    public AppUser AppUser { get; set; } = default!;
+    public required AppUser AppUser { get; set; }
 }
