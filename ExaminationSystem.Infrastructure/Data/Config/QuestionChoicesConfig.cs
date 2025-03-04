@@ -18,10 +18,5 @@ public static class QuestionChoicesConfig
             .WithMany(q => q.Choices)
             .HasForeignKey(c => c.QuestionId)
             .OnDelete(DeleteBehavior.NoAction);
-
-        modelBuilder.Entity<Question>()
-            .HasOne(q => q.Answer)
-            .WithOne()
-            .HasForeignKey<Question>(q => q.AnswerId);
     }
 }

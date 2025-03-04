@@ -63,7 +63,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("AppUsers", (string)null);
+                    b.ToTable("AppUsers");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Choice", b =>
@@ -100,7 +100,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Choices", (string)null);
+                    b.ToTable("Choices");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Course", b =>
@@ -144,7 +144,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("InstructorID");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Exam", b =>
@@ -195,7 +195,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("CourseID");
 
-                    b.ToTable("Exams", (string)null);
+                    b.ToTable("Exams");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.ExamQuestion", b =>
@@ -233,7 +233,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("ExamQuestion", (string)null);
+                    b.ToTable("ExamQuestion");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Instructor", b =>
@@ -266,7 +266,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("AppUserId");
 
-                    b.ToTable("Instructors", (string)null);
+                    b.ToTable("Instructors");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Question", b =>
@@ -277,8 +277,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<int>("AnswerId")
-                        .HasColumnType("int");
+                    b.Property<byte>("AnswerOrder")
+                        .HasColumnType("tinyint");
 
                     b.Property<string>("Body")
                         .IsRequired()
@@ -307,10 +307,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasKey("ID");
 
-                    b.HasIndex("AnswerId")
-                        .IsUnique();
-
-                    b.ToTable("Questions", (string)null);
+                    b.ToTable("Questions");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>
@@ -346,7 +343,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("AppUserId");
 
-                    b.ToTable("Students", (string)null);
+                    b.ToTable("Students");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.StudentCourses", b =>
@@ -390,7 +387,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentID");
 
-                    b.ToTable("StudentCourses", (string)null);
+                    b.ToTable("StudentCourses");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.StudentExamsAnswers", b =>
@@ -438,7 +435,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     b.HasIndex("StudentID");
 
-                    b.ToTable("StudentExamsAnswers", (string)null);
+                    b.ToTable("StudentExamsAnswers");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Choice", b =>
@@ -502,17 +499,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
-                });
-
-            modelBuilder.Entity("ExaminationSystem.Domain.Entities.Question", b =>
-                {
-                    b.HasOne("ExaminationSystem.Domain.Entities.Choice", "Answer")
-                        .WithOne()
-                        .HasForeignKey("ExaminationSystem.Domain.Entities.Question", "AnswerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Answer");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>

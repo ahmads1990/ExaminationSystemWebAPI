@@ -15,7 +15,6 @@ public static class ServiceExtensions
     {
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IQuestionService, QuestionService>();
-        services.AddScoped<IChoiceService, ChoiceService>();
 
         return services;
     }

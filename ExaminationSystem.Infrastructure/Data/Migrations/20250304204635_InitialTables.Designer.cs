@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExaminationSystem.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250223185944_InitialTables")]
+    [Migration("20250304204635_InitialTables")]
     partial class InitialTables
     {
         /// <inheritdoc />
@@ -280,8 +280,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
-                    b.Property<int>("AnswerId")
-                        .HasColumnType("int");
+                    b.Property<byte>("AnswerOrder")
+                        .HasColumnType("tinyint");
 
                     b.Property<string>("Body")
                         .IsRequired()
@@ -309,9 +309,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("AnswerId")
-                        .IsUnique();
 
                     b.ToTable("Questions");
                 });
@@ -505,17 +502,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
-                });
-
-            modelBuilder.Entity("ExaminationSystem.Domain.Entities.Question", b =>
-                {
-                    b.HasOne("ExaminationSystem.Domain.Entities.Choice", "Answer")
-                        .WithOne()
-                        .HasForeignKey("ExaminationSystem.Domain.Entities.Question", "AnswerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Answer");
                 });
 
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>

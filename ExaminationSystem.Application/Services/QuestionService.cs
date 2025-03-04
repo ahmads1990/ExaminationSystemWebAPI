@@ -7,30 +7,29 @@ namespace ExaminationSystem.Application.Services;
 
 public class QuestionService : IQuestionService
 {
-    private readonly IChoiceService _choiceService;
-    private readonly IRepository<Question> _repository;
+    private readonly IRepository<Question> _questionRepository;
+    private readonly IRepository<Choice> _choiceRepository;
     private readonly IMapper _mapper;
 
-    public QuestionService(IRepository<Question> repository, IMapper mapper, IChoiceService choiceService)
+    public QuestionService(IRepository<Question> questionRepository, IRepository<Choice> choiceRepository, IMapper mapper)
     {
-        _repository = repository;
+        _questionRepository = questionRepository;
+        _choiceRepository = choiceRepository;
         _mapper = mapper;
-        _choiceService = choiceService;
     }
 
     public IQueryable<Question> GetAll()
     {
-        return _repository.GetAll();
+        return _questionRepository.GetAll();
     }
 
     public async Task<QuestionDto> Add(AddQuestionDto questionDto)
     {
         var question = _mapper.Map<Question>(questionDto);
 
-        question.Choices = await _choiceService.AddRange(questionDto.Choices);
-        question.Answer = question.Choices.ElementAt(questionDto.AnswerOrder);
+        await _choiceRepository.AddRange(question.Choices);
 
-        await _repository.Add(question);
+        await _questionRepository.Add(question);
         await SaveChanges();
 
         return _mapper.Map<QuestionDto>(questionDto);
@@ -58,6 +57,6 @@ public class QuestionService : IQuestionService
 
     public async Task SaveChanges()
     {
-        await _repository.SaveChanges();
+        await _questionRepository.SaveChanges();
     }
 }

@@ -15,7 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Responses\" />
     <Folder Include="Extensions\" />
     <Folder Include="Middlewares\" />
   </ItemGroup>
