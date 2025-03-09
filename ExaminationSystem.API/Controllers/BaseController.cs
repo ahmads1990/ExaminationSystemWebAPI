@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace ExaminationSystem.API.Controllers;
 
 [ApiController]
-[Route("[controller]/[action]")]
+[Route("api/[controller]/[action]")]
+[Produces("application/json")]
 public class BaseController : ControllerBase
 {
     protected readonly IMapper _mapper;
