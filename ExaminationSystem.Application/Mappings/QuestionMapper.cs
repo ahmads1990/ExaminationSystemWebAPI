@@ -8,6 +8,7 @@ public class QuestionMapper : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<AddQuestionDto, Question>();
+        config.NewConfig<UpdateQuestionDto, Question>()
+            .Ignore(dest => dest.Choices);
     }
 }

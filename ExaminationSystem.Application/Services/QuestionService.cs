@@ -59,13 +59,16 @@ public class QuestionService : IQuestionService
         if (question is null)
             return null;
 
-        question.Body = questionDto.Body;
-        question.Score = questionDto.Score;
-        question.QuestionLevel = (QuestionLevel)questionDto.QuestionLevel;
+        question = _mapper.Map<Question>(questionDto);
+
 
         question.Choices = questionDto.Choices
-                                .Select(c => new Choice { ID = c.ID, Body = c.Body, Question = question })
-                                .ToList();
+                                .Select(c => new Choice
+                                {
+                                    ID = c.ID,
+                                    Body = c.Body,
+                                    Question = question
+                                }).ToList();
 
         _questionRepository.Update(question);
         await SaveChanges();
