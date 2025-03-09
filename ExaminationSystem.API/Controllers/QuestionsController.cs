@@ -17,15 +17,22 @@ public class QuestionsController : BaseController
     }
 
     [HttpGet]
-    public Task<BaseResponse<IEnumerable<QuestionDto>>> List(int start, int length = 10)
+    public async Task<BaseResponse<IEnumerable<QuestionDto>>> List(int start = 0, int length = 10)
     {
+        var questions = await _questionService.GetAll(start, length);
 
+        return new SuccessResponse<IEnumerable<QuestionDto>>(questions);
     }
 
     [HttpGet]
-    public Task<BaseResponse<QuestionDto>> GetDetails(int id)
+    public async Task<BaseResponse<QuestionDto?>> GetDetails(int id)
     {
+        var question = await _questionService.GetByID(id);
 
+        if (question is null)
+            return new FailureResponse<QuestionDto?>(ErrorCode.None, "Couldnt find that item");
+
+        return new SuccessResponse<QuestionDto?>(question);
     }
 
     [HttpPost]
@@ -38,14 +45,29 @@ public class QuestionsController : BaseController
     }
 
     [HttpPut]
-    public async Task<BaseResponse<QuestionDto>> Update(UpdateQuestionRequest request)
+    public async Task<BaseResponse<QuestionDto?>> Update(UpdateQuestionRequest request)
     {
+        var updateQuestionDto = _mapper.Map<UpdateQuestionDto>(request);
+        var questionDto = await _questionService.Update(updateQuestionDto);
 
+        if (questionDto is null)
+        {
+            return new FailureResponse<QuestionDto?>(ErrorCode.UnKnownError, "Couldnt find that item, invalid id");
+        }
+
+        return new SuccessResponse<QuestionDto?>(questionDto);
     }
 
     [HttpDelete]
-    public async Task<BaseResponse<List<int>>> Delete(List<int> idsToDelete)
+    public async Task<BaseResponse<object>> Delete(List<int> idsToDelete)
     {
+        var unDeletedIds = await _questionService.Delete(idsToDelete);
 
+        if (unDeletedIds is null || unDeletedIds.Any())
+        {
+            return new FailureResponse<object>(ErrorCode.UnKnownError, string.Join(',', idsToDelete));
+        }
+
+        return new SuccessResponse<object>("Deleted succuesfully");
     }
 }

@@ -2,7 +2,9 @@
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
+using Mapster;
 using MapsterMapper;
+using Microsoft.EntityFrameworkCore;
 namespace ExaminationSystem.Application.Services;
 
 public class QuestionService : IQuestionService
@@ -18,9 +20,24 @@ public class QuestionService : IQuestionService
         _mapper = mapper;
     }
 
-    public IQueryable<Question> GetAll()
+    public async Task<IEnumerable<QuestionDto>> GetAll(int start, int length)
     {
-        return _questionRepository.GetAll();
+        var query = _questionRepository.GetAll()
+                 .ProjectToType<QuestionDto>()
+                 .Skip(start * length)
+                 .Take(length);
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<QuestionDto?> GetByID(int id)
+    {
+        var question = await _questionRepository.GetByID(id);
+
+        if (question == null)
+            return null;
+
+        return _mapper.Map<QuestionDto>(question);
     }
 
     public async Task<QuestionDto> Add(AddQuestionDto questionDto)
@@ -32,28 +49,48 @@ public class QuestionService : IQuestionService
         await _questionRepository.Add(question);
         await SaveChanges();
 
-        return _mapper.Map<QuestionDto>(questionDto);
+        return _mapper.Map<QuestionDto>(question);
     }
 
-    //public Task<Question?> GetByID(int id)
-    //{
-    //    throw new NotImplementedException();
-    //}
+    public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto)
+    {
+        var question = await _questionRepository.GetByID(questionDto.ID);
 
-    //public Task<IEnumerable<Question>> AddRange(AddQuestionsRequest request)
-    //{
-    //    throw new NotImplementedException();
-    //}
+        if (question is null)
+            return null;
 
-    //public void UpdateQuestion(UpdateQuestionRequest request)
-    //{
-    //    throw new NotImplementedException();
-    //}
+        question.Body = questionDto.Body;
+        question.Score = questionDto.Score;
+        question.QuestionLevel = (QuestionLevel)questionDto.QuestionLevel;
 
-    //public void Delete(DeleteQuestionsRequest request)
-    //{
-    //    throw new NotImplementedException();
-    //}
+        question.Choices = questionDto.Choices
+                                .Select(c => new Choice { ID = c.ID, Body = c.Body, Question = question })
+                                .ToList();
+
+        _questionRepository.Update(question);
+        await SaveChanges();
+
+        return _mapper.Map<QuestionDto>(question);
+    }
+
+    public async Task<IEnumerable<int>> Delete(List<int> idsToDelete)
+    {
+        var questions = await _questionRepository
+                .GetByCondition(q => idsToDelete.Contains(q.ID) && !q.ExamQuestions.Any())
+                .Include(q => q.Choices)
+                .ToListAsync();
+
+        foreach (var question in questions)
+        {
+            _choiceRepository.DeleteRange(question.Choices);
+        }
+
+        _questionRepository.DeleteRange(questions);
+        await SaveChanges();
+
+        var deletedIds = questions.Select(q => q.ID).ToList();
+        return idsToDelete.Except(deletedIds);
+    }
 
     public async Task SaveChanges()
     {

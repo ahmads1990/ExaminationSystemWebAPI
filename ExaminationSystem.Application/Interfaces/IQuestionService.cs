@@ -1,15 +1,13 @@
 ﻿using ExaminationSystem.Application.DTOs.Questions;
-using ExaminationSystem.Domain.Entities;
 
 namespace ExaminationSystem.Application.Interfaces;
 
 public interface IQuestionService
 {
-    //IQueryable<Question> GetAll();
-    //Task<Question?> GetByID(int id);
+    Task<IEnumerable<QuestionDto>> GetAll(int start, int length);
+    Task<QuestionDto?> GetByID(int id);
     Task<QuestionDto> Add(AddQuestionDto questionDto);
-    //Task<IEnumerable<Question>> AddRange(AddQuestionsRequest request);
-    //void UpdateQuestion(UpdateQuestionRequest request);
-    //void Delete(DeleteQuestionsRequest request);
+    Task<QuestionDto?> Update(UpdateQuestionDto questionDto);
+    Task<IEnumerable<int>> Delete(List<int> idsToDelete);
     Task SaveChanges();
 }
