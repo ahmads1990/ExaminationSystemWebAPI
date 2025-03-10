@@ -2,9 +2,13 @@
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
+using Mapster;
+using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+
 namespace ExaminationSystem.Application.Services;
 
+/// <inheritdoc/>
 public class QuestionService : IQuestionService
 {
     private readonly IRepository<Question> _questionRepository;
@@ -16,6 +20,7 @@ public class QuestionService : IQuestionService
         _choiceRepository = choiceRepository;
     }
 
+    /// <inheritdoc/>
     public async Task<IEnumerable<QuestionDto>> GetAll(int start, int length)
     {
         var query = _questionRepository.GetAll()
@@ -26,6 +31,7 @@ public class QuestionService : IQuestionService
         return await query.ToListAsync();
     }
 
+    /// <inheritdoc/>
     public async Task<QuestionDto?> GetByID(int id)
     {
         var question = await _questionRepository.GetByID(id);
@@ -36,6 +42,7 @@ public class QuestionService : IQuestionService
         return question.Adapt<QuestionDto>();
     }
 
+    /// <inheritdoc/>
     public async Task<QuestionDto> Add(AddQuestionDto questionDto)
     {
         var question = questionDto.Adapt<Question>();
@@ -48,6 +55,7 @@ public class QuestionService : IQuestionService
         return question.Adapt<QuestionDto>();
     }
 
+    /// <inheritdoc/>
     public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto)
     {
         var question = await _questionRepository.GetByID(questionDto.ID);
@@ -70,6 +78,7 @@ public class QuestionService : IQuestionService
         return question.Adapt<QuestionDto>();
     }
 
+    /// <inheritdoc/>
     public async Task<IEnumerable<int>> Delete(List<int> idsToDelete)
     {
         var questions = await _questionRepository
@@ -89,6 +98,7 @@ public class QuestionService : IQuestionService
         return idsToDelete.Except(deletedIds);
     }
 
+    /// <inheritdoc/>
     public async Task SaveChanges()
     {
         await _questionRepository.SaveChanges();
