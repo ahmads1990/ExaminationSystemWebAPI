@@ -1,5 +1,4 @@
-﻿using MapsterMapper;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace ExaminationSystem.API.Controllers;
 
@@ -8,10 +7,7 @@ namespace ExaminationSystem.API.Controllers;
 [Produces("application/json")]
 public class BaseController : ControllerBase
 {
-    protected readonly IMapper _mapper;
-
-    public BaseController(IMapper mapper)
+    public BaseController()
     {
-        _mapper = mapper;
     }
 }

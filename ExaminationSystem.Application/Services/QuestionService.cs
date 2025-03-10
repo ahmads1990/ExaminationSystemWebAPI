@@ -2,8 +2,6 @@
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
-using Mapster;
-using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 namespace ExaminationSystem.Application.Services;
 
@@ -11,13 +9,11 @@ public class QuestionService : IQuestionService
 {
     private readonly IRepository<Question> _questionRepository;
     private readonly IRepository<Choice> _choiceRepository;
-    private readonly IMapper _mapper;
 
-    public QuestionService(IRepository<Question> questionRepository, IRepository<Choice> choiceRepository, IMapper mapper)
+    public QuestionService(IRepository<Question> questionRepository, IRepository<Choice> choiceRepository)
     {
         _questionRepository = questionRepository;
         _choiceRepository = choiceRepository;
-        _mapper = mapper;
     }
 
     public async Task<IEnumerable<QuestionDto>> GetAll(int start, int length)
@@ -37,19 +33,19 @@ public class QuestionService : IQuestionService
         if (question == null)
             return null;
 
-        return _mapper.Map<QuestionDto>(question);
+        return question.Adapt<QuestionDto>();
     }
 
     public async Task<QuestionDto> Add(AddQuestionDto questionDto)
     {
-        var question = _mapper.Map<Question>(questionDto);
+        var question = questionDto.Adapt<Question>();
 
         await _choiceRepository.AddRange(question.Choices);
 
         await _questionRepository.Add(question);
         await SaveChanges();
 
-        return _mapper.Map<QuestionDto>(question);
+        return question.Adapt<QuestionDto>();
     }
 
     public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto)
@@ -59,9 +55,7 @@ public class QuestionService : IQuestionService
         if (question is null)
             return null;
 
-        question = _mapper.Map<Question>(questionDto);
-
-
+        question = questionDto.Adapt<Question>();
         question.Choices = questionDto.Choices
                                 .Select(c => new Choice
                                 {
@@ -73,7 +67,7 @@ public class QuestionService : IQuestionService
         _questionRepository.Update(question);
         await SaveChanges();
 
-        return _mapper.Map<QuestionDto>(question);
+        return question.Adapt<QuestionDto>();
     }
 
     public async Task<IEnumerable<int>> Delete(List<int> idsToDelete)
