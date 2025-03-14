@@ -1,3 +1,4 @@
+using ExaminationSystem.API.Extensions;
 using ExaminationSystem.Application;
 using ExaminationSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -37,9 +38,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCustomCors(app.Configuration);
 
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
