@@ -19,17 +19,22 @@ public class QuestionsController : BaseController
     }
 
     /// <summary>
-    /// Retrieves a paginated list of questions.
+    /// Retrieves a paginated, sorted, and filtered list of questions.
     /// </summary>
-    /// <param name="start">The starting index for pagination. Default is 0.</param>
-    /// <param name="length">The number of items to retrieve. Default is 10.</param>
-    /// <returns>A list of questions.</returns>
+    /// <param name="pageIndex">The zero-based index of the page to retrieve.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <param name="orderBy">The field name to sort by (e.g., 'QuestionLevel', 'Score').</param>
+    /// <param name="sortDirection">The direction of sorting: 'asc' or 'desc'.</param>
+    /// <param name="body">Optional filter to search for questions containing this text in their body.</param>
+    /// <returns>A paginated response containing a list of questions and the total count.</returns>
     [HttpGet]
-    public async Task<BaseResponse<IEnumerable<QuestionDto>>> List(int start = 0, int length = 10)
+    public async Task<PaginatedResponse<QuestionDto>> List(int pageIndex, int pageSize,
+        string? orderBy, string? sortDirection, string? body)
     {
-        var questions = await _questionService.GetAll(start, length);
+        var sortingDirection = sortDirection == "desc" ? SortingDirection.Descending : SortingDirection.Ascending;
+        var (questions, totalCount) = await _questionService.GetAll(pageIndex, pageSize, orderBy, sortingDirection, body);
 
-        return new SuccessResponse<IEnumerable<QuestionDto>>(questions);
+        return new PaginatedResponse<QuestionDto>(questions, totalCount);
     }
 
     /// <summary>

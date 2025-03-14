@@ -1,4 +1,11 @@
-﻿public enum QuestionLevel
+﻿public enum SortingDirection
+{
+    Ascending = 0,
+    Descending,
+}
+
+
+public enum QuestionLevel
 {
     Easy = 0,
     Medium,

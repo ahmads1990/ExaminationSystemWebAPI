@@ -8,12 +8,15 @@ namespace ExaminationSystem.Application.Interfaces;
 public interface IQuestionService
 {
     /// <summary>
-    /// Retrieves a paginated list of questions.
+    /// Retrieves a paginated, sorted, and optionally filtered list of questions from the repository.
     /// </summary>
-    /// <param name="start">The page index (zero-based).</param>
-    /// <param name="length">The number of records to retrieve per page.</param>
-    /// <returns>A collection of <see cref="QuestionDto"/>.</returns>
-    Task<IEnumerable<QuestionDto>> GetAll(int start, int length);
+    /// <param name="pageIndex">The zero-based index of the page to retrieve.</param>
+    /// <param name="pageSize">The number of items per page.</param>
+    /// <param name="orderBy">The field to order by (e.g., 'QuestionLevel', 'Score'). Defaults to 'CreatedDate'.</param>
+    /// <param name="sortingDirection">The direction to sort the results (Ascending or Descending).</param>
+    /// <param name="body">Optional filter to search for questions containing this text in their body.</param>
+    /// <returns>A tuple containing the list of question DTOs and the total count of matching questions.</returns>
+    Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? body);
 
     /// <summary>
     /// Retrieves a single question by its unique identifier.

@@ -2,9 +2,8 @@
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
-using Mapster;
-using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace ExaminationSystem.Application.Services;
 
@@ -21,14 +20,39 @@ public class QuestionService : IQuestionService
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<QuestionDto>> GetAll(int start, int length)
+    public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? body)
     {
-        var query = _questionRepository.GetAll()
-                 .ProjectToType<QuestionDto>()
-                 .Skip(start * length)
-                 .Take(length);
+        var query = _questionRepository.GetAll();
 
-        return await query.ToListAsync();
+        if (!string.IsNullOrEmpty(body))
+        {
+            query = query.Where(q => q.Body.Contains(body));
+        }
+
+        // Get count here
+        var totalCount = await query.CountAsync();
+
+        Expression<Func<Question, object>> sortingExpression = q => q.CreatedDate;
+        if (!string.IsNullOrEmpty(orderBy))
+        {
+            if (orderBy.Equals("QuestionLevel"))
+                sortingExpression = q => q.QuestionLevel;
+            else if (orderBy.Equals("Score"))
+                sortingExpression = q => q.Score;
+            else
+                throw new ArgumentException($"Invalid orderBy field: {orderBy}");
+
+        }
+
+        query = sortingDirection == SortingDirection.Ascending ?
+                  query.OrderBy(sortingExpression) :
+                  query.OrderByDescending(sortingExpression);
+
+        var data = await query.Skip(pageIndex * pageSize).Take(pageSize)
+                              .ProjectToType<QuestionDto>()
+                              .ToListAsync();
+
+        return (data, totalCount);
     }
 
     /// <inheritdoc/>
