@@ -1,6 +1,7 @@
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.Application;
 using ExaminationSystem.Infrastructure.Data;
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
@@ -15,6 +16,9 @@ builder.Services.AddSwaggerGen();
 builder.Services
     .AddApplicationServices()
     .AddMapsterConfiguration();
+
+// Add FluentValidation
+builder.Services.AddFluentValidation();
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
