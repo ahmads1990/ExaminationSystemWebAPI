@@ -7,14 +7,14 @@ public interface IRepository<Entity> where Entity : BaseModel
 {
     IQueryable<Entity> GetAll();
     IQueryable<Entity> GetByCondition(Expression<Func<Entity, bool>> expression);
-    Task<Entity?> GetByID(int id);
-    Task<bool> CheckExistsByID(int id);
-    Task<Entity> Add(Entity entity);
-    Task AddRange(IEnumerable<Entity> entities);
+    Task<Entity?> GetByID(int id, CancellationToken cancellationToken = default);
+    Task<bool> CheckExistsByID(int id, CancellationToken cancellationToken = default);
+    Task<Entity> Add(Entity entity, CancellationToken cancellationToken = default);
+    Task AddRange(IEnumerable<Entity> entities, CancellationToken cancellationToken = default);
     void Update(Entity entity);
     void SaveInclude(Entity entity, params string[] properties);
     void SaveExclude(Entity entity, params string[] properties);
     void Delete(Entity entity);
     void DeleteRange(IEnumerable<Entity> entity);
-    Task<bool> SaveChanges();
+    Task<bool> SaveChanges(CancellationToken cancellationToken = default);
 }

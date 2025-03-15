@@ -20,7 +20,7 @@ public class QuestionService : IQuestionService
     }
 
     /// <inheritdoc/>
-    public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? body)
+    public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default)
     {
         var query = _questionRepository.GetAll();
 
@@ -50,15 +50,15 @@ public class QuestionService : IQuestionService
 
         var data = await query.Skip(pageIndex * pageSize).Take(pageSize)
                               .ProjectToType<QuestionDto>()
-                              .ToListAsync();
+                              .ToListAsync(cancellationToken);
 
         return (data, totalCount);
     }
 
     /// <inheritdoc/>
-    public async Task<QuestionDto?> GetByID(int id)
+    public async Task<QuestionDto?> GetByID(int id, CancellationToken cancellationToken = default)
     {
-        var question = await _questionRepository.GetByID(id);
+        var question = await _questionRepository.GetByID(id, cancellationToken);
 
         if (question == null)
             return null;
@@ -67,22 +67,22 @@ public class QuestionService : IQuestionService
     }
 
     /// <inheritdoc/>
-    public async Task<QuestionDto> Add(AddQuestionDto questionDto)
+    public async Task<QuestionDto> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default)
     {
         var question = questionDto.Adapt<Question>();
 
-        await _choiceRepository.AddRange(question.Choices);
+        await _choiceRepository.AddRange(question.Choices, cancellationToken);
 
-        await _questionRepository.Add(question);
+        await _questionRepository.Add(question, cancellationToken);
         await SaveChanges();
 
         return question.Adapt<QuestionDto>();
     }
 
     /// <inheritdoc/>
-    public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto)
+    public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default)
     {
-        var question = await _questionRepository.GetByID(questionDto.ID);
+        var question = await _questionRepository.GetByID(questionDto.ID, cancellationToken);
 
         if (question is null)
             return null;
@@ -97,18 +97,18 @@ public class QuestionService : IQuestionService
                                 }).ToList();
 
         _questionRepository.Update(question);
-        await SaveChanges();
+        await SaveChanges(cancellationToken);
 
         return question.Adapt<QuestionDto>();
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<int>> Delete(List<int> idsToDelete)
+    public async Task<IEnumerable<int>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
     {
         var questions = await _questionRepository
                 .GetByCondition(q => idsToDelete.Contains(q.ID) && !q.ExamQuestions.Any())
                 .Include(q => q.Choices)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
         foreach (var question in questions)
         {
@@ -116,15 +116,15 @@ public class QuestionService : IQuestionService
         }
 
         _questionRepository.DeleteRange(questions);
-        await SaveChanges();
+        await SaveChanges(cancellationToken);
 
         var deletedIds = questions.Select(q => q.ID).ToList();
         return idsToDelete.Except(deletedIds);
     }
 
     /// <inheritdoc/>
-    public async Task SaveChanges()
+    public async Task SaveChanges(CancellationToken cancellationToken = default)
     {
-        await _questionRepository.SaveChanges();
+        await _questionRepository.SaveChanges(cancellationToken);
     }
 }

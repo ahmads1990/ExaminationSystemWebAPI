@@ -26,32 +26,32 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         return GetAll().Where(expression);
     }
 
-    public async Task<Entity?> GetByID(int id)
+    public async Task<Entity?> GetByID(int id, CancellationToken cancellationToken = default)
     {
-        return await GetByCondition(x => x.ID == id).FirstOrDefaultAsync();
+        return await GetByCondition(x => x.ID == id).FirstOrDefaultAsync(cancellationToken);
     }
 
-    public async Task<bool> CheckExistsByID(int id)
+    public async Task<bool> CheckExistsByID(int id, CancellationToken cancellationToken = default)
     {
-        return await GetAll().AnyAsync(x => x.ID == id);
+        return await GetAll().AnyAsync(x => x.ID == id, cancellationToken);
     }
 
-    public async Task<Entity> Add(Entity entity)
+    public async Task<Entity> Add(Entity entity, CancellationToken cancellationToken = default)
     {
         entity.CreatedDate = DateTime.Now;
 
-        var result = await _dbset.AddAsync(entity);
+        var result = await _dbset.AddAsync(entity, cancellationToken);
         return result.Entity;
     }
 
-    public async Task AddRange(IEnumerable<Entity> entities)
+    public async Task AddRange(IEnumerable<Entity> entities, CancellationToken cancellationToken = default)
     {
         foreach (var entity in entities)
         {
             entity.CreatedDate = DateTime.Now;
         }
 
-        await _dbset.AddRangeAsync(entities);
+        await _dbset.AddRangeAsync(entities, cancellationToken);
     }
 
     public void Update(Entity entity)
@@ -101,8 +101,8 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         _dbset.RemoveRange(entity);
     }
 
-    public async Task<bool> SaveChanges()
+    public async Task<bool> SaveChanges(CancellationToken cancellationToken = default)
     {
-        return await _context.SaveChangesAsync() > 0;
+        return await _context.SaveChangesAsync(cancellationToken) > 0;
     }
 }
