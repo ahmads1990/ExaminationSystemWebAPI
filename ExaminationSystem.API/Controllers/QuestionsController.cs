@@ -51,7 +51,7 @@ public class QuestionsController : BaseController
         var question = await _questionService.GetByID(id, cancellationToken);
 
         if (question is null)
-            return new FailureResponse<QuestionDto?>(ErrorCode.None, "Couldnt find that item");
+            return new FailureResponse<QuestionDto?>(ErrorCode.EntityNotFound, "Couldnt find that entity");
 
         return new SuccessResponse<QuestionDto?>(question);
     }
@@ -85,7 +85,7 @@ public class QuestionsController : BaseController
 
         if (questionDto is null)
         {
-            return new FailureResponse<QuestionDto?>(ErrorCode.UnKnownError, "Couldnt find that item, invalid id");
+            return new FailureResponse<QuestionDto?>(ErrorCode.EntityNotFound, "Couldnt find that entity");
         }
 
         return new SuccessResponse<QuestionDto?>(questionDto);
@@ -103,7 +103,7 @@ public class QuestionsController : BaseController
 
         if (unDeletedIds is null || unDeletedIds.Any())
         {
-            return new FailureResponse<object>(ErrorCode.UnKnownError, string.Join(',', idsToDelete));
+            return new FailureResponse<object>(ErrorCode.CannotDelete, string.Join(',', idsToDelete));
         }
 
         return new SuccessResponse<object>("Deleted succuesfully");

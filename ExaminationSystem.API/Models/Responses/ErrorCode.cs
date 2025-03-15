@@ -3,6 +3,8 @@
 public enum ErrorCode
 {
     None = 0,
-    UnKnownError, 
-    ValidationError
+    UnKnownError,
+    ValidationError,
+    EntityNotFound,
+    CannotDelete
 }
