@@ -28,12 +28,20 @@ public interface IQuestionService
     Task<QuestionDto?> GetByID(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a new question to the system.
+    /// Adds a new question to a exam.
     /// </summary>
     /// <param name="questionDto">The data for the new question.</param>
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The added <see cref="QuestionDto"/>.</returns>
     Task<QuestionDto> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds multiple questions to a exam
+    /// </summary>
+    /// <param name="questionDtos"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<QuestionDto> AddRange(ICollection<AddQuestionDto> questionDtos, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing question.

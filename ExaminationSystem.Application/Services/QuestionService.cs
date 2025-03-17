@@ -80,6 +80,12 @@ public class QuestionService : IQuestionService
     }
 
     /// <inheritdoc/>
+    public async Task<QuestionDto> AddRange(ICollection<AddQuestionDto> questionDtos, CancellationToken cancellationToken = default)
+    {
+
+    }
+
+    /// <inheritdoc/>
     public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default)
     {
         var question = await _questionRepository.GetByID(questionDto.ID, cancellationToken);
