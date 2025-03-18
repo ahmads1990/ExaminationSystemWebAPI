@@ -20,9 +20,14 @@ public class QuestionService : IQuestionService
     }
 
     /// <inheritdoc/>
-    public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default)
+    public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, int? examId, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default)
     {
         var query = _questionRepository.GetAll();
+
+        if (examId.HasValue)
+        {
+            query.Where(q => q.ExamQuestions.Any(eq => eq.ExamId == examId.Value));
+        }
 
         if (!string.IsNullOrEmpty(body))
         {
@@ -77,12 +82,6 @@ public class QuestionService : IQuestionService
         await SaveChanges();
 
         return question.Adapt<QuestionDto>();
-    }
-
-    /// <inheritdoc/>
-    public async Task<QuestionDto> AddRange(ICollection<AddQuestionDto> questionDtos, CancellationToken cancellationToken = default)
-    {
-
     }
 
     /// <inheritdoc/>

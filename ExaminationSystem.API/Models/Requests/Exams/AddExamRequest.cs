@@ -1,10 +1,8 @@
-﻿using ExaminationSystem.API.Models.Requests.Questions;
-
-namespace ExaminationSystem.API.Models.Requests.Exams;
+﻿namespace ExaminationSystem.API.Models.Requests.Exams;
 
 public class AddExamRequest
 {
-    public byte ExamType { get; set; }
+    public ExamType ExamType { get; set; }
     public int MaxDuration { get; set; }
     public int TotalGrade { get; set; }
     public int PassMark { get; set; }
@@ -12,5 +10,4 @@ public class AddExamRequest
     public DateTime DeadlineDate { get; set; }
 
     public int CourseID { get; set; }
-    public ICollection<AddQuestionRequest> ExamQuestions { get; set; } = new List<AddQuestionRequest>();
 }

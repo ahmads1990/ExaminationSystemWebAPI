@@ -7,17 +7,7 @@ namespace ExaminationSystem.Application.Interfaces;
 /// </summary>
 public interface IQuestionService
 {
-    /// <summary>
-    /// Retrieves a paginated, sorted, and optionally filtered list of questions from the repository.
-    /// </summary>
-    /// <param name="pageIndex">The zero-based index of the page to retrieve.</param>
-    /// <param name="pageSize">The number of items per page.</param>
-    /// <param name="orderBy">The field to order by (e.g., 'QuestionLevel', 'Score'). Defaults to 'CreatedDate'.</param>
-    /// <param name="sortingDirection">The direction to sort the results (Ascending or Descending).</param>
-    /// <param name="body">Optional filter to search for questions containing this text in their body.</param>
-    /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>A tuple containing the list of question DTOs and the total count of matching questions.</returns>
-    Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, int? examId, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a single question by its unique identifier.
@@ -34,14 +24,6 @@ public interface IQuestionService
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The added <see cref="QuestionDto"/>.</returns>
     Task<QuestionDto> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Adds multiple questions to a exam
-    /// </summary>
-    /// <param name="questionDtos"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task<QuestionDto> AddRange(ICollection<AddQuestionDto> questionDtos, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing question.

@@ -18,23 +18,23 @@ public class QuestionsController : BaseController
         _questionService = questionService;
     }
 
-
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of questions.
     /// </summary>
-    /// <param name="pageIndex">The zero-based index of the page to retrieve.</param>
-    /// <param name="pageSize">The number of items per page.</param>
-    /// <param name="orderBy">The field name to sort by (e.g., 'QuestionLevel', 'Score').</param>
-    /// <param name="sortDirection">The direction of sorting: 'asc' or 'desc'.</param>
-    /// <param name="body">Optional filter to search for questions containing this text in their body.</param>
-    /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>A paginated response containing a list of questions and the total count.</returns>
+    /// <param name="pageIndex"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="orderBy"></param>
+    /// <param name="sortDirection"></param>
+    /// <param name="examId"></param>
+    /// <param name="body"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpGet]
     public async Task<PaginatedResponse<QuestionDto>> List(int pageIndex, int pageSize,
-        string? orderBy, string? sortDirection, string? body, CancellationToken cancellationToken = default)
+        string? orderBy, string? sortDirection, int? examId, string? body, CancellationToken cancellationToken = default)
     {
         var sortingDirection = sortDirection == "desc" ? SortingDirection.Descending : SortingDirection.Ascending;
-        var (questions, totalCount) = await _questionService.GetAll(pageIndex, pageSize, orderBy, sortingDirection, body);
+        var (questions, totalCount) = await _questionService.GetAll(pageIndex, pageSize, examId, orderBy, sortingDirection, body);
 
         return new PaginatedResponse<QuestionDto>(questions, totalCount);
     }
