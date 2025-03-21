@@ -55,12 +55,9 @@ public class ExamService : IExamService
 
     public async Task<ExamDto?> GetByID(int id, CancellationToken cancellationToken = default)
     {
-        var exam = await _examRepository.GetByID(id, cancellationToken);
-
-        if (exam == null)
-            return null;
-
-        return exam.Adapt<ExamDto>();
+        return await _examRepository.GetByID(id)
+                                    .ProjectToType<ExamDto>()
+                                    .FirstOrDefaultAsync();
     }
 
     public async Task<ExamDto> Add(AddExamDto examDto, CancellationToken cancellationToken = default)

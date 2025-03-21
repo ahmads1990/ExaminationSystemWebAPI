@@ -63,12 +63,9 @@ public class QuestionService : IQuestionService
     /// <inheritdoc/>
     public async Task<QuestionDto?> GetByID(int id, CancellationToken cancellationToken = default)
     {
-        var question = await _questionRepository.GetByID(id, cancellationToken);
-
-        if (question == null)
-            return null;
-
-        return question.Adapt<QuestionDto>();
+        return await _questionRepository.GetByID(id)
+                                        .ProjectToType<QuestionDto>()
+                                        .FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc/>

@@ -31,6 +31,11 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         return GetByCondition(x => x.ID == id);
     }
 
+    public async Task<Entity?> GetByID(int id, CancellationToken cancellationToken = default)
+    {
+        return await GetByCondition(x => x.ID == id).FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<bool> CheckExistsByID(int id, CancellationToken cancellationToken = default)
     {
         return await GetAll().AnyAsync(x => x.ID == id, cancellationToken);

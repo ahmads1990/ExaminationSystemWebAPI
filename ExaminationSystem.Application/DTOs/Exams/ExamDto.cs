@@ -15,6 +15,6 @@ public class ExamDto
     public int CourseID { get; set; }
     public string Course { get; set; }
 
-    public List<QuestionDto> Questions { get; set; }
+    public List<QuestionDto> Questions { get; set; } = new List<QuestionDto>();
 }
 
