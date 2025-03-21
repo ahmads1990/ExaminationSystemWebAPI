@@ -17,10 +17,10 @@ public class ExamsController : BaseController
 
     [HttpGet]
     public async Task<PaginatedResponse<ExamListDto>> List(int pageIndex, int pageSize,
-        string? orderBy, string? sortDirection, string? body, CancellationToken cancellationToken = default)
+        string? orderBy, string? sortDirection, string? title, ExamType? examType, CancellationToken cancellationToken = default)
     {
         var sortingDirection = sortDirection == "desc" ? SortingDirection.Descending : SortingDirection.Ascending;
-        var (exams, totalCount) = await _examService.GetAll(pageIndex, pageSize, orderBy, sortingDirection, body);
+        var (exams, totalCount) = await _examService.GetAll(pageIndex, pageSize, orderBy, sortingDirection, title, examType, cancellationToken);
 
         return new PaginatedResponse<ExamListDto>(exams, totalCount);
     }

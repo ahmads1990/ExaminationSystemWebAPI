@@ -31,7 +31,7 @@ public class ExamService : IExamService
             query = query.Where(q => q.ExamType == examType);
 
         // Get count here
-        var totalCount = await query.CountAsync();
+        var totalCount = await query.CountAsync(cancellationToken);
 
         Expression<Func<Exam, object>> sortingExpression = q => q.CreatedDate;
         if (!string.IsNullOrEmpty(orderBy))
