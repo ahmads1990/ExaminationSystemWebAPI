@@ -26,9 +26,9 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         return GetAll().Where(expression);
     }
 
-    public async Task<Entity?> GetByID(int id, CancellationToken cancellationToken = default)
+    public IQueryable<Entity> GetByID(int id)
     {
-        return await GetByCondition(x => x.ID == id).FirstOrDefaultAsync(cancellationToken);
+        return GetByCondition(x => x.ID == id);
     }
 
     public async Task<bool> CheckExistsByID(int id, CancellationToken cancellationToken = default)
