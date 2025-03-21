@@ -7,6 +7,17 @@ namespace ExaminationSystem.Application.Interfaces;
 /// </summary>
 public interface IQuestionService
 {
+    /// <summary>
+    /// Retrieves a paginated, sorted, and filtered list of questions.
+    /// </summary>
+    /// <param name="pageIndex"></param>
+    /// <param name="pageSize"></param>
+    /// <param name="examId"></param>
+    /// <param name="orderBy"></param>
+    /// <param name="sortingDirection"></param>
+    /// <param name="body"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, int? examId, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -18,7 +29,7 @@ public interface IQuestionService
     Task<QuestionDto?> GetByID(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a new question to a exam.
+    /// Adds a new question to a question bank.
     /// </summary>
     /// <param name="questionDto">The data for the new question.</param>
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
