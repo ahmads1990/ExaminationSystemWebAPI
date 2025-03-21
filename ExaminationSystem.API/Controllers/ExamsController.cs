@@ -16,13 +16,13 @@ public class ExamsController : BaseController
     }
 
     [HttpGet]
-    public async Task<PaginatedResponse<ExamDto>> List(int pageIndex, int pageSize,
+    public async Task<PaginatedResponse<ExamListDto>> List(int pageIndex, int pageSize,
         string? orderBy, string? sortDirection, string? body, CancellationToken cancellationToken = default)
     {
         var sortingDirection = sortDirection == "desc" ? SortingDirection.Descending : SortingDirection.Ascending;
         var (exams, totalCount) = await _examService.GetAll(pageIndex, pageSize, orderBy, sortingDirection, body);
 
-        return new PaginatedResponse<ExamDto>(exams, totalCount);
+        return new PaginatedResponse<ExamListDto>(exams, totalCount);
     }
 
     [HttpGet]

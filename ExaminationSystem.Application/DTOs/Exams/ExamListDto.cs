@@ -1,8 +1,6 @@
-﻿using ExaminationSystem.Application.DTOs.Questions;
+﻿namespace ExaminationSystem.Application.DTOs.Exams;
 
-namespace ExaminationSystem.Application.DTOs.Exams;
-
-public class ExamDto
+public class ExamListDto
 {
     public ExamType ExamType { get; set; }
     public string Title { get; set; } = string.Empty;
@@ -14,7 +12,5 @@ public class ExamDto
 
     public int CourseID { get; set; }
     public string Course { get; set; }
-
-    public List<QuestionDto> Questions { get; set; }
 }
 

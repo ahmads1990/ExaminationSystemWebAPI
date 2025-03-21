@@ -17,36 +17,37 @@ public class ExamService : IExamService
         _examRepository = examRepository;
         _questionService = questionService;
     }
-    public async Task<(IEnumerable<ExamDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default)
+
+    public async Task<(IEnumerable<ExamListDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize,
+        string? orderBy, SortingDirection sortingDirection,
+        string? title, ExamType? examType, CancellationToken cancellationToken = default)
     {
         var query = _examRepository.GetAll();
 
-        //if (!string.IsNullOrEmpty(body))
-        //{
-        //    query = query.Where(q => q.Body.Contains(body));
-        //}
+        if (!string.IsNullOrEmpty(title))
+            query = query.Where(q => q.Title.Contains(title));
+
+        if (examType is not null)
+            query = query.Where(q => q.ExamType == examType);
 
         // Get count here
         var totalCount = await query.CountAsync();
 
         Expression<Func<Exam, object>> sortingExpression = q => q.CreatedDate;
-        //if (!string.IsNullOrEmpty(orderBy))
-        //{
-        //    if (orderBy.Equals("QuestionLevel"))
-        //        sortingExpression = q => q.QuestionLevel;
-        //    else if (orderBy.Equals("Score"))
-        //        sortingExpression = q => q.Score;
-        //    else
-        //        throw new ArgumentException($"Invalid orderBy field: {orderBy}");
-
-        //}
+        if (!string.IsNullOrEmpty(orderBy))
+        {
+            if (orderBy.Equals("DeadlineDate"))
+                sortingExpression = q => q.DeadlineDate;
+            else
+                throw new ArgumentException($"Invalid orderBy field: {orderBy}");
+        }
 
         query = sortingDirection == SortingDirection.Ascending ?
                   query.OrderBy(sortingExpression) :
                   query.OrderByDescending(sortingExpression);
 
         var data = await query.Skip(pageIndex * pageSize).Take(pageSize)
-                              .ProjectToType<ExamDto>()
+                              .ProjectToType<ExamListDto>()
                               .ToListAsync(cancellationToken);
 
         return (data, totalCount);
