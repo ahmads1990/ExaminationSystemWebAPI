@@ -3,6 +3,7 @@
 public class Exam : BaseModel
 {
     public ExamType ExamType { get; set; }
+    public string Title { get; set; } = string.Empty;
     public int MaxDuration { get; set; }
     public int TotalGrade { get; set; }
     public int PassMark { get; set; }
