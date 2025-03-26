@@ -1,5 +1,6 @@
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.Application;
+using ExaminationSystem.Infrastructure;
 using ExaminationSystem.Infrastructure.Data;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,13 @@ builder.Services
     .AddMapsterConfiguration();
 
 // Add FluentValidation
-builder.Services.AddFluentValidation();
+builder.Services
+    .AddFluentValidation();
+
+// Add Infrastructure services registrations
+builder.Services
+    .AddInfrastructureServices()
+    .AddSecurityConfiguration(builder.Configuration);
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
