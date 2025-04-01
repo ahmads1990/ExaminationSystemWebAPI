@@ -9,6 +9,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 {
     AppDbContext _context;
     DbSet<Entity> _dbset;
+    private static readonly string[] ImmutableFieldNames = { nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy), nameof(BaseModel.UpdatedBy), nameof(BaseModel.UpdatedDate) };
 
     public Repository(AppDbContext dbContext)
     {
@@ -66,14 +67,16 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void SaveInclude(Entity entity, params string[] properties)
     {
+        properties.Except(ImmutableFieldNames);
+
         var changeTrackerEntry = _dbset.Local.FindEntry(entity.ID) ?? _dbset.Entry(entity);
 
-        foreach (var property in changeTrackerEntry.Properties)
+        foreach (var entryProperty in changeTrackerEntry.Properties)
         {
-            if (properties.Contains(property.Metadata.Name))
+            if (properties.Contains(entryProperty.Metadata.Name))
             {
-                property.CurrentValue = entity.GetType().GetProperty(property.Metadata.Name).GetValue(entity);
-                property.IsModified = true;
+                entryProperty.CurrentValue = entity.GetType().GetProperty(entryProperty.Metadata.Name).GetValue(entity);
+                entryProperty.IsModified = true;
             }
         }
     }
@@ -81,7 +84,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
     public void SaveExclude(Entity entity, params string[] properties)
     {
         properties = properties
-            .Concat([nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy)])
+            .Concat(ImmutableFieldNames)
             .ToArray();
 
         var changeTrackerEntry = _dbset.Local.FindEntry(entity.ID) ?? _dbset.Entry(entity);
