@@ -14,7 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ExaminationSystem.Domain\ExaminationSystem.Domain.csproj" />
-    <ProjectReference Include="..\ExaminationSystem.Infrastructure\ExaminationSystem.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ExaminationSystem.Application\ExaminationSystem.Application.csproj" />
     <ProjectReference Include="..\ExaminationSystem.Domain\ExaminationSystem.Domain.csproj" />
   </ItemGroup>
 
