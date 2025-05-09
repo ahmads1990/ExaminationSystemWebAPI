@@ -1,33 +1,40 @@
 ﻿using ExaminationSystem.Application.DTOs.Auth;
-using ExaminationSystem.Application.InfraInterfaces;
+using ExaminationSystem.Application.DTOs.Instructor;
+using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.Interfaces;
-using ExaminationSystem.Domain.Entities;
 
 namespace ExaminationSystem.Application.Services;
 
 public class AuthService : IAuthService
 {
     private readonly IUserService _userService;
-    private readonly IPasswordHelper _passwordHelper;
+    private readonly IInstructorService _instructorService;
 
-    public AuthService(IUserService userService, IPasswordHelper passwordHelper)
+    public AuthService(IUserService userService, IInstructorService instructorService)
     {
         _userService = userService;
-        _passwordHelper = passwordHelper;
+        _instructorService = instructorService;
     }
 
     public async Task RegisterInstructor(RegisterInstructorDto registerInstructorDto)
     {
-        // Validation first
-        // Check email is unique
-        var isEmailUnique = await _userService.IsUserEmailUnique(registerInstructorDto.Email);
-        if (!isEmailUnique)
+        // Input validation
+        if (string.IsNullOrEmpty(registerInstructorDto.Email) ||
+            string.IsNullOrEmpty(registerInstructorDto.Password))
+        {
             return;
-        // Hash password
-        var hashedPassword = _passwordHelper.HashPassword(registerInstructorDto.Password);
+        }
+
         // Save user
-        var userDto = registerInstructorDto.Adapt<AppUser>();
-        _userService.AddUser(user);
+        var addUserDto = registerInstructorDto.Adapt<AddUserDto>();
+        (AddUserResult addUserResult, int userId) = await _userService.Add(addUserDto);
+
+        // Save instructor
+        var addInstructorDto = registerInstructorDto.Adapt<AddInstructorDto>();
+        addInstructorDto.AppUserId = userId;
+        (AddInstructorResult addInstructorResult, int instructorId) = await _instructorService.Add(addInstructorDto);
+        
+        // Create Token
         // Return success
     }
 }
