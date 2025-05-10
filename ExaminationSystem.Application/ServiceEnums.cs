@@ -12,3 +12,14 @@ public enum AddInstructorResult
     UserNotFound,
     InvalidUserId
 }
+
+public enum RegisterResult
+{
+    Success,
+    ValidationFailed,
+    EmailDuplicated,
+    AlreadyRegistered,
+    UserCreationFailed,
+    TokenGenerationFailed,
+    UnknownError
+}

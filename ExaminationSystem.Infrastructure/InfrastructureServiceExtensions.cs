@@ -1,5 +1,10 @@
-﻿using ExaminationSystem.Infrastructure.Configs;
+﻿using ExaminationSystem.Application.InfraInterfaces;
+using ExaminationSystem.Domain.Interfaces;
+using ExaminationSystem.Infrastructure.Configs;
+using ExaminationSystem.Infrastructure.Data.Repositories;
+using ExaminationSystem.Infrastructure.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -10,6 +15,11 @@ public static class InfrastructureServiceExtensions
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services)
     {
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IPasswordHasher<string>, PasswordHasher<string>>();
+        services.AddScoped<IPasswordHelper, PasswordHelper>();
+        services.AddSingleton<ITokenHelper, TokenHelper>();
+
         return services;
     }
 

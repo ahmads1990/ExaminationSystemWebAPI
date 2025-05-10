@@ -6,9 +6,9 @@ namespace ExaminationSystem.Infrastructure.Services.Auth;
 #pragma warning disable CS8625
 public class PasswordHelper : IPasswordHelper
 {
-    private readonly PasswordHasher<string> _passwordHasher;
+    private readonly IPasswordHasher<string> _passwordHasher;
 
-    public PasswordHelper(PasswordHasher<string> passwordHasher)
+    public PasswordHelper(IPasswordHasher<string> passwordHasher)
     {
         _passwordHasher = passwordHasher;
     }

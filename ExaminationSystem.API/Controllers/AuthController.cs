@@ -1,6 +1,8 @@
 ﻿using ExaminationSystem.API.Models.Requests.Auth;
+using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ExaminationSystem.API.Controllers;
 
@@ -13,18 +15,24 @@ public class AuthController : BaseController
         _authService = authService;
     }
 
-    public void RegisterInstructor(RegisterInstructorRequest request)
+    [HttpPost]
+    public async Task<BaseResponse<string>> RegisterInstructor(RegisterInstructorRequest request)
     {
         var registerInstructorDto = request.Adapt<RegisterInstructorDto>();
-        _authService.RegisterInstructor(registerInstructorDto);
-        return;
+        var (registerResult, token) = await _authService.RegisterInstructor(registerInstructorDto);
+
+        return registerResult == RegisterResult.Success ?
+              new SuccessResponse<string>(token) :
+              new FailureResponse<string>(ErrorCode.ValidationError, registerResult.ToString());
     }
 
+    [HttpPost]
     public void RegisterStudent()
     {
         return;
     }
 
+    [HttpPost]
     public void Login()
     {
         return;

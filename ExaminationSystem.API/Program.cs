@@ -13,6 +13,11 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add Infrastructure services registrations
+builder.Services
+    .AddInfrastructureServices()
+    .AddSecurityConfiguration(builder.Configuration);
+
 // Add all services and Mapster configuration
 builder.Services
     .AddApplicationServices()
@@ -21,11 +26,6 @@ builder.Services
 // Add FluentValidation
 builder.Services
     .AddFluentValidation();
-
-// Add Infrastructure services registrations
-builder.Services
-    .AddInfrastructureServices()
-    .AddSecurityConfiguration(builder.Configuration);
 
 // Database
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
