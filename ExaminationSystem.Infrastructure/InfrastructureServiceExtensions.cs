@@ -28,6 +28,8 @@ public static class InfrastructureServiceExtensions
         // Configure jwt helper class to use jwt config info
         SetJwtConfig(configuration);
 
+        services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
+
         // Add Authentication with jwt config
         services.AddAuthentication(options =>
         {

@@ -23,3 +23,8 @@ public enum RegisterResult
     TokenGenerationFailed,
     UnknownError
 }
+
+public enum EmailTemplate
+{
+    Welcome
+}
