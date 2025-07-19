@@ -1,0 +1,33 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=.\\sqlexpress;Database=ExamSystemDB;Integrated Security=True;TrustServerCertificate=True"
+  },
+  "AllowedHosts": "*",
+  "Cors": {
+    "AllowedOrigins": [ "*" ],
+    "AllowedMethods": [ "*" ],
+    "AllowedHeaders": [ "*" ]
+  },
+  "Jwt": {
+    "Key": "This is a sample secret key - please don't use in production environment.'",
+    "Issuer": "https://localhost.com/",
+    "Audience": "https://localhost.com/",
+    "DurationInHours": 1
+  },
+  "SMTPConfig": {
+    "Host": "localhost",
+    "Port": 25,
+    "Username": "",
+    "Password": "",
+    "EnableSsl": false,
+    "FromEmail": "noreply@examsystem.local",
+    "FromName": "Exam System",
+    "IsBodyHtml": true
+  }
+}
