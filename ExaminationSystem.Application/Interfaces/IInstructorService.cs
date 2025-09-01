@@ -4,6 +4,6 @@ namespace ExaminationSystem.Application.Interfaces;
 
 public interface IInstructorService
 {
-    Task<(AddInstructorResult result, int Id)> Add(AddInstructorDto userDto, CancellationToken cancellationToken = default);
+    Task<(AddInstructorResult result, int Id)> AddAsync(AddInstructorDto userDto, CancellationToken cancellationToken = default);
 }
 

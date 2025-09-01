@@ -36,7 +36,7 @@ public class AuthService : IAuthService
         // Save instructor
         var addInstructorDto = registerInstructorDto.Adapt<AddInstructorDto>();
         addInstructorDto.AppUserId = userId;
-        var (addInstructorResult, instructorId) = await _instructorService.Add(addInstructorDto);
+        var (addInstructorResult, instructorId) = await _instructorService.AddAsync(addInstructorDto);
 
         if (addInstructorResult != AddInstructorResult.Success)
             return (RegisterResult.UserCreationFailed, string.Empty);
