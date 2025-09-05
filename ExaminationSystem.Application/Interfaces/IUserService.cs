@@ -4,7 +4,6 @@ namespace ExaminationSystem.Application.Interfaces;
 
 public interface IUserService
 {
-    Task<(AddUserResult result, int Id)> Add(AddUserDto userDto, CancellationToken cancellationToken = default);
-    Task<bool> IsUserEmailUnique(string email, CancellationToken cancellationToken = default);
+    Task<(UserOperationResult Result, int Id)> AddAsync(AddUserDto userDto, CancellationToken cancellationToken = default);
 }
 

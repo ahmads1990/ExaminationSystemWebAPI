@@ -14,18 +14,22 @@ public class InstructorService : IInstructorService
         _instructorRepository = instructorRepository;
     }
 
-    public async Task<(AddInstructorResult result, int Id)> AddAsync(AddInstructorDto instructorDto, CancellationToken cancellationToken = default)
+    #region Public Methods
+
+    public async Task<(UserOperationResult result, int Id)> AddAsync(AddInstructorDto instructorDto, CancellationToken cancellationToken = default)
     {
         // Validate the required fields
         if (instructorDto.AppUserId <= 0)
-            return (AddInstructorResult.InvalidUserId, 0);
+            return (UserOperationResult.InvalidUserId, 0);
 
         var instructor = instructorDto.Adapt<Instructor>();
 
         await _instructorRepository.Add(instructor, cancellationToken);
         await _instructorRepository.SaveChanges(cancellationToken);
 
-        return (AddInstructorResult.Success, instructor.ID);
+        return (UserOperationResult.Success, instructor.ID);
     }
+
+    #endregion
 }
 

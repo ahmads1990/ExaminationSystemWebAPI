@@ -7,6 +7,12 @@ public class RegisterInstructorRequestValidator : AbstractValidator<RegisterInst
 {
     public RegisterInstructorRequestValidator()
     {
+        // Validate name
+        RuleFor(x => x.Name)
+            .NotEmpty().WithMessage("Name is required.")
+            .MinimumLength(3).WithMessage("Name must be at least 3 characters long.")
+            .MaximumLength(100).WithMessage("Name must not exceed 100 characters.");
+
         // Validate Username
         RuleFor(x => x.Username)
             .NotEmpty().WithMessage("Username is required.")
@@ -26,5 +32,13 @@ public class RegisterInstructorRequestValidator : AbstractValidator<RegisterInst
             .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
             .Matches("[0-9]").WithMessage("Password must contain at least one digit.")
             .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
+
+        // Validate Bio
+        RuleFor(x => x.Bio)
+            .MaximumLength(500).WithMessage("Bio must not exceed 500 characters.");
+
+        // Validate Specialization
+        RuleFor(x => x.Specialization)
+            .MaximumLength(200).WithMessage("Specialization must not exceed 200 characters.");
     }
 }

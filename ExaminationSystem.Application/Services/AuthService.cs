@@ -19,43 +19,81 @@ public class AuthService : IAuthService
         _tokenHelper = tokenHelper;
     }
 
-    public async Task<(RegisterResult result, string token)> RegisterInstructor(RegisterInstructorDto registerInstructorDto)
+    #region Public Methods
+
+    /// <summary>
+    /// Registers a new instructor and returns a result with a token if successful.
+    /// </summary>
+    /// <param name="registerInstructorDto">Instructor registration data.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>
+    /// A tuple with:
+    /// <list type="bullet">
+    ///   <item><description>The operation result.</description></item>
+    ///   <item><description>A JWT token if successful, otherwise empty.</description></item>
+    /// </list>
+    /// </returns>
+    public async Task<(UserOperationResult Result, string Token)> RegisterInstructorAsync(RegisterInstructorDto registerInstructorDto, CancellationToken cancellationToken = default)
     {
-        // Input validation
-        if (string.IsNullOrEmpty(registerInstructorDto.Email) ||
-            string.IsNullOrEmpty(registerInstructorDto.Password))
-            return (RegisterResult.ValidationFailed, string.Empty);
+        // Prepare user dto
+        var addUserDto = registerInstructorDto.Adapt<AddUserDto>();
+        addUserDto.Role = UserRole.Instructor;
+        addUserDto.Code = GenerateUserCode(UserRole.Instructor);
 
         // Save user
-        var addUserDto = registerInstructorDto.Adapt<AddUserDto>();
-        var (addUserResult, userId) = await _userService.Add(addUserDto);
+        var (addUserResult, userId) = await _userService.AddAsync(addUserDto, cancellationToken);
+        if (addUserResult != UserOperationResult.Success)
+            return (UserOperationResult.UserCreationFailed, string.Empty);
 
-        if (addUserResult != AddUserResult.Success)
-            return (RegisterResult.UserCreationFailed, string.Empty);
-
-        // Save instructor
+        // Prepare instructor dto
         var addInstructorDto = registerInstructorDto.Adapt<AddInstructorDto>();
         addInstructorDto.AppUserId = userId;
-        var (addInstructorResult, instructorId) = await _instructorService.AddAsync(addInstructorDto);
 
-        if (addInstructorResult != AddInstructorResult.Success)
-            return (RegisterResult.UserCreationFailed, string.Empty);
+        // Save instructor
+        var (addInstructorResult, instructorId) = await _instructorService.AddAsync(addInstructorDto, cancellationToken);
+        if (addInstructorResult != UserOperationResult.Success)
+            return (UserOperationResult.UserCreationFailed, string.Empty);
 
         // Create Token
         var token = _tokenHelper.GenerateToken(
             new UserTokenBaseClaims(userId, addUserDto.Username, addUserDto.Email),
             new List<UserClaim>
             {
-                new("Role", "Instructor"),
-                new("RoleId", instructorId.ToString())
+                new("RoleId", ((int)UserRole.Instructor).ToString()),
+                new("Name",  addUserDto.Name)
             }
         );
 
         if (string.IsNullOrEmpty(token))
-            return (RegisterResult.TokenGenerationFailed, string.Empty);
+            return (UserOperationResult.TokenGenerationFailed, string.Empty);
 
         // Return success
-        return (RegisterResult.Success, token);
+        return (UserOperationResult.Success, token);
     }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// Creates a unique user code based on role.
+    /// </summary>
+    /// <param name="role">The user role.</param>
+    /// <returns>A unique code like INS-ABC123.</returns>
+    public static string GenerateUserCode(UserRole role)
+    {
+        string rolePrefix = role switch
+        {
+            UserRole.Admin => "ADM",
+            UserRole.Instructor => "INS",
+            UserRole.Student => "STD",
+            _ => "USR"
+        };
+
+        string uniquePart = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
+        return $"{rolePrefix}-{uniquePart}";
+    }
+
+    #endregion
 }
 

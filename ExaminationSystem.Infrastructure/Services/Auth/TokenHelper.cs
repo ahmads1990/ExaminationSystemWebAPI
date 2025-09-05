@@ -11,6 +11,12 @@ namespace ExaminationSystem.Infrastructure.Services.Auth;
 
 public class TokenHelper : ITokenHelper
 {
+    /// <summary>
+    /// Generates a JWT token based on the provided user claims.
+    /// </summary>
+    /// <param name="baseUserClaims">Required claims</param>
+    /// <param name="userClaims"></param>
+    /// <returns></returns>
     public string GenerateToken(UserTokenBaseClaims baseUserClaims, List<UserClaim> userClaims)
     {
         // Validate base user claims

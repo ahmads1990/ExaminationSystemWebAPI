@@ -1,26 +1,20 @@
-﻿public enum AddUserResult
+﻿public enum UserOperationResult
 {
     Success,
-    ValidationFailed,
-    EmailDuplicated
-}
 
-public enum AddInstructorResult
-{
-    Success,
-    AlreadyInstructor,
-    UserNotFound,
-    InvalidUserId
-}
-
-public enum RegisterResult
-{
-    Success,
+    // Validation / Data issues
     ValidationFailed,
     EmailDuplicated,
-    AlreadyRegistered,
+
+    // User lookup / existence
+    UserNotFound,
+    InvalidUserId,
+
+    // System / process issues
     UserCreationFailed,
     TokenGenerationFailed,
+
+    // Fallback
     UnknownError
 }
 

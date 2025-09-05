@@ -16,12 +16,12 @@ public class AuthController : BaseController
     }
 
     [HttpPost]
-    public async Task<BaseResponse<string>> RegisterInstructor(RegisterInstructorRequest request)
+    public async Task<BaseResponse<string>> RegisterInstructor(RegisterInstructorRequest request, CancellationToken cancellationToken = default)
     {
         var registerInstructorDto = request.Adapt<RegisterInstructorDto>();
-        var (registerResult, token) = await _authService.RegisterInstructor(registerInstructorDto);
+        var (registerResult, token) = await _authService.RegisterInstructorAsync(registerInstructorDto, cancellationToken);
 
-        return registerResult == RegisterResult.Success ?
+        return registerResult == UserOperationResult.Success ?
               new SuccessResponse<string>(token) :
               new FailureResponse<string>(ErrorCode.ValidationError, registerResult.ToString());
     }

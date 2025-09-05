@@ -39,7 +39,12 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public async Task<bool> CheckExistsByID(int id, CancellationToken cancellationToken = default)
     {
-        return await GetAll().AnyAsync(x => x.ID == id, cancellationToken);
+        return await CheckExistsByCondition(x => x.ID == id, cancellationToken);
+    }
+
+    public async Task<bool> CheckExistsByCondition(Expression<Func<Entity, bool>> expression, CancellationToken cancellationToken = default)
+    {
+        return await GetAll().AnyAsync(expression, cancellationToken);
     }
 
     public async Task<Entity> Add(Entity entity, CancellationToken cancellationToken = default)

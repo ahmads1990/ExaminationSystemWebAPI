@@ -4,6 +4,6 @@ namespace ExaminationSystem.Application.Interfaces;
 
 public interface IAuthService
 {
-    Task<(RegisterResult result, string token)> RegisterInstructor(RegisterInstructorDto registerInstructorDto);
+    Task<(UserOperationResult Result, string Token)> RegisterInstructorAsync(RegisterInstructorDto registerInstructorDto, CancellationToken cancellationToken = default);
 }
 

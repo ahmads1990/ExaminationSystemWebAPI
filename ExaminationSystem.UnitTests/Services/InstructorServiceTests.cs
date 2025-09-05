@@ -2,13 +2,11 @@
 using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
+using FluentAssertions;
 using Moq;
 
 namespace ExaminationSystem.UnitTests.Services;
 
-/// <summary>
-/// Unit tests for InstructorService
-/// </summary>
 public class InstructorServiceTests
 {
     private readonly Mock<IRepository<Instructor>> _repositoryMock;
@@ -22,61 +20,32 @@ public class InstructorServiceTests
 
     #region AddAsync Tests
 
-    /// <summary>
-    /// Tests AddAsync with valid AppUserId returns success
-    /// </summary>
+    // Happy
     [Theory]
     [InlineData(1)]
     [InlineData(100)]
     [InlineData(999)]
+    [Trait("Category", TestCategories.Happy)]
     public async Task AddAsync_ValidAppUserId_ReturnsSuccess(int appUserId)
     {
-        // Arrange
         var dto = new AddInstructorDto { AppUserId = appUserId };
 
         _repositoryMock
             .Setup(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()))
             .Callback<Instructor, CancellationToken>((i, _) => i.ID = 123);
 
-        // Act
         var result = await _service.AddAsync(dto);
 
-        // Assert
-        Assert.Equal(AddInstructorResult.Success, result.result);
-        Assert.Equal(123, result.Id);
+        result.result.Should().Be(UserOperationResult.Success);
+        result.Id.Should().Be(123);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()), Times.Once);
         _repositoryMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    /// <summary>
-    /// Tests AddAsync with invalid AppUserId returns InvalidUserId
-    /// </summary>
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    [InlineData(-100)]
-    public async Task AddAsync_InvalidAppUserId_ReturnsInvalidUserId(int appUserId)
-    {
-        // Arrange
-        var dto = new AddInstructorDto { AppUserId = appUserId };
-
-        // Act
-        var result = await _service.AddAsync(dto);
-
-        // Assert
-        Assert.Equal(AddInstructorResult.InvalidUserId, result.result);
-        Assert.Equal(0, result.Id);
-        _repositoryMock.Verify(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()), Times.Never);
-        _repositoryMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    /// <summary>
-    /// Tests AddAsync with cancellation token
-    /// </summary>
     [Fact]
+    [Trait("Category", TestCategories.Happy)]
     public async Task AddAsync_WithCancellationToken_PassesTokenCorrectly()
     {
-        // Arrange
         var dto = new AddInstructorDto { AppUserId = 1 };
         var cts = new CancellationTokenSource();
 
@@ -84,13 +53,65 @@ public class InstructorServiceTests
             .Setup(x => x.Add(It.IsAny<Instructor>(), cts.Token))
             .Callback<Instructor, CancellationToken>((i, _) => i.ID = 456);
 
-        // Act
         var result = await _service.AddAsync(dto, cts.Token);
 
-        // Assert
-        Assert.Equal(AddInstructorResult.Success, result.result);
+        result.result.Should().Be(UserOperationResult.Success);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Instructor>(), cts.Token), Times.Once);
         _repositoryMock.Verify(x => x.SaveChanges(cts.Token), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(1, "Bio1", "Spec1")]
+    [InlineData(2, "", "")]
+    [InlineData(3, null, null)]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task AddAsync_MapsDtoPropertiesToInstructor(int appUserId, string bio, string specialization)
+    {
+        var dto = new AddInstructorDto { AppUserId = appUserId, Bio = bio, Specialization = specialization };
+        Instructor? capturedInstructor = null;
+
+        _repositoryMock
+            .Setup(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()))
+            .Callback<Instructor, CancellationToken>((i, _) => { i.ID = 321; capturedInstructor = i; });
+
+        var result = await _service.AddAsync(dto);
+
+        capturedInstructor?.AppUserId.Should().Be(appUserId);
+        capturedInstructor?.Bio.Should().Be(bio);
+        capturedInstructor?.Specialization.Should().Be(specialization);
+        result.result.Should().Be(UserOperationResult.Success);
+        result.Id.Should().Be(321);
+    }
+
+    // Validation
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    [Trait("Category", TestCategories.Validation)]
+    public async Task AddAsync_InvalidAppUserId_ReturnsInvalidUserId(int appUserId)
+    {
+        var dto = new AddInstructorDto { AppUserId = appUserId };
+
+        var result = await _service.AddAsync(dto);
+
+        result.result.Should().Be(UserOperationResult.InvalidUserId);
+        result.Id.Should().Be(0);
+        _repositoryMock.Verify(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()), Times.Never);
+        _repositoryMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    // Infrastructure
+    [Fact]
+    [Trait("Category", TestCategories.Infrastructure)]
+    public async Task AddAsync_RepositoryThrowsException_ReturnsUnknownError()
+    {
+        var dto = new AddInstructorDto { AppUserId = 1 };
+        _repositoryMock
+            .Setup(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("DB error"));
+
+        await Assert.ThrowsAsync<Exception>(() => _service.AddAsync(dto));
     }
 
     #endregion
