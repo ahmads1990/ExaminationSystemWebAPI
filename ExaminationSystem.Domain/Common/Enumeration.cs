@@ -17,3 +17,10 @@ public enum ExamType
     Quiz = 0,
     Final
 };
+
+public enum UserRole
+{
+    Student = 0,
+    Instructor,
+    Admin
+}
