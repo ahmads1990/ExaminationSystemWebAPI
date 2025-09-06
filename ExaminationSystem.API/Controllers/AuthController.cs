@@ -15,6 +15,12 @@ public class AuthController : BaseController
         _authService = authService;
     }
 
+    /// <summary>
+    /// Adds a new instructor to the system and returns a JWT token if successful.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     [HttpPost]
     public async Task<BaseResponse<string>> RegisterInstructor(RegisterInstructorRequest request, CancellationToken cancellationToken = default)
     {
@@ -26,10 +32,21 @@ public class AuthController : BaseController
               new FailureResponse<string>(ErrorCode.ValidationError, registerResult.ToString());
     }
 
+    /// <summary>
+    /// Adds a new student to the system and returns a JWT token if successful.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellation"></param>
+    /// <returns></returns>
     [HttpPost]
-    public void RegisterStudent()
+    public async Task<BaseResponse<string>> RegisterStudent(RegisterStudentRequest request, CancellationToken cancellation)
     {
-        return;
+        var registerStudentDto = request.Adapt<RegisterStudentDto>();
+        var (registerResult, token) = await _authService.RegisterStudentAsync(registerStudentDto, cancellation);
+
+        return registerResult == UserOperationResult.Success ?
+              new SuccessResponse<string>(token) :
+              new FailureResponse<string>(ErrorCode.ValidationError, registerResult.ToString());
     }
 
     [HttpPost]

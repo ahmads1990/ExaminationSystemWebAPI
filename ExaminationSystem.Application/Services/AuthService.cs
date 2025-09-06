@@ -1,5 +1,6 @@
 ﻿using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.DTOs.Instructor;
+using ExaminationSystem.Application.DTOs.Student;
 using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
@@ -10,12 +11,13 @@ public class AuthService : IAuthService
 {
     private readonly IUserService _userService;
     private readonly IInstructorService _instructorService;
+    private readonly IStudentService _studentService;
     private readonly ITokenHelper _tokenHelper;
-
-    public AuthService(IUserService userService, IInstructorService instructorService, ITokenHelper tokenHelper)
+    public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService, ITokenHelper tokenHelper)
     {
         _userService = userService;
         _instructorService = instructorService;
+        _studentService = studentService;
         _tokenHelper = tokenHelper;
     }
 
@@ -60,6 +62,44 @@ public class AuthService : IAuthService
             new List<UserClaim>
             {
                 new("RoleId", ((int)UserRole.Instructor).ToString()),
+                new("Name",  addUserDto.Name)
+            }
+        );
+
+        if (string.IsNullOrEmpty(token))
+            return (UserOperationResult.TokenGenerationFailed, string.Empty);
+
+        // Return success
+        return (UserOperationResult.Success, token);
+    }
+
+    public async Task<(UserOperationResult Result, string Token)> RegisterStudentAsync(RegisterStudentDto registerStudentDto, CancellationToken cancellationToken = default)
+    {
+        // Prepare user dto
+        var addUserDto = registerStudentDto.Adapt<AddUserDto>();
+        addUserDto.Role = UserRole.Student;
+        addUserDto.Code = GenerateUserCode(UserRole.Student);
+
+        // Save user
+        var (addUserResult, userId) = await _userService.AddAsync(addUserDto, cancellationToken);
+        if (addUserResult != UserOperationResult.Success)
+            return (UserOperationResult.UserCreationFailed, string.Empty);
+
+        // Prepare student dto
+        var addStudentDto = registerStudentDto.Adapt<AddStudentDto>();
+        addStudentDto.AppUserId = userId;
+
+        // Save student
+        var (addStudentResult, studentId) = await _studentService.AddAsync(addStudentDto, cancellationToken);
+        if (addStudentResult != UserOperationResult.Success)
+            return (UserOperationResult.UserCreationFailed, string.Empty);
+
+        // Create Token
+        var token = _tokenHelper.GenerateToken(
+            new UserTokenBaseClaims(userId, addUserDto.Username, addUserDto.Email),
+            new List<UserClaim>
+            {
+                new("RoleId", ((int)UserRole.Student).ToString()),
                 new("Name",  addUserDto.Name)
             }
         );
