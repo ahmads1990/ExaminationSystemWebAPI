@@ -9,6 +9,7 @@
     // User lookup / existence
     UserNotFound,
     InvalidUserId,
+    InvalidCredentials,
 
     // System / process issues
     UserCreationFailed,

@@ -50,8 +50,13 @@ public class AuthController : BaseController
     }
 
     [HttpPost]
-    public void Login()
+    public async Task<BaseResponse<string>> Login(UserLoginRequest request, CancellationToken cancellationToken)
     {
-        return;
+        var loginDto = request.Adapt<UserLoginDto>();
+        var (loginResult, token) = await _authService.LoginAsync(loginDto, cancellationToken);
+
+        return loginResult == UserOperationResult.Success ?
+              new SuccessResponse<string>(token) :
+              new FailureResponse<string>(ErrorCode.ValidationError, loginResult.ToString());
     }
 }

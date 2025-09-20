@@ -73,6 +73,12 @@ public class AuthService : IAuthService
         return (UserOperationResult.Success, token);
     }
 
+    /// <summary>
+    /// Registers a new student and returns a result with a token if successful.
+    /// </summary>
+    /// <param name="registerStudentDto"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
     public async Task<(UserOperationResult Result, string Token)> RegisterStudentAsync(RegisterStudentDto registerStudentDto, CancellationToken cancellationToken = default)
     {
         // Prepare user dto
@@ -101,6 +107,35 @@ public class AuthService : IAuthService
             {
                 new("RoleId", ((int)UserRole.Student).ToString()),
                 new("Name",  addUserDto.Name)
+            }
+        );
+
+        if (string.IsNullOrEmpty(token))
+            return (UserOperationResult.TokenGenerationFailed, string.Empty);
+
+        // Return success
+        return (UserOperationResult.Success, token);
+    }
+
+    /// <summary>
+    /// Logins a user and returns a result with a token if successful.
+    /// </summary>
+    /// <param name="userLoginDto"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<(UserOperationResult Result, string Token)> LoginAsync(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
+    {
+        var (result, userInfo) = await _userService.GetUserInfoForLogin(userLoginDto);
+        if (result != UserOperationResult.Success)
+            return (result, string.Empty);
+
+        // Create Token
+        var token = _tokenHelper.GenerateToken(
+            new UserTokenBaseClaims(userInfo.Id, userInfo.Username, userInfo.Email),
+            new List<UserClaim>
+            {
+                new("RoleId", ((int)userInfo.Role).ToString()),
+                new("Name",  userInfo.Name)
             }
         );
 

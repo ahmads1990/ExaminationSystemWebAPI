@@ -27,6 +27,11 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         return GetAll().Where(expression);
     }
 
+    public async Task<Entity?> GetByCondition(Expression<Func<Entity, bool>> expression, CancellationToken cancellationToken = default)
+    {
+        return await GetAll().Where(expression).FirstOrDefaultAsync(cancellationToken);
+    }
+
     public IQueryable<Entity> GetByID(int id)
     {
         return GetByCondition(x => x.ID == id);

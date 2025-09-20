@@ -1,9 +1,12 @@
-﻿using ExaminationSystem.Application.DTOs.Users;
+﻿using ExaminationSystem.Application.DTOs.Auth;
+using ExaminationSystem.Application.DTOs.Users;
 
 namespace ExaminationSystem.Application.Interfaces;
 
 public interface IUserService
 {
     Task<(UserOperationResult Result, int Id)> AddAsync(AddUserDto userDto, CancellationToken cancellationToken = default);
+
+    Task<(UserOperationResult Result, UserBasicInfo? UserInfo)> GetUserInfoForLogin(UserLoginDto userLoginDto, CancellationToken cancellationToken = default);
 }
 
