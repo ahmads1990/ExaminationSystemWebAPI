@@ -1,13 +1,21 @@
 ﻿using ExaminationSystem.Application.InfraInterfaces;
+using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Interfaces;
 using ExaminationSystem.Infrastructure.Configs;
+using ExaminationSystem.Infrastructure.Data;
 using ExaminationSystem.Infrastructure.Data.Repositories;
+using ExaminationSystem.Infrastructure.Jobs;
 using ExaminationSystem.Infrastructure.Services.Auth;
+using ExaminationSystem.Infrastructure.Services.Email;
+using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 
 namespace ExaminationSystem.Infrastructure;
 
@@ -18,17 +26,48 @@ public static class InfrastructureServiceExtensions
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IPasswordHasher<string>, PasswordHasher<string>>();
         services.AddScoped<IPasswordHelper, PasswordHelper>();
+        services.AddScoped<IEmailService, EmailService>();
+
         services.AddSingleton<ITokenHelper, TokenHelper>();
 
         return services;
     }
 
+    public static IServiceCollection AddInfraStructureConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
+
+        services.AddDatabaseConfiguration(configuration);
+        services.AddSecurityConfiguration(configuration);
+        services.AddHangfireConfiguration(configuration);
+
+        return services;
+    }
+
+    #region Database Configuration
+
+    public static IServiceCollection AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString(Constants.ConnectionStringName);
+        services.AddDbContext<AppDbContext>(options =>
+        {
+            options
+                .UseSqlServer(connectionString)
+                .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
+                .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
+                .EnableSensitiveDataLogging();
+        });
+        return services;
+    }
+
+    #endregion
+
+    #region Security Configuration
+
     public static IServiceCollection AddSecurityConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         // Configure jwt helper class to use jwt config info
-        SetJwtConfig(configuration);
-
-        services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
+        SetJwtConfiguration(configuration);
 
         // Add Authentication with jwt config
         services.AddAuthentication(options =>
@@ -55,12 +94,34 @@ public static class InfrastructureServiceExtensions
         return services;
     }
 
-    private static void SetJwtConfig(IConfiguration configuration)
+    private static void SetJwtConfiguration(IConfiguration configuration)
     {
         JwtConfig.Key = configuration.GetSection("Jwt:Key")?.Value ?? string.Empty;
         JwtConfig.Issuer = configuration.GetSection("Jwt:Issuer")?.Value ?? string.Empty;
         JwtConfig.Audience = configuration.GetSection("Jwt:Audience")?.Value ?? string.Empty;
         JwtConfig.DurationInHours = int.Parse(configuration.GetSection("Jwt:DurationInHours")?.Value ?? "0");
     }
+
+    #endregion
+
+    #region Hangfire Configuration
+
+    public static IServiceCollection AddHangfireConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        var connectionString = configuration.GetConnectionString(Constants.ConnectionStringName);
+        // Add Hangfire services
+        services.AddHangfire(config => config
+            .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSqlServerStorage(connectionString));
+
+        services.AddHangfireServer();
+        services.RegisterJobs();
+
+        return services;
+    }
+
+    #endregion
 }
 

@@ -1,10 +1,8 @@
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.Application;
 using ExaminationSystem.Infrastructure;
-using ExaminationSystem.Infrastructure.Data;
 using FluentValidation.AspNetCore;
-using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +14,7 @@ builder.Services.AddSwaggerGen();
 // Add Infrastructure services registrations
 builder.Services
     .AddInfrastructureServices()
-    .AddSecurityConfiguration(builder.Configuration);
+    .AddInfraStructureConfiguration(builder.Configuration);
 
 // Add all services and Mapster configuration
 builder.Services
@@ -26,18 +24,6 @@ builder.Services
 // Add FluentValidation
 builder.Services
     .AddFluentValidation();
-
-// Database
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-Console.WriteLine(connectionString);
-builder.Services.AddDbContext<AppDbContext>(options =>
-{
-    options
-        .UseSqlServer(connectionString)
-        .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-        .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
-        .EnableSensitiveDataLogging();
-});
 
 var app = builder.Build();
 
@@ -50,6 +36,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCustomCors(app.Configuration);
+
+app.UseStaticFiles();
+app.UseHangfireDashboard("/hangfire");
 
 app.UseAuthorization();
 app.MapControllers();
