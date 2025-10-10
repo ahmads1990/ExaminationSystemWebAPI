@@ -1,0 +1,16 @@
+Welcome to Examination System!
+
+Hi {{UserName}},
+
+Thank you for joining our platform! To complete your registration and start using your account, please verify your email address.
+
+Click the link below to verify your email:
+{{ConfirmationLink}}
+
+If you can’t click the link, copy and paste it into your browser.
+
+Your verification code: {{VerificationCode}}
+
+Welcome again,
+The Examination System Team
+© {{Year}} Examination System. All rights reserved.

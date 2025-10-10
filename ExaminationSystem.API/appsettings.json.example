@@ -27,7 +27,6 @@
     "Password": "",
     "EnableSsl": false,
     "FromEmail": "noreply@examsystem.local",
-    "FromName": "Exam System",
-    "IsBodyHtml": true
+    "FromName": "Exam System"
   }
 }

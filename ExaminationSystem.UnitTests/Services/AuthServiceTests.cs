@@ -6,6 +6,7 @@ using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Application.Services;
 using FluentAssertions;
+using Hangfire;
 using Moq;
 
 namespace ExaminationSystem.UnitTests.Services;
@@ -16,6 +17,7 @@ public class AuthServiceTests
     private readonly Mock<IInstructorService> _instructorServiceMock;
     private readonly Mock<IStudentService> _studentServiceMock;
     private readonly Mock<ITokenHelper> _tokenHelperMock;
+    private readonly Mock<IBackgroundJobClient> _backgroundJobClientMock;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
@@ -24,9 +26,10 @@ public class AuthServiceTests
         _instructorServiceMock = new Mock<IInstructorService>();
         _studentServiceMock = new Mock<IStudentService>();
         _tokenHelperMock = new Mock<ITokenHelper>();
+        _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
 
         _authService = new AuthService(_userServiceMock.Object, _instructorServiceMock.Object,
-            _studentServiceMock.Object, _tokenHelperMock.Object);
+            _studentServiceMock.Object, _tokenHelperMock.Object, _backgroundJobClientMock.Object);
     }
 
     #region RegisterInstructor Tests

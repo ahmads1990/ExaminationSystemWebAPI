@@ -4,6 +4,8 @@ using ExaminationSystem.Application.DTOs.Student;
 using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
+using ExaminationSystem.Application.UseCases;
+using Hangfire;
 
 namespace ExaminationSystem.Application.Services;
 
@@ -13,12 +15,15 @@ public class AuthService : IAuthService
     private readonly IInstructorService _instructorService;
     private readonly IStudentService _studentService;
     private readonly ITokenHelper _tokenHelper;
-    public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService, ITokenHelper tokenHelper)
+    private readonly IBackgroundJobClient _backgroundJobClient;
+
+    public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService, ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient)
     {
         _userService = userService;
         _instructorService = instructorService;
         _studentService = studentService;
         _tokenHelper = tokenHelper;
+        _backgroundJobClient = backgroundJobClient;
     }
 
     #region Public Methods
@@ -113,6 +118,9 @@ public class AuthService : IAuthService
         if (string.IsNullOrEmpty(token))
             return (UserOperationResult.TokenGenerationFailed, string.Empty);
 
+        // Add job to send welcome email
+        EnqueueSendWelcomeEmailJob(addUserDto.Name, addUserDto.Email);
+
         // Return success
         return (UserOperationResult.Success, token);
     }
@@ -149,6 +157,22 @@ public class AuthService : IAuthService
     #endregion
 
     #region Private Methods
+
+    private void EnqueueSendWelcomeEmailJob(string toName, string toEmail)
+    {
+        var emailParameters = new Dictionary<string, string>
+        {
+            { "UserName", toName },
+            { "ConfirmationLink", ""},
+            { "VerificationCode", ""},
+            { "Year", DateTime.Now.Year.ToString()},
+        };
+
+        _backgroundJobClient.Enqueue<SendEmailJob>(job =>
+            job.Execute(toName, toEmail, "Welcome", EmailTemplate.Welcome,
+            emailParameters, default)
+        );
+    }
 
     /// <summary>
     /// Creates a unique user code based on role.
