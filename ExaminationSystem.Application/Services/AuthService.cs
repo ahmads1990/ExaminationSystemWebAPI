@@ -140,7 +140,7 @@ public class AuthService : IAuthService
             new UserTokenBaseClaims(userInfo!.ID, userInfo.Name, userInfo.Email),
             new List<UserClaim>
             {
-                new("roleId", ((int)userInfo.Role).ToString()),
+                new("role", userInfo.Role.ToString()),
                 new("username",  userInfo.Username)
             }
         );
