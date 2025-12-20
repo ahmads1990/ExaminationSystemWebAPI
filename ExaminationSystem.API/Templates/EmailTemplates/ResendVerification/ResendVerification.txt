@@ -1,0 +1,17 @@
+Resend Verification Link
+
+Hi {{UserName}},
+
+We received a request to resend your email verification link. Please verify your account using the link below:
+
+{{ConfirmationLink}}
+
+If you can’t click the link, copy and paste it into your browser.
+
+Your verification code: {{VerificationCode}}
+
+If you didn’t request this, you can safely ignore this email — your account will remain unverified until you confirm it.
+
+Best regards,
+The Examination System Team
+© {{Year}} Examination System. All rights reserved.

@@ -2,6 +2,7 @@
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Infrastructure.Configs;
 using Microsoft.IdentityModel.Tokens;
+using OtpNet;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -11,13 +12,18 @@ namespace ExaminationSystem.Infrastructure.Services.Auth;
 
 public class TokenHelper : ITokenHelper
 {
+    private const int OTP_LENGTH = 6;
+
+    // Temporary
+    private const string SECRET_KEY = "VerySecretKey";
+
     /// <summary>
     /// Generates a JWT token based on the provided user claims.
     /// </summary>
     /// <param name="baseUserClaims">Required claims</param>
     /// <param name="userClaims"></param>
     /// <returns></returns>
-    public string GenerateToken(UserTokenBaseClaims baseUserClaims, List<UserClaim> userClaims)
+    public string GenerateJWT(UserTokenBaseClaims baseUserClaims, List<UserClaim> userClaims)
     {
         // Validate base user claims
         if (baseUserClaims.AreClaimsInValid())
@@ -50,6 +56,16 @@ public class TokenHelper : ITokenHelper
 
         // Return the serialized token
         return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+    }
+
+    /// <summary>
+    /// Generates a one-time password (OTP) using the configured secret key and specified length.
+    /// </summary>
+    /// <returns>A string containing the generated OTP of the specified length.</returns>
+    public string GenerateOTP(int length = OTP_LENGTH)
+    {
+        var totp = new Totp(Encoding.UTF8.GetBytes(SECRET_KEY), totpSize: length);
+        return totp.ComputeTotp();
     }
 }
 

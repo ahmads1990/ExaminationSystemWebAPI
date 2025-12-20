@@ -6,6 +6,6 @@ public static class Constants
     public const int MaxChoicesCount = 5;
 
     // System
-    public const string ConnectionStringName = "DefaultConnection";
+    public const string DBConnectionStringName = "DefaultConnection";
 }
 

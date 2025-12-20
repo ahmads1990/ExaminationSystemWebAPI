@@ -4,6 +4,7 @@ using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExaminationSystem.Application.Services;
 
@@ -60,18 +61,62 @@ public class UserService : IUserService
     /// <param name="userLoginDto"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<(UserOperationResult Result, UserBasicInfo? UserInfo)> GetUserInfoForLogin(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
+    public async Task<(UserOperationResult Result, int? Id)> VerifyUserPassword(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
     {
-        // Hash the provided password
-        var hashedPassword = _passwordHelper.HashPassword(userLoginDto.Password);
-
         // Find user by email and hashed password
-        var user = await _userRepository.GetByCondition(u => u.Email == userLoginDto.Email && u.Password == hashedPassword, cancellationToken);
-        if (user == null)
-            return (UserOperationResult.InvalidCredentials, null);
+        var userInfo = await _userRepository.GetByCondition(u => u.Email == userLoginDto.Email)
+                                            .Select(u => new { u.ID, u.Password })
+                                            .FirstOrDefaultAsync(cancellationToken);
 
-        var userInfo = user.Adapt<UserBasicInfo>();
-        return (UserOperationResult.Success, userInfo);
+        return _passwordHelper.VerifyPassword(userInfo?.Password ?? "", userLoginDto.Password)
+          ? (UserOperationResult.Success, userInfo!.ID)
+          : (UserOperationResult.InvalidCredentials, null);
+    }
+
+    /// <summary>
+    /// Asynchronously retrieves basic information for a user identified by the specified user ID.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose basic information is to be retrieved.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A <see cref="UserBasicInfo"/> object containing the user's basic information if found; otherwise, <see
+    /// langword="null"/>.</returns>
+    public async Task<UserBasicInfo?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _userRepository.GetByCondition(u => u.ID == userId)
+                                              .ProjectToType<UserBasicInfo>()
+                                              .FirstOrDefaultAsync();
+    }
+
+    /// <summary>
+    /// Confirms the email address for the specified user if it has not already been confirmed.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose email address is to be confirmed.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A value indicating the result of the email confirmation attempt. Returns <see
+    /// cref="UserEmailVerificationResult.Success"/> if the email was successfully confirmed; <see
+    /// cref="UserEmailVerificationResult.AlreadyConfirmed"/> if the email was already confirmed; or <see
+    /// cref="UserEmailVerificationResult.UserNotFound"/> if the user does not exist.</returns>
+    public async Task<UserEmailVerificationResult> ConfirmUserEmail(int userId, CancellationToken cancellationToken = default)
+    {
+        var userData = await _userRepository.GetByCondition(u => u.ID == userId)
+                                        .Select(u => new { ID = u.ID, IsEmailConfirmed = u.IsEmailConfirmed })
+                                        .FirstOrDefaultAsync(cancellationToken);
+
+        if (userData == null)
+            return UserEmailVerificationResult.UserNotFound;
+
+        if (userData.IsEmailConfirmed)
+            return UserEmailVerificationResult.AlreadyConfirmed;
+
+        var user = new AppUser
+        {
+            ID = userData.ID,
+            IsEmailConfirmed = true
+        };
+
+        _userRepository.SaveInclude(user, nameof(AppUser.IsEmailConfirmed));
+        await _userRepository.SaveChanges(cancellationToken);
+        return UserEmailVerificationResult.Success;
     }
 
     #endregion

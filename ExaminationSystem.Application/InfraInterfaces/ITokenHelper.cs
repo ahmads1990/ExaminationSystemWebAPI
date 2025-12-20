@@ -4,7 +4,6 @@ namespace ExaminationSystem.Application.InfraInterfaces;
 
 public interface ITokenHelper
 {
-    string GenerateToken(UserTokenBaseClaims baseClaims, List<UserClaim> userClaims);
+    string GenerateJWT(UserTokenBaseClaims baseClaims, List<UserClaim> userClaims);
+    string GenerateOTP(int length = 6);
 }
-
-

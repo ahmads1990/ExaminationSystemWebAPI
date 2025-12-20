@@ -7,6 +7,9 @@ using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Application.Services;
 using FluentAssertions;
 using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
+using Microsoft.Extensions.Configuration;
 using Moq;
 
 namespace ExaminationSystem.UnitTests.Services;
@@ -18,6 +21,8 @@ public class AuthServiceTests
     private readonly Mock<IStudentService> _studentServiceMock;
     private readonly Mock<ITokenHelper> _tokenHelperMock;
     private readonly Mock<IBackgroundJobClient> _backgroundJobClientMock;
+    private readonly Mock<ICachingService> _cachingServiceMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
@@ -27,17 +32,32 @@ public class AuthServiceTests
         _studentServiceMock = new Mock<IStudentService>();
         _tokenHelperMock = new Mock<ITokenHelper>();
         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
+        _cachingServiceMock = new Mock<ICachingService>();
+        _configurationMock = new Mock<IConfiguration>();
 
-        _authService = new AuthService(_userServiceMock.Object, _instructorServiceMock.Object,
-            _studentServiceMock.Object, _tokenHelperMock.Object, _backgroundJobClientMock.Object);
+        // Setup configuration mock
+        var configSectionMock = new Mock<IConfigurationSection>();
+        configSectionMock.Setup(x => x.Value).Returns("https://example.com");
+        _configurationMock.Setup(x => x.GetSection("BackendBaseUrl")).Returns(configSectionMock.Object);
+
+        _authService = new AuthService(
+            _userServiceMock.Object,
+            _instructorServiceMock.Object,
+            _studentServiceMock.Object,
+            _tokenHelperMock.Object,
+            _backgroundJobClientMock.Object,
+            _cachingServiceMock.Object,
+            _configurationMock.Object
+        );
     }
 
     #region RegisterInstructor Tests
 
     [Fact]
     [Trait("Category", TestCategories.Happy)]
-    public async Task RegisterInstructorAsync_ValidData_ReturnsSuccessWithToken()
+    public async Task RegisterInstructorAsync_ValidData_ReturnsSuccessWithUserId()
     {
+        // Arrange
         var dto = new RegisterInstructorDto
         {
             Name = "Test Instructor",
@@ -53,15 +73,30 @@ public class AuthServiceTests
         _instructorServiceMock.Setup(x => x.AddAsync(It.IsAny<AddInstructorDto>(), cancellationToken))
             .ReturnsAsync((UserOperationResult.Success, 100));
 
-        _tokenHelperMock.Setup(x => x.GenerateToken(
-            It.IsAny<UserTokenBaseClaims>(),
-            It.IsAny<List<UserClaim>>()))
-            .Returns("valid.jwt.token");
+        _tokenHelperMock.Setup(x => x.GenerateOTP(6)).Returns("123456");
 
-        var result = await _authService.RegisterInstructorAsync(dto, cancellationToken);
+        _cachingServiceMock.Setup(x => x.AddAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            cancellationToken))
+            .Returns(Task.CompletedTask);
 
-        result.Result.Should().Be(UserOperationResult.Success);
-        result.Token.Should().Be("valid.jwt.token");
+        // Act
+        var (result, id) = await _authService.RegisterInstructorAsync(dto, cancellationToken);
+
+        // Assert
+        result.Should().Be(UserOperationResult.Success);
+        id.Should().Be(42);
+        _tokenHelperMock.Verify(x => x.GenerateOTP(6), Times.Once);
+        _cachingServiceMock.Verify(x => x.AddAsync(
+            "user:email_confirmation:42",
+            "123456",
+            TimeSpan.FromMinutes(5),
+            cancellationToken), Times.Once);
+        _backgroundJobClientMock.Verify(x => x.Create(
+            It.IsAny<Job>(),
+            It.IsAny<IState>()), Times.Once);
     }
 
     [Theory]
@@ -69,8 +104,9 @@ public class AuthServiceTests
     [InlineData(UserOperationResult.EmailDuplicated)]
     [InlineData(UserOperationResult.UserCreationFailed)]
     [Trait("Category", TestCategories.Validation)]
-    public async Task RegisterInstructorAsync_UserCreationFails_ReturnsUserCreationFailed(UserOperationResult userResult)
+    public async Task RegisterInstructorAsync_UserCreationFails_ReturnsFailureWithZeroId(UserOperationResult userResult)
     {
+        // Arrange
         var dto = new RegisterInstructorDto
         {
             Name = "Test Instructor",
@@ -83,10 +119,13 @@ public class AuthServiceTests
         _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
             .ReturnsAsync((userResult, 0));
 
-        var result = await _authService.RegisterInstructorAsync(dto, cancellationToken);
+        // Act
+        var (result, id) = await _authService.RegisterInstructorAsync(dto, cancellationToken);
 
-        result.Result.Should().Be(UserOperationResult.UserCreationFailed);
-        result.Token.Should().BeEmpty();
+        // Assert
+        result.Should().Be(userResult);
+        id.Should().Be(0);
+        _instructorServiceMock.Verify(x => x.AddAsync(It.IsAny<AddInstructorDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -94,8 +133,9 @@ public class AuthServiceTests
     [InlineData(UserOperationResult.InvalidUserId)]
     [InlineData(UserOperationResult.UserCreationFailed)]
     [Trait("Category", TestCategories.Validation)]
-    public async Task RegisterInstructorAsync_InstructorCreationFails_ReturnsUserCreationFailed(UserOperationResult instructorResult)
+    public async Task RegisterInstructorAsync_InstructorCreationFails_ReturnsFailureWithZeroId(UserOperationResult instructorResult)
     {
+        // Arrange
         var dto = new RegisterInstructorDto
         {
             Name = "Test Instructor",
@@ -111,85 +151,14 @@ public class AuthServiceTests
         _instructorServiceMock.Setup(x => x.AddAsync(It.IsAny<AddInstructorDto>(), cancellationToken))
             .ReturnsAsync((instructorResult, 0));
 
-        var result = await _authService.RegisterInstructorAsync(dto, cancellationToken);
+        // Act
+        var (result, id) = await _authService.RegisterInstructorAsync(dto, cancellationToken);
 
-        result.Result.Should().Be(UserOperationResult.UserCreationFailed);
-        result.Token.Should().BeEmpty();
-    }
-
-    [Fact]
-    [Trait("Category", TestCategories.Business)]
-    public async Task RegisterInstructorAsync_TokenGenerationFails_ReturnsTokenGenerationFailed()
-    {
-        var dto = new RegisterInstructorDto
-        {
-            Name = "Test Instructor",
-            Username = "testinstructor",
-            Email = "test@domain.com",
-            Password = "password"
-        };
-        var cancellationToken = new CancellationToken();
-
-        _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 42));
-
-        _instructorServiceMock.Setup(x => x.AddAsync(It.IsAny<AddInstructorDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 100));
-
-        _tokenHelperMock.Setup(x => x.GenerateToken(
-            It.IsAny<UserTokenBaseClaims>(),
-            It.IsAny<List<UserClaim>>()))
-            .Returns(string.Empty);
-
-        var result = await _authService.RegisterInstructorAsync(dto, cancellationToken);
-
-        result.Result.Should().Be(UserOperationResult.TokenGenerationFailed);
-        result.Token.Should().BeEmpty();
-    }
-
-    [Fact]
-    [Trait("Category", TestCategories.Infrastructure)]
-    public async Task RegisterInstructorAsync_UserServiceThrows_PropagatesException()
-    {
-        var dto = new RegisterInstructorDto
-        {
-            Name = "Test Instructor",
-            Username = "testinstructor",
-            Email = "test@domain.com",
-            Password = "password"
-        };
-        var cancellationToken = new CancellationToken();
-
-        _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
-            .ThrowsAsync(new Exception("User service error"));
-
-        var act = async () => await _authService.RegisterInstructorAsync(dto, cancellationToken);
-
-        await act.Should().ThrowAsync<Exception>().WithMessage("User service error");
-    }
-
-    [Fact]
-    [Trait("Category", TestCategories.Infrastructure)]
-    public async Task RegisterInstructorAsync_InstructorServiceThrows_PropagatesException()
-    {
-        var dto = new RegisterInstructorDto
-        {
-            Name = "Test Instructor",
-            Username = "testinstructor",
-            Email = "test@domain.com",
-            Password = "password"
-        };
-        var cancellationToken = new CancellationToken();
-
-        _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 42));
-
-        _instructorServiceMock.Setup(x => x.AddAsync(It.IsAny<AddInstructorDto>(), cancellationToken))
-            .ThrowsAsync(new Exception("Instructor service error"));
-
-        var act = async () => await _authService.RegisterInstructorAsync(dto, cancellationToken);
-
-        await act.Should().ThrowAsync<Exception>().WithMessage("Instructor service error");
+        // Assert
+        result.Should().Be(instructorResult);
+        id.Should().Be(0);
+        _tokenHelperMock.Verify(x => x.GenerateOTP(6), Times.Never);
+        _backgroundJobClientMock.Verify(x => x.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Never);
     }
 
     #endregion
@@ -198,8 +167,9 @@ public class AuthServiceTests
 
     [Fact]
     [Trait("Category", TestCategories.Happy)]
-    public async Task RegisterStudentAsync_ValidData_ReturnsSuccessWithToken()
+    public async Task RegisterStudentAsync_ValidData_ReturnsSuccessWithUserId()
     {
+        // Arrange
         var dto = new RegisterStudentDto
         {
             Name = "Test Student",
@@ -211,17 +181,34 @@ public class AuthServiceTests
 
         _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
             .ReturnsAsync((UserOperationResult.Success, 42));
+
         _studentServiceMock.Setup(x => x.AddAsync(It.IsAny<AddStudentDto>(), cancellationToken))
             .ReturnsAsync((UserOperationResult.Success, 100));
-        _tokenHelperMock.Setup(x => x.GenerateToken(
-            It.IsAny<UserTokenBaseClaims>(),
-            It.IsAny<List<UserClaim>>()))
-            .Returns("valid.jwt.token");
 
-        var result = await _authService.RegisterStudentAsync(dto, cancellationToken);
+        _tokenHelperMock.Setup(x => x.GenerateOTP(6)).Returns("123456");
 
-        result.Result.Should().Be(UserOperationResult.Success);
-        result.Token.Should().Be("valid.jwt.token");
+        _cachingServiceMock.Setup(x => x.AddAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            cancellationToken))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var (result, id) = await _authService.RegisterStudentAsync(dto, cancellationToken);
+
+        // Assert
+        result.Should().Be(UserOperationResult.Success);
+        id.Should().Be(42);
+        _tokenHelperMock.Verify(x => x.GenerateOTP(6), Times.Once);
+        _cachingServiceMock.Verify(x => x.AddAsync(
+            "user:email_confirmation:42",
+            "123456",
+            TimeSpan.FromMinutes(5),
+            cancellationToken), Times.Once);
+        _backgroundJobClientMock.Verify(x => x.Create(
+            It.IsAny<Job>(),
+            It.IsAny<IState>()), Times.Once);
     }
 
     [Theory]
@@ -229,8 +216,9 @@ public class AuthServiceTests
     [InlineData(UserOperationResult.EmailDuplicated)]
     [InlineData(UserOperationResult.UserCreationFailed)]
     [Trait("Category", TestCategories.Validation)]
-    public async Task RegisterStudentAsync_UserCreationFails_ReturnsUserCreationFailed(UserOperationResult userResult)
+    public async Task RegisterStudentAsync_UserCreationFails_ReturnsFailureWithZeroId(UserOperationResult userResult)
     {
+        // Arrange
         var dto = new RegisterStudentDto
         {
             Name = "Test Student",
@@ -243,10 +231,13 @@ public class AuthServiceTests
         _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
             .ReturnsAsync((userResult, 0));
 
-        var result = await _authService.RegisterStudentAsync(dto, cancellationToken);
+        // Act
+        var (result, id) = await _authService.RegisterStudentAsync(dto, cancellationToken);
 
-        result.Result.Should().Be(UserOperationResult.UserCreationFailed);
-        result.Token.Should().BeEmpty();
+        // Assert
+        result.Should().Be(userResult);
+        id.Should().Be(0);
+        _studentServiceMock.Verify(x => x.AddAsync(It.IsAny<AddStudentDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Theory]
@@ -254,8 +245,9 @@ public class AuthServiceTests
     [InlineData(UserOperationResult.InvalidUserId)]
     [InlineData(UserOperationResult.UserCreationFailed)]
     [Trait("Category", TestCategories.Validation)]
-    public async Task RegisterStudentAsync_StudentCreationFails_ReturnsUserCreationFailed(UserOperationResult studentResult)
+    public async Task RegisterStudentAsync_StudentCreationFails_ReturnsFailureWithZeroId(UserOperationResult studentResult)
     {
+        // Arrange
         var dto = new RegisterStudentDto
         {
             Name = "Test Student",
@@ -267,85 +259,299 @@ public class AuthServiceTests
 
         _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
             .ReturnsAsync((UserOperationResult.Success, 42));
+
         _studentServiceMock.Setup(x => x.AddAsync(It.IsAny<AddStudentDto>(), cancellationToken))
             .ReturnsAsync((studentResult, 0));
 
-        var result = await _authService.RegisterStudentAsync(dto, cancellationToken);
+        // Act
+        var (result, id) = await _authService.RegisterStudentAsync(dto, cancellationToken);
 
-        result.Result.Should().Be(UserOperationResult.UserCreationFailed);
-        result.Token.Should().BeEmpty();
+        // Assert
+        result.Should().Be(studentResult);
+        id.Should().Be(0);
+        _tokenHelperMock.Verify(x => x.GenerateOTP(6), Times.Never);
+        _backgroundJobClientMock.Verify(x => x.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Never);
+    }
+
+    #endregion
+
+    #region Login Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task LoginAsync_ValidCredentials_ReturnsSuccessWithToken()
+    {
+        // Arrange
+        var userId = 42;
+        var loginDto = new UserLoginDto
+        {
+            Email = "test@domain.com",
+            Password = "password"
+        };
+        var cancellationToken = new CancellationToken();
+
+        var userInfo = new UserBasicInfo
+        {
+            ID = userId,
+            Username = "testuser",
+            Email = "test@domain.com",
+            Name = "Test User",
+            Role = UserRole.Instructor
+        };
+
+        _userServiceMock.Setup(x => x.VerifyUserPassword(loginDto, default))
+            .ReturnsAsync((UserOperationResult.Success, userId));
+
+        _userServiceMock.Setup(x => x.GetUserBasicInfoById(userId, default))
+            .ReturnsAsync(userInfo);
+
+        _tokenHelperMock.Setup(x => x.GenerateJWT(
+            It.IsAny<UserTokenBaseClaims>(),
+            It.IsAny<List<UserClaim>>()))
+            .Returns("valid.jwt.token");
+
+        // Act
+        var (result, token) = await _authService.LoginAsync(loginDto, cancellationToken);
+
+        // Assert
+        result.Should().Be(UserOperationResult.Success);
+        token.Should().Be("valid.jwt.token");
+    }
+
+    [Theory]
+    [InlineData(UserOperationResult.InvalidCredentials)]
+    [InlineData(UserOperationResult.UserNotFound)]
+    [Trait("Category", TestCategories.Validation)]
+    public async Task LoginAsync_InvalidCredentials_ReturnsFailureWithEmptyToken(UserOperationResult expectedResult)
+    {
+        // Arrange
+        var loginDto = new UserLoginDto
+        {
+            Email = "test@domain.com",
+            Password = "wrongpassword"
+        };
+        var cancellationToken = new CancellationToken();
+
+        _userServiceMock.Setup(x => x.VerifyUserPassword(loginDto, default))
+            .ReturnsAsync((expectedResult, default));
+
+        // Act
+        var (result, token) = await _authService.LoginAsync(loginDto, cancellationToken);
+
+        // Assert
+        result.Should().Be(expectedResult);
+        token.Should().BeEmpty();
+        _tokenHelperMock.Verify(x => x.GenerateJWT(
+            It.IsAny<UserTokenBaseClaims>(),
+            It.IsAny<List<UserClaim>>()), Times.Never);
     }
 
     [Fact]
     [Trait("Category", TestCategories.Business)]
-    public async Task RegisterStudentAsync_TokenGenerationFails_ReturnsTokenGenerationFailed()
+    public async Task LoginAsync_TokenGenerationFails_ReturnsTokenGenerationFailed()
     {
-        var dto = new RegisterStudentDto
+        // Arrange
+        var userId = 42;
+        var loginDto = new UserLoginDto
         {
-            Name = "Test Student",
-            Username = "teststudent",
-            Email = "student@domain.com",
+            Email = "test@domain.com",
             Password = "password"
         };
         var cancellationToken = new CancellationToken();
 
-        _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 42));
-        _studentServiceMock.Setup(x => x.AddAsync(It.IsAny<AddStudentDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 100));
-        _tokenHelperMock.Setup(x => x.GenerateToken(
+        var userInfo = new UserBasicInfo
+        {
+            ID = userId,
+            Username = "testuser",
+            Email = "test@domain.com",
+            Name = "Test User",
+            Role = UserRole.Instructor
+        };
+
+        _userServiceMock.Setup(x => x.VerifyUserPassword(loginDto, default))
+            .ReturnsAsync((UserOperationResult.Success, userId));
+
+        _userServiceMock.Setup(x => x.GetUserBasicInfoById(userId, default))
+            .ReturnsAsync(userInfo);
+
+        _tokenHelperMock.Setup(x => x.GenerateJWT(
             It.IsAny<UserTokenBaseClaims>(),
             It.IsAny<List<UserClaim>>()))
             .Returns(string.Empty);
 
-        var result = await _authService.RegisterStudentAsync(dto, cancellationToken);
+        // Act
+        var (result, token) = await _authService.LoginAsync(loginDto, cancellationToken);
 
-        result.Result.Should().Be(UserOperationResult.TokenGenerationFailed);
-        result.Token.Should().BeEmpty();
+        // Assert
+        result.Should().Be(UserOperationResult.TokenGenerationFailed);
+        token.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region VerifyEmail Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task VerifyEmailAsync_ValidToken_ReturnsSuccess()
+    {
+        // Arrange
+        var userId = 42;
+        var token = "123456";
+        var cancellationToken = new CancellationToken();
+
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+            .ReturnsAsync("123456");
+
+        _userServiceMock.Setup(x => x.ConfirmUserEmail(userId, cancellationToken))
+            .ReturnsAsync(UserEmailVerificationResult.Success);
+
+        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _authService.VerifyEmailAsync(userId, token, cancellationToken);
+
+        // Assert
+        result.Should().Be(UserEmailVerificationResult.Success);
+        _cachingServiceMock.Verify(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken), Times.Once);
     }
 
     [Fact]
-    [Trait("Category", TestCategories.Infrastructure)]
-    public async Task RegisterStudentAsync_UserServiceThrows_PropagatesException()
+    [Trait("Category", TestCategories.Validation)]
+    public async Task VerifyEmailAsync_ExpiredToken_ReturnsTokenExpired()
     {
-        var dto = new RegisterStudentDto
-        {
-            Name = "Test Student",
-            Username = "teststudent",
-            Email = "student@domain.com",
-            Password = "password"
-        };
+        // Arrange
+        var userId = 42;
+        var token = "123456";
         var cancellationToken = new CancellationToken();
 
-        _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
-            .ThrowsAsync(new Exception("User service error"));
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+            .ReturnsAsync((string?)null);
 
-        var act = async () => await _authService.RegisterStudentAsync(dto, cancellationToken);
+        // Act
+        var result = await _authService.VerifyEmailAsync(userId, token, cancellationToken);
 
-        await act.Should().ThrowAsync<Exception>().WithMessage("User service error");
+        // Assert
+        result.Should().Be(UserEmailVerificationResult.TokenExpired);
+        _userServiceMock.Verify(x => x.ConfirmUserEmail(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    [Trait("Category", TestCategories.Infrastructure)]
-    public async Task RegisterStudentAsync_StudentServiceThrows_PropagatesException()
+    [Trait("Category", TestCategories.Validation)]
+    public async Task VerifyEmailAsync_InvalidToken_ReturnsInvalidToken()
     {
-        var dto = new RegisterStudentDto
-        {
-            Name = "Test Student",
-            Username = "teststudent",
-            Email = "student@domain.com",
-            Password = "password"
-        };
+        // Arrange
+        var userId = 42;
+        var token = "wrong-token";
         var cancellationToken = new CancellationToken();
 
-        _userServiceMock.Setup(x => x.AddAsync(It.IsAny<AddUserDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 42));
-        _studentServiceMock.Setup(x => x.AddAsync(It.IsAny<AddStudentDto>(), cancellationToken))
-            .ThrowsAsync(new Exception("Student service error"));
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+            .ReturnsAsync("123456");
 
-        var act = async () => await _authService.RegisterStudentAsync(dto, cancellationToken);
+        // Act
+        var result = await _authService.VerifyEmailAsync(userId, token, cancellationToken);
 
-        await act.Should().ThrowAsync<Exception>().WithMessage("Student service error");
+        // Assert
+        result.Should().Be(UserEmailVerificationResult.InvalidToken);
+        _userServiceMock.Verify(x => x.ConfirmUserEmail(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Validation)]
+    public async Task VerifyEmailAsync_UserServiceFails_ReturnsFailureResult()
+    {
+        // Arrange
+        var userId = 42;
+        var token = "123456";
+        var cancellationToken = new CancellationToken();
+
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+            .ReturnsAsync("123456");
+
+        _userServiceMock.Setup(x => x.ConfirmUserEmail(userId, cancellationToken))
+            .ReturnsAsync(UserEmailVerificationResult.UserNotFound);
+
+        // Act
+        var result = await _authService.VerifyEmailAsync(userId, token, cancellationToken);
+
+        // Assert
+        result.Should().Be(UserEmailVerificationResult.UserNotFound);
+        _cachingServiceMock.Verify(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region RefreshUserEmailVerificationToken Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task RefreshUserEmailVerificationToken_ValidUser_GeneratesNewTokenAndSendsEmail()
+    {
+        // Arrange
+        var userId = 42;
+        var cancellationToken = new CancellationToken();
+
+        var userData = new UserBasicInfo
+        {
+            ID = userId,
+            Name = "Test User",
+            Email = "test@domain.com"
+        };
+
+        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken))
+            .Returns(Task.CompletedTask);
+
+        _userServiceMock.Setup(x => x.GetUserBasicInfoById(userId, cancellationToken))
+            .ReturnsAsync(userData);
+
+        _tokenHelperMock.Setup(x => x.GenerateOTP(6)).Returns("654321");
+
+        _cachingServiceMock.Setup(x => x.AddAsync(
+            It.IsAny<string>(),
+            It.IsAny<string>(),
+            It.IsAny<TimeSpan>(),
+            cancellationToken))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _authService.RefreshUserEmailVerificationToken(userId, cancellationToken);
+
+        // Assert
+        result.Should().Be(UserEmailVerificationResult.EmailJobSent);
+        _cachingServiceMock.Verify(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken), Times.Once);
+        _tokenHelperMock.Verify(x => x.GenerateOTP(6), Times.Once);
+        _cachingServiceMock.Verify(x => x.AddAsync(
+            "user:email_confirmation:42",
+            "654321",
+            TimeSpan.FromMinutes(5),
+            cancellationToken), Times.Once);
+        _backgroundJobClientMock.Verify(x => x.Create(
+            It.IsAny<Job>(),
+            It.IsAny<IState>()), Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Validation)]
+    public async Task RefreshUserEmailVerificationToken_UserNotFound_ReturnsUserNotFound()
+    {
+        // Arrange
+        var userId = 42;
+        var cancellationToken = new CancellationToken();
+
+        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken))
+            .Returns(Task.CompletedTask);
+
+        _userServiceMock.Setup(x => x.GetUserBasicInfoById(userId, cancellationToken))
+            .ReturnsAsync((UserBasicInfo?)null);
+
+        // Act
+        var result = await _authService.RefreshUserEmailVerificationToken(userId, cancellationToken);
+
+        // Assert
+        result.Should().Be(UserEmailVerificationResult.UserNotFound);
+        _tokenHelperMock.Verify(x => x.GenerateOTP(6), Times.Never);
+        _backgroundJobClientMock.Verify(x => x.Create(It.IsAny<Job>(), It.IsAny<IState>()), Times.Never);
     }
 
     #endregion

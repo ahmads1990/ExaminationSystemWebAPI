@@ -1,4 +1,5 @@
 {
+  "BackendBaseUrl": "",
   "Logging": {
     "LogLevel": {
       "Default": "Information",
@@ -28,5 +29,14 @@
     "EnableSsl": false,
     "FromEmail": "noreply@examsystem.local",
     "FromName": "Exam System"
+  },
+  "RedisConfig": {
+    "Host": "localhost",
+    "Port": 6379,
+    "User": "",
+    "Password": "",
+    "Ssl": false,
+    "AbortOnConnectFail": false,
+    "InstanceName": "ExaminationSystem:"
   }
 }

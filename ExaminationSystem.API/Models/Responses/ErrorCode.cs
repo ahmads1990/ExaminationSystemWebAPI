@@ -3,8 +3,9 @@
 public enum ErrorCode
 {
     None = 0,
-    UnKnownError,
-    ValidationError,
+    InternalServerError,
+    Error,
     EntityNotFound,
-    CannotDelete
+    CannotDelete, 
+    NotFound
 }

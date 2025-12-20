@@ -5,6 +5,7 @@ using ExaminationSystem.Infrastructure.Configs;
 using ExaminationSystem.Infrastructure.Data;
 using ExaminationSystem.Infrastructure.Data.Repositories;
 using ExaminationSystem.Infrastructure.Jobs;
+using ExaminationSystem.Infrastructure.Services;
 using ExaminationSystem.Infrastructure.Services.Auth;
 using ExaminationSystem.Infrastructure.Services.Email;
 using Hangfire;
@@ -29,6 +30,7 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IEmailService, EmailService>();
 
         services.AddSingleton<ITokenHelper, TokenHelper>();
+        services.AddSingleton<ICachingService, CachingService>();
 
         return services;
     }
@@ -38,6 +40,8 @@ public static class InfrastructureServiceExtensions
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
 
         services.AddDatabaseConfiguration(configuration);
+        services.AddRedisCacheConfiguration(configuration);
+
         services.AddSecurityConfiguration(configuration);
         services.AddHangfireConfiguration(configuration);
 
@@ -48,7 +52,7 @@ public static class InfrastructureServiceExtensions
 
     public static IServiceCollection AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString(Constants.ConnectionStringName);
+        var connectionString = configuration.GetConnectionString(Constants.DBConnectionStringName);
         services.AddDbContext<AppDbContext>(options =>
         {
             options
@@ -56,6 +60,24 @@ public static class InfrastructureServiceExtensions
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
                 .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
                 .EnableSensitiveDataLogging();
+        });
+        return services;
+    }
+
+    public static IServiceCollection AddRedisCacheConfiguration(this IServiceCollection services, IConfiguration configuration)
+    {
+        var settings = configuration.GetSection(nameof(RedisConfig)).Get<RedisConfig>();
+        services.AddStackExchangeRedisCache(options =>
+        {
+            options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions
+            {
+                EndPoints = { { settings!.Host, settings.Port } },
+                User = settings.User,
+                Password = settings.Password,
+                Ssl = settings.Ssl,
+                AbortOnConnectFail = settings.AbortOnConnectFail
+            };
+            options.InstanceName = settings.InstanceName;
         });
         return services;
     }
@@ -108,7 +130,7 @@ public static class InfrastructureServiceExtensions
 
     public static IServiceCollection AddHangfireConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString(Constants.ConnectionStringName);
+        var connectionString = configuration.GetConnectionString(Constants.DBConnectionStringName);
         // Add Hangfire services
         services.AddHangfire(config => config
             .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)

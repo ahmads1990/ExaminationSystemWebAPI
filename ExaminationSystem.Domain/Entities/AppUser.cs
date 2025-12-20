@@ -8,4 +8,5 @@ public class AppUser : BaseModel
     public string Password { get; set; } = string.Empty;
     public UserRole Role { get; set; }
     public string Code { get; set; } = string.Empty;
+    public bool IsEmailConfirmed { get; set; }
 }

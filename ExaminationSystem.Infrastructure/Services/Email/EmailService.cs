@@ -15,7 +15,8 @@ namespace ExaminationSystem.Infrastructure.Services.Email
     {
         #region Fields
 
-        private const string TemplatesFolder = "Templates/EmailTemplates";
+        private const string TemplatesFolder = "Templates";
+        private const string EmailTemplatesFolder = "EmailTemplates";
         private readonly SMTPConfig _smtpConfig;
         private readonly string _templateRoot;
 
@@ -31,7 +32,7 @@ namespace ExaminationSystem.Infrastructure.Services.Email
         public EmailService(IOptions<SMTPConfig> sMTPConfig, IWebHostEnvironment env)
         {
             _smtpConfig = sMTPConfig.Value;
-            _templateRoot = Path.Combine(env.ContentRootPath, TemplatesFolder);
+            _templateRoot = Path.Combine(env.ContentRootPath, TemplatesFolder, EmailTemplatesFolder);
         }
 
         #endregion
@@ -46,13 +47,17 @@ namespace ExaminationSystem.Infrastructure.Services.Email
             ValidateEmailParameters(toEmail, subject);
 
             var message = await CreateEmailMessage(toName, toEmail, subject, template, templateModel);
-
             using (var client = new SmtpClient())
             {
                 try
                 {
                     await client.ConnectAsync(_smtpConfig.Host, _smtpConfig.Port, _smtpConfig.EnableSsl, cancellationToken);
-                    await client.AuthenticateAsync(_smtpConfig.Username, _smtpConfig.Password, cancellationToken);
+
+                    if (string.IsNullOrEmpty(_smtpConfig.Username) && string.IsNullOrEmpty(_smtpConfig.Password))
+                    {
+                        await client.AuthenticateAsync(_smtpConfig.Username, _smtpConfig.Password, cancellationToken);
+                    }
+
                     await client.SendAsync(message, cancellationToken);
                 }
                 catch (Exception ex)

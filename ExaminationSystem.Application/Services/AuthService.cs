@@ -6,24 +6,39 @@ using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Application.UseCases;
 using Hangfire;
+using Microsoft.Extensions.Configuration;
 
 namespace ExaminationSystem.Application.Services;
 
 public class AuthService : IAuthService
 {
+    #region Constants
+
+    private const string CacheEmailConfirmationKey = "user:email_confirmation:";
+
+    #endregion
+
+    #region Fields
+
     private readonly IUserService _userService;
     private readonly IInstructorService _instructorService;
     private readonly IStudentService _studentService;
     private readonly ITokenHelper _tokenHelper;
     private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly ICachingService _cachingService;
+    private readonly IConfiguration _configuration;
 
-    public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService, ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient)
+    #endregion
+
+    public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService, ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient, ICachingService cachingService, IConfiguration configuration)
     {
         _userService = userService;
         _instructorService = instructorService;
         _studentService = studentService;
         _tokenHelper = tokenHelper;
         _backgroundJobClient = backgroundJobClient;
+        _cachingService = cachingService;
+        _configuration = configuration;
     }
 
     #region Public Methods
@@ -40,7 +55,7 @@ public class AuthService : IAuthService
     ///   <item><description>A JWT token if successful, otherwise empty.</description></item>
     /// </list>
     /// </returns>
-    public async Task<(UserOperationResult Result, string Token)> RegisterInstructorAsync(RegisterInstructorDto registerInstructorDto, CancellationToken cancellationToken = default)
+    public async Task<(UserOperationResult Result, int Id)> RegisterInstructorAsync(RegisterInstructorDto registerInstructorDto, CancellationToken cancellationToken = default)
     {
         // Prepare user dto
         var addUserDto = registerInstructorDto.Adapt<AddUserDto>();
@@ -50,7 +65,7 @@ public class AuthService : IAuthService
         // Save user
         var (addUserResult, userId) = await _userService.AddAsync(addUserDto, cancellationToken);
         if (addUserResult != UserOperationResult.Success)
-            return (UserOperationResult.UserCreationFailed, string.Empty);
+            return (addUserResult, 0);
 
         // Prepare instructor dto
         var addInstructorDto = registerInstructorDto.Adapt<AddInstructorDto>();
@@ -59,23 +74,15 @@ public class AuthService : IAuthService
         // Save instructor
         var (addInstructorResult, instructorId) = await _instructorService.AddAsync(addInstructorDto, cancellationToken);
         if (addInstructorResult != UserOperationResult.Success)
-            return (UserOperationResult.UserCreationFailed, string.Empty);
+            return (addInstructorResult, 0);
 
-        // Create Token
-        var token = _tokenHelper.GenerateToken(
-            new UserTokenBaseClaims(userId, addUserDto.Username, addUserDto.Email),
-            new List<UserClaim>
-            {
-                new("RoleId", ((int)UserRole.Instructor).ToString()),
-                new("Name",  addUserDto.Name)
-            }
-        );
+        var userOtp = await CreateEmailConfirmationToken(userId);
 
-        if (string.IsNullOrEmpty(token))
-            return (UserOperationResult.TokenGenerationFailed, string.Empty);
+        // Add job to send welcome email
+        EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp);
 
         // Return success
-        return (UserOperationResult.Success, token);
+        return (UserOperationResult.Success, userId);
     }
 
     /// <summary>
@@ -84,7 +91,7 @@ public class AuthService : IAuthService
     /// <param name="registerStudentDto"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<(UserOperationResult Result, string Token)> RegisterStudentAsync(RegisterStudentDto registerStudentDto, CancellationToken cancellationToken = default)
+    public async Task<(UserOperationResult Result, int Id)> RegisterStudentAsync(RegisterStudentDto registerStudentDto, CancellationToken cancellationToken = default)
     {
         // Prepare user dto
         var addUserDto = registerStudentDto.Adapt<AddUserDto>();
@@ -94,7 +101,7 @@ public class AuthService : IAuthService
         // Save user
         var (addUserResult, userId) = await _userService.AddAsync(addUserDto, cancellationToken);
         if (addUserResult != UserOperationResult.Success)
-            return (UserOperationResult.UserCreationFailed, string.Empty);
+            return (addUserResult, 0);
 
         // Prepare student dto
         var addStudentDto = registerStudentDto.Adapt<AddStudentDto>();
@@ -103,26 +110,15 @@ public class AuthService : IAuthService
         // Save student
         var (addStudentResult, studentId) = await _studentService.AddAsync(addStudentDto, cancellationToken);
         if (addStudentResult != UserOperationResult.Success)
-            return (UserOperationResult.UserCreationFailed, string.Empty);
+            return (addStudentResult, 0);
 
-        // Create Token
-        var token = _tokenHelper.GenerateToken(
-            new UserTokenBaseClaims(userId, addUserDto.Username, addUserDto.Email),
-            new List<UserClaim>
-            {
-                new("RoleId", ((int)UserRole.Student).ToString()),
-                new("Name",  addUserDto.Name)
-            }
-        );
-
-        if (string.IsNullOrEmpty(token))
-            return (UserOperationResult.TokenGenerationFailed, string.Empty);
+        var userOtp = await CreateEmailConfirmationToken(userId);
 
         // Add job to send welcome email
-        EnqueueSendWelcomeEmailJob(addUserDto.Name, addUserDto.Email);
+        EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp);
 
         // Return success
-        return (UserOperationResult.Success, token);
+        return (UserOperationResult.Success, userId);
     }
 
     /// <summary>
@@ -133,13 +129,15 @@ public class AuthService : IAuthService
     /// <returns></returns>
     public async Task<(UserOperationResult Result, string Token)> LoginAsync(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
     {
-        var (result, userInfo) = await _userService.GetUserInfoForLogin(userLoginDto);
+        var (result, userId) = await _userService.VerifyUserPassword(userLoginDto, cancellationToken);
         if (result != UserOperationResult.Success)
             return (result, string.Empty);
 
+        var userInfo = await _userService.GetUserBasicInfoById(userId!.Value, cancellationToken);
+
         // Create Token
-        var token = _tokenHelper.GenerateToken(
-            new UserTokenBaseClaims(userInfo.Id, userInfo.Username, userInfo.Email),
+        var token = _tokenHelper.GenerateJWT(
+            new UserTokenBaseClaims(userInfo!.ID, userInfo.Username, userInfo.Email),
             new List<UserClaim>
             {
                 new("RoleId", ((int)userInfo.Role).ToString()),
@@ -154,23 +152,94 @@ public class AuthService : IAuthService
         return (UserOperationResult.Success, token);
     }
 
+    /// <summary>
+    /// Verifies a user's email address using the provided confirmation token.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose email address is being verified.</param>
+    /// <param name="token">The email confirmation token to validate against the user's pending verification.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
+    /// <returns>A value indicating the result of the email verification attempt. Returns <see
+    /// cref="UserEmailVerificationResult.Success"/> if the email was successfully verified; otherwise, returns a value
+    /// indicating the reason for failure, such as an expired or invalid token.</returns>
+    public async Task<UserEmailVerificationResult> VerifyEmailAsync(int userId, string token, CancellationToken cancellationToken = default)
+    {
+        var userOtp = await _cachingService.GetAsync(CacheEmailConfirmationKey + userId, cancellationToken);
+
+        if (string.IsNullOrEmpty(userOtp))
+            return UserEmailVerificationResult.TokenExpired;
+
+        if (userOtp != token)
+            return UserEmailVerificationResult.InvalidToken;
+
+        var result = await _userService.ConfirmUserEmail(userId, cancellationToken);
+        if (result != UserEmailVerificationResult.Success)
+            return result;
+
+        await _cachingService.RemoveAsync(CacheEmailConfirmationKey + userId, cancellationToken);
+
+        return UserEmailVerificationResult.Success;
+    }
+
+    /// <summary>
+    /// Refreshes the email verification token for the specified user and schedules a welcome email to be sent with the
+    /// new token.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user whose email verification token will be refreshed.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if the user specified by <paramref name="userId"/> does not exist.</exception>
+    public async Task<UserEmailVerificationResult> RefreshUserEmailVerificationToken(int userId, CancellationToken cancellationToken = default)
+    {
+        // Simply remove the existing token from cache to allow regeneration
+        await _cachingService.RemoveAsync(CacheEmailConfirmationKey + userId, cancellationToken);
+
+        var userData = await _userService.GetUserBasicInfoById(userId, cancellationToken);
+        if (userData == null)
+            return UserEmailVerificationResult.UserNotFound;
+
+        var newToken = await CreateEmailConfirmationToken(userId, cancellationToken);
+
+        EnqueueSendWelcomeEmailJob(userId, userData.Name, userData.Email, newToken);
+        return UserEmailVerificationResult.EmailJobSent;
+    }
+
     #endregion
 
     #region Private Methods
 
-    private void EnqueueSendWelcomeEmailJob(string toName, string toEmail)
+    /// <summary>
+    /// Generates a one-time email confirmation token for the specified user and stores it in the cache for later
+    /// verification.
+    /// </summary>
+    /// <param name="userId">The unique identifier of the user for whom the email confirmation token is generated.</param>
+    /// <returns>A string containing the generated email confirmation token.</returns>
+    private async Task<string> CreateEmailConfirmationToken(int userId, CancellationToken cancellationToken = default)
     {
+        var otp = _tokenHelper.GenerateOTP();
+        await _cachingService.AddAsync(CacheEmailConfirmationKey + userId, otp, TimeSpan.FromMinutes(5), cancellationToken);
+        return otp;
+    }
+
+    /// <summary>
+    /// Enqueues a background job to send a welcome email to the specified recipient.
+    /// </summary>
+    /// <param name="toName">The display name of the recipient to whom the welcome email will be addressed. Cannot be null or empty.</param>
+    /// <param name="toEmail">The email address of the recipient who will receive the welcome email. Cannot be null or empty.</param>
+    private void EnqueueSendWelcomeEmailJob(int userId, string toName, string toEmail, string otpCode)
+    {
+        var baseUrl = _configuration.GetSection("BackendBaseUrl").Value ?? string.Empty;
+        baseUrl = $"{baseUrl.TrimEnd('/')}/VerifyEmail/token={otpCode}&userId={userId}";
+
         var emailParameters = new Dictionary<string, string>
         {
             { "UserName", toName },
-            { "ConfirmationLink", ""},
-            { "VerificationCode", ""},
+            { "ConfirmationLink", baseUrl},
+            { "VerificationCode", otpCode},
             { "Year", DateTime.Now.Year.ToString()},
         };
 
         _backgroundJobClient.Enqueue<SendEmailJob>(job =>
-            job.Execute(toName, toEmail, "Welcome", EmailTemplate.Welcome,
-            emailParameters, default)
+            job.Execute(toName, toEmail, "Welcome new user", EmailTemplate.Welcome, emailParameters, default)
         );
     }
 
@@ -179,7 +248,7 @@ public class AuthService : IAuthService
     /// </summary>
     /// <param name="role">The user role.</param>
     /// <returns>A unique code like INS-ABC123.</returns>
-    public static string GenerateUserCode(UserRole role)
+    private static string GenerateUserCode(UserRole role)
     {
         string rolePrefix = role switch
         {
