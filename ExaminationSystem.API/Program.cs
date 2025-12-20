@@ -3,13 +3,38 @@ using ExaminationSystem.Application;
 using ExaminationSystem.Infrastructure;
 using FluentValidation.AspNetCore;
 using Hangfire;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+
+    // Add JWT Authentication
+    var securityScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter JWT token like: Bearer {your token}"
+    };
+
+    c.AddSecurityDefinition("Bearer", securityScheme);
+
+    var securityRequirement = new OpenApiSecurityRequirement
+    {
+        { securityScheme, new string[] { } }
+    };
+
+    c.AddSecurityRequirement(securityRequirement);
+});
+
 
 // Add Infrastructure services registrations
 builder.Services
@@ -40,6 +65,7 @@ app.UseCustomCors(app.Configuration);
 app.UseStaticFiles();
 app.UseHangfireDashboard("/hangfire");
 
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
