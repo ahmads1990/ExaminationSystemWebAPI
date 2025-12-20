@@ -137,11 +137,11 @@ public class AuthService : IAuthService
 
         // Create Token
         var token = _tokenHelper.GenerateJWT(
-            new UserTokenBaseClaims(userInfo!.ID, userInfo.Username, userInfo.Email),
+            new UserTokenBaseClaims(userInfo!.ID, userInfo.Name, userInfo.Email),
             new List<UserClaim>
             {
-                new("RoleId", ((int)userInfo.Role).ToString()),
-                new("Name",  userInfo.Name)
+                new("roleId", ((int)userInfo.Role).ToString()),
+                new("username",  userInfo.Username)
             }
         );
 
