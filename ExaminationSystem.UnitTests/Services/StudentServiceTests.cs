@@ -27,7 +27,7 @@ public class StudentServiceTests
     [Trait("Category", TestCategories.Happy)]
     public async Task AddAsync_ValidAppUserId_ReturnsSuccess(int appUserId)
     {
-        var dto = new AddStudentDto { AppUserId = appUserId };
+        var dto = new AddStudentDto { ID = appUserId };
 
         _repositoryMock
             .Setup(x => x.Add(It.IsAny<Student>(), It.IsAny<CancellationToken>()))
@@ -35,8 +35,7 @@ public class StudentServiceTests
 
         var result = await _service.AddAsync(dto);
 
-        result.result.Should().Be(UserOperationResult.Success);
-        result.Id.Should().Be(123);
+        result.Should().Be(UserOperationResult.Success);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Student>(), It.IsAny<CancellationToken>()), Times.Once);
         _repositoryMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -45,7 +44,7 @@ public class StudentServiceTests
     [Trait("Category", TestCategories.Happy)]
     public async Task AddAsync_WithCancellationToken_PassesTokenCorrectly()
     {
-        var dto = new AddStudentDto { AppUserId = 1 };
+        var dto = new AddStudentDto { ID = 1 };
         var cts = new CancellationTokenSource();
 
         _repositoryMock
@@ -54,7 +53,7 @@ public class StudentServiceTests
 
         var result = await _service.AddAsync(dto, cts.Token);
 
-        result.result.Should().Be(UserOperationResult.Success);
+        result.Should().Be(UserOperationResult.Success);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Student>(), cts.Token), Times.Once);
         _repositoryMock.Verify(x => x.SaveChanges(cts.Token), Times.Once);
     }
@@ -66,12 +65,11 @@ public class StudentServiceTests
     [Trait("Category", TestCategories.Validation)]
     public async Task AddAsync_InvalidAppUserId_ReturnsInvalidUserId(int appUserId)
     {
-        var dto = new AddStudentDto { AppUserId = appUserId };
+        var dto = new AddStudentDto { ID = appUserId };
 
         var result = await _service.AddAsync(dto);
 
-        result.result.Should().Be(UserOperationResult.InvalidUserId);
-        result.Id.Should().Be(0);
+        result.Should().Be(UserOperationResult.InvalidUserId);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Student>(), It.IsAny<CancellationToken>()), Times.Never);
         _repositoryMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Never);
     }

@@ -31,9 +31,10 @@ public class TokenHelper : ITokenHelper
 
         var jwtClaims = new UserClaim[]
         {
-            new UserClaim(JwtRegisteredClaimNames.Name, baseUserClaims.Name ?? string.Empty),
-            new UserClaim(JwtRegisteredClaimNames.Email, baseUserClaims.Email ?? string.Empty),
-            new UserClaim(JwtRegisteredClaimNames.Sid, baseUserClaims.Uid.ToString())
+            new UserClaim(ClaimTypes.NameIdentifier, baseUserClaims.Uid.ToString()),
+            new UserClaim(ClaimTypes.Role, baseUserClaims.Role.ToString()),
+            new UserClaim(ClaimTypes.Name, baseUserClaims.Name ?? string.Empty),
+            new UserClaim(ClaimTypes.Email, baseUserClaims.Email ?? string.Empty)
         };
 
         // Merge base claims and additional user claims

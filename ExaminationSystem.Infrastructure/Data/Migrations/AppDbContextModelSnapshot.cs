@@ -253,12 +253,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Instructor", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<int>("AppUserId")
                         .HasColumnType("int");
 
                     b.Property<string>("Bio")
@@ -285,8 +279,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("AppUserId");
 
                     b.ToTable("Instructors");
                 });
@@ -335,12 +327,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<int>("AppUserId")
                         .HasColumnType("int");
 
                     b.Property<int?>("CreatedBy")
@@ -367,8 +353,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("AppUserId");
 
                     b.ToTable("Students");
                 });
@@ -520,8 +504,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Instructor", b =>
                 {
                     b.HasOne("ExaminationSystem.Domain.Entities.AppUser", "AppUser")
-                        .WithMany()
-                        .HasForeignKey("AppUserId")
+                        .WithOne("Instructor")
+                        .HasForeignKey("ExaminationSystem.Domain.Entities.Instructor", "ID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -531,8 +515,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>
                 {
                     b.HasOne("ExaminationSystem.Domain.Entities.AppUser", "AppUser")
-                        .WithMany()
-                        .HasForeignKey("AppUserId")
+                        .WithOne("Student")
+                        .HasForeignKey("ExaminationSystem.Domain.Entities.Student", "ID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -589,6 +573,13 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.Navigation("Exam");
 
                     b.Navigation("Question");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("ExaminationSystem.Domain.Entities.AppUser", b =>
+                {
+                    b.Navigation("Instructor");
 
                     b.Navigation("Student");
                 });

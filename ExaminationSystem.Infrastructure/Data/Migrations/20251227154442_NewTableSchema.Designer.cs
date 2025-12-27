@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExaminationSystem.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250309221759_UpdateBaseModelCreatedByToBeNullable")]
-    partial class UpdateBaseModelCreatedByToBeNullable
+    [Migration("20251227154442_NewTableSchema")]
+    partial class NewTableSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,6 +33,10 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
@@ -46,6 +50,9 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsEmailConfirmed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -53,6 +60,9 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
@@ -185,6 +195,10 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.Property<int>("PassMark")
                         .HasColumnType("int");
 
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TotalGrade")
                         .HasColumnType("int");
 
@@ -242,13 +256,11 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Instructor", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<int>("AppUserId")
-                        .HasColumnType("int");
+                    b.Property<string>("Bio")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -259,6 +271,10 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.Property<bool>("Deleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Specialization")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
@@ -266,8 +282,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("AppUserId");
 
                     b.ToTable("Instructors");
                 });
@@ -316,12 +330,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>
                 {
                     b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<int>("AppUserId")
                         .HasColumnType("int");
 
                     b.Property<int?>("CreatedBy")
@@ -333,8 +341,13 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.Property<bool>("Deleted")
                         .HasColumnType("bit");
 
-                    b.Property<byte>("Grade")
-                        .HasColumnType("tinyint");
+                    b.Property<string>("Group")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
@@ -343,8 +356,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("AppUserId");
 
                     b.ToTable("Students");
                 });
@@ -496,8 +507,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Instructor", b =>
                 {
                     b.HasOne("ExaminationSystem.Domain.Entities.AppUser", "AppUser")
-                        .WithMany()
-                        .HasForeignKey("AppUserId")
+                        .WithOne("Instructor")
+                        .HasForeignKey("ExaminationSystem.Domain.Entities.Instructor", "ID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -507,8 +518,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
             modelBuilder.Entity("ExaminationSystem.Domain.Entities.Student", b =>
                 {
                     b.HasOne("ExaminationSystem.Domain.Entities.AppUser", "AppUser")
-                        .WithMany()
-                        .HasForeignKey("AppUserId")
+                        .WithOne("Student")
+                        .HasForeignKey("ExaminationSystem.Domain.Entities.Student", "ID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -565,6 +576,13 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     b.Navigation("Exam");
 
                     b.Navigation("Question");
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("ExaminationSystem.Domain.Entities.AppUser", b =>
+                {
+                    b.Navigation("Instructor");
 
                     b.Navigation("Student");
                 });

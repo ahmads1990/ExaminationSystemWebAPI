@@ -71,7 +71,7 @@ public class AuthServiceTests
             .ReturnsAsync((UserOperationResult.Success, 42));
 
         _instructorServiceMock.Setup(x => x.AddAsync(It.IsAny<AddInstructorDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 100));
+            .ReturnsAsync(UserOperationResult.Success);
 
         _tokenHelperMock.Setup(x => x.GenerateOTP(6)).Returns("123456");
 
@@ -149,7 +149,7 @@ public class AuthServiceTests
             .ReturnsAsync((UserOperationResult.Success, 42));
 
         _instructorServiceMock.Setup(x => x.AddAsync(It.IsAny<AddInstructorDto>(), cancellationToken))
-            .ReturnsAsync((instructorResult, 0));
+            .ReturnsAsync(instructorResult);
 
         // Act
         var (result, id) = await _authService.RegisterInstructorAsync(dto, cancellationToken);
@@ -183,7 +183,7 @@ public class AuthServiceTests
             .ReturnsAsync((UserOperationResult.Success, 42));
 
         _studentServiceMock.Setup(x => x.AddAsync(It.IsAny<AddStudentDto>(), cancellationToken))
-            .ReturnsAsync((UserOperationResult.Success, 100));
+            .ReturnsAsync(UserOperationResult.Success);
 
         _tokenHelperMock.Setup(x => x.GenerateOTP(6)).Returns("123456");
 
@@ -261,7 +261,7 @@ public class AuthServiceTests
             .ReturnsAsync((UserOperationResult.Success, 42));
 
         _studentServiceMock.Setup(x => x.AddAsync(It.IsAny<AddStudentDto>(), cancellationToken))
-            .ReturnsAsync((studentResult, 0));
+            .ReturnsAsync(studentResult);
 
         // Act
         var (result, id) = await _authService.RegisterStudentAsync(dto, cancellationToken);

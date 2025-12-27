@@ -9,4 +9,7 @@ public class AppUser : BaseModel
     public UserRole Role { get; set; }
     public string Code { get; set; } = string.Empty;
     public bool IsEmailConfirmed { get; set; }
+
+    public Instructor? Instructor { get; set; }
+    public Student? Student { get; set; }
 }

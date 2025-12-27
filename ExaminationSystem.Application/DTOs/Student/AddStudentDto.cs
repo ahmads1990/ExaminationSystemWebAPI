@@ -2,7 +2,7 @@
 
 public class AddStudentDto
 {
-    public int AppUserId { get; set; }
+    public int ID { get; set; }
     public string Level { get; set; } = string.Empty;
     public string Group { get; set; } = string.Empty;
 }

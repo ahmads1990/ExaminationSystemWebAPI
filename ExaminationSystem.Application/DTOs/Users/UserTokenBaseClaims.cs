@@ -1,6 +1,6 @@
 ﻿namespace ExaminationSystem.Application.DTOs.Users;
 
-public record UserTokenBaseClaims(int Uid, string Name, string Email)
+public record UserTokenBaseClaims(int Uid, UserRole Role, string Name, string Email)
 {
     /// <summary>
     /// Validates that all claims are not null or empty.

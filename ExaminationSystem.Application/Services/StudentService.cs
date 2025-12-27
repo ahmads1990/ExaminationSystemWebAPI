@@ -4,6 +4,7 @@ using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 
 namespace ExaminationSystem.Application.Services;
+
 public class StudentService : IStudentService
 {
     private readonly IRepository<Student> _studentsRepo;
@@ -15,18 +16,18 @@ public class StudentService : IStudentService
 
     #region Public Methods
 
-    public async Task<(UserOperationResult result, int Id)> AddAsync(AddStudentDto studentDto, CancellationToken cancellationToken = default)
+    public async Task<UserOperationResult> AddAsync(AddStudentDto studentDto, CancellationToken cancellationToken = default)
     {
         // Validate the required fields
-        if (studentDto.AppUserId <= 0)
-            return (UserOperationResult.InvalidUserId, 0);
+        if (studentDto.ID <= 0)
+            return UserOperationResult.InvalidUserId;
 
         var student = studentDto.Adapt<Student>();
 
         await _studentsRepo.Add(student, cancellationToken);
         await _studentsRepo.SaveChanges(cancellationToken);
 
-        return (UserOperationResult.Success, student.ID);
+        return UserOperationResult.Success;
     }
 
     #endregion

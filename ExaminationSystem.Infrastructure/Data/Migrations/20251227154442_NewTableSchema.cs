@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ExaminationSystem.Infrastructure.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialTables : Migration
+    public partial class NewTableSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,10 +19,13 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Username = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Role = table.Column<int>(type: "int", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsEmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -43,7 +46,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     QuestionLevel = table.Column<int>(type: "int", nullable: false),
                     AnswerOrder = table.Column<byte>(type: "tinyint", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -57,11 +60,11 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                 name: "Instructors",
                 columns: table => new
                 {
-                    ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AppUserId = table.Column<int>(type: "int", nullable: false),
+                    ID = table.Column<int>(type: "int", nullable: false),
+                    Bio = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Specialization = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -70,8 +73,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("PK_Instructors", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_Instructors_AppUsers_AppUserId",
-                        column: x => x.AppUserId,
+                        name: "FK_Instructors_AppUsers_ID",
+                        column: x => x.ID,
                         principalTable: "AppUsers",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
@@ -81,12 +84,11 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                 name: "Students",
                 columns: table => new
                 {
-                    ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Grade = table.Column<byte>(type: "tinyint", nullable: false),
-                    AppUserId = table.Column<int>(type: "int", nullable: false),
+                    ID = table.Column<int>(type: "int", nullable: false),
+                    Level = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Group = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -95,8 +97,8 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("PK_Students", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_Students_AppUsers_AppUserId",
-                        column: x => x.AppUserId,
+                        name: "FK_Students_AppUsers_ID",
+                        column: x => x.ID,
                         principalTable: "AppUsers",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
@@ -111,7 +113,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     Body = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     QuestionId = table.Column<int>(type: "int", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -137,7 +139,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     CreditHours = table.Column<int>(type: "int", nullable: false),
                     InstructorID = table.Column<int>(type: "int", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -160,6 +162,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     ExamType = table.Column<int>(type: "int", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     MaxDuration = table.Column<int>(type: "int", nullable: false),
                     TotalGrade = table.Column<int>(type: "int", nullable: false),
                     PassMark = table.Column<int>(type: "int", nullable: false),
@@ -167,7 +170,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     DeadlineDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CourseID = table.Column<int>(type: "int", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -194,7 +197,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     StudentID = table.Column<int>(type: "int", nullable: false),
                     CourseID = table.Column<int>(type: "int", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -224,7 +227,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     ExamId = table.Column<int>(type: "int", nullable: false),
                     QuestionId = table.Column<int>(type: "int", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -257,7 +260,7 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                     QuestionID = table.Column<int>(type: "int", nullable: false),
                     ChoiceID = table.Column<int>(type: "int", nullable: false),
                     Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedBy = table.Column<int>(type: "int", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -314,11 +317,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                 column: "CourseID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Instructors_AppUserId",
-                table: "Instructors",
-                column: "AppUserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_StudentCourses_CourseID",
                 table: "StudentCourses",
                 column: "CourseID");
@@ -347,11 +345,6 @@ namespace ExaminationSystem.Infrastructure.Data.Migrations
                 name: "IX_StudentExamsAnswers_StudentID",
                 table: "StudentExamsAnswers",
                 column: "StudentID");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Students_AppUserId",
-                table: "Students",
-                column: "AppUserId");
         }
 
         /// <inheritdoc />

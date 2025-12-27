@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.Application.DTOs.Auth;
+﻿using ExaminationSystem.Application.Common;
+using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.DTOs.Instructor;
 using ExaminationSystem.Application.DTOs.Student;
 using ExaminationSystem.Application.DTOs.Users;
@@ -69,10 +70,10 @@ public class AuthService : IAuthService
 
         // Prepare instructor dto
         var addInstructorDto = registerInstructorDto.Adapt<AddInstructorDto>();
-        addInstructorDto.AppUserId = userId;
+        addInstructorDto.ID = userId;
 
         // Save instructor
-        var (addInstructorResult, instructorId) = await _instructorService.AddAsync(addInstructorDto, cancellationToken);
+        var addInstructorResult = await _instructorService.AddAsync(addInstructorDto, cancellationToken);
         if (addInstructorResult != UserOperationResult.Success)
             return (addInstructorResult, 0);
 
@@ -105,10 +106,10 @@ public class AuthService : IAuthService
 
         // Prepare student dto
         var addStudentDto = registerStudentDto.Adapt<AddStudentDto>();
-        addStudentDto.AppUserId = userId;
+        addStudentDto.ID = userId;
 
         // Save student
-        var (addStudentResult, studentId) = await _studentService.AddAsync(addStudentDto, cancellationToken);
+        var addStudentResult = await _studentService.AddAsync(addStudentDto, cancellationToken);
         if (addStudentResult != UserOperationResult.Success)
             return (addStudentResult, 0);
 
@@ -137,11 +138,10 @@ public class AuthService : IAuthService
 
         // Create Token
         var token = _tokenHelper.GenerateJWT(
-            new UserTokenBaseClaims(userInfo!.ID, userInfo.Name, userInfo.Email),
+            new UserTokenBaseClaims(userInfo!.ID, userInfo.Role, userInfo.Name, userInfo.Email),
             new List<UserClaim>
             {
-                new("role", userInfo.Role.ToString()),
-                new("username",  userInfo.Username)
+                new(CustomClaimTypes.Username,  userInfo.Username)
             }
         );
 

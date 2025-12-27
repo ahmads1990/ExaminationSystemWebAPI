@@ -2,7 +2,6 @@
 
 public class Student : BaseModel
 {
-    public int AppUserId { get; set; }
     public required AppUser AppUser { get; set; }
 
     public string Level { get; set; } = string.Empty;

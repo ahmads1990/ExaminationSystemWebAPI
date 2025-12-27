@@ -28,7 +28,7 @@ public class InstructorServiceTests
     [Trait("Category", TestCategories.Happy)]
     public async Task AddAsync_ValidAppUserId_ReturnsSuccess(int appUserId)
     {
-        var dto = new AddInstructorDto { AppUserId = appUserId };
+        var dto = new AddInstructorDto { ID = appUserId };
 
         _repositoryMock
             .Setup(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()))
@@ -36,8 +36,7 @@ public class InstructorServiceTests
 
         var result = await _service.AddAsync(dto);
 
-        result.result.Should().Be(UserOperationResult.Success);
-        result.Id.Should().Be(123);
+        result.Should().Be(UserOperationResult.Success);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()), Times.Once);
         _repositoryMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -46,7 +45,7 @@ public class InstructorServiceTests
     [Trait("Category", TestCategories.Happy)]
     public async Task AddAsync_WithCancellationToken_PassesTokenCorrectly()
     {
-        var dto = new AddInstructorDto { AppUserId = 1 };
+        var dto = new AddInstructorDto { ID = 1 };
         var cts = new CancellationTokenSource();
 
         _repositoryMock
@@ -55,7 +54,7 @@ public class InstructorServiceTests
 
         var result = await _service.AddAsync(dto, cts.Token);
 
-        result.result.Should().Be(UserOperationResult.Success);
+        result.Should().Be(UserOperationResult.Success);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Instructor>(), cts.Token), Times.Once);
         _repositoryMock.Verify(x => x.SaveChanges(cts.Token), Times.Once);
     }
@@ -67,7 +66,7 @@ public class InstructorServiceTests
     [Trait("Category", TestCategories.Happy)]
     public async Task AddAsync_MapsDtoPropertiesToInstructor(int appUserId, string bio, string specialization)
     {
-        var dto = new AddInstructorDto { AppUserId = appUserId, Bio = bio, Specialization = specialization };
+        var dto = new AddInstructorDto { ID = appUserId, Bio = bio, Specialization = specialization };
         Instructor? capturedInstructor = null;
 
         _repositoryMock
@@ -76,11 +75,9 @@ public class InstructorServiceTests
 
         var result = await _service.AddAsync(dto);
 
-        capturedInstructor?.AppUserId.Should().Be(appUserId);
         capturedInstructor?.Bio.Should().Be(bio);
         capturedInstructor?.Specialization.Should().Be(specialization);
-        result.result.Should().Be(UserOperationResult.Success);
-        result.Id.Should().Be(321);
+        result.Should().Be(UserOperationResult.Success);
     }
 
     // Validation
@@ -91,12 +88,11 @@ public class InstructorServiceTests
     [Trait("Category", TestCategories.Validation)]
     public async Task AddAsync_InvalidAppUserId_ReturnsInvalidUserId(int appUserId)
     {
-        var dto = new AddInstructorDto { AppUserId = appUserId };
+        var dto = new AddInstructorDto { ID = appUserId };
 
         var result = await _service.AddAsync(dto);
 
-        result.result.Should().Be(UserOperationResult.InvalidUserId);
-        result.Id.Should().Be(0);
+        result.Should().Be(UserOperationResult.InvalidUserId);
         _repositoryMock.Verify(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()), Times.Never);
         _repositoryMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -106,7 +102,7 @@ public class InstructorServiceTests
     [Trait("Category", TestCategories.Infrastructure)]
     public async Task AddAsync_RepositoryThrowsException_ReturnsUnknownError()
     {
-        var dto = new AddInstructorDto { AppUserId = 1 };
+        var dto = new AddInstructorDto { ID = 1 };
         _repositoryMock
             .Setup(x => x.Add(It.IsAny<Instructor>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("DB error"));
