@@ -17,9 +17,14 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
         _dbset = _context.Set<Entity>();
     }
 
+    public IQueryable<Entity> GetAllWithDeleted()
+    {
+        return _dbset.Where(e => !e.Deleted);
+    }
+
     public IQueryable<Entity> GetAll()
     {
-        return _dbset;
+        return _dbset.Where(e=>!e.Deleted);
     }
 
     public IQueryable<Entity> GetByCondition(Expression<Func<Entity, bool>> expression)
@@ -54,19 +59,12 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public async Task<Entity> Add(Entity entity, CancellationToken cancellationToken = default)
     {
-        entity.CreatedDate = DateTime.Now;
-
         var result = await _dbset.AddAsync(entity, cancellationToken);
         return result.Entity;
     }
 
     public async Task AddRange(IEnumerable<Entity> entities, CancellationToken cancellationToken = default)
     {
-        foreach (var entity in entities)
-        {
-            entity.CreatedDate = DateTime.Now;
-        }
-
         await _dbset.AddRangeAsync(entities, cancellationToken);
     }
 
@@ -77,15 +75,18 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public void SaveInclude(Entity entity, params string[] properties)
     {
-        properties.Except(ImmutableFieldNames);
+        properties = properties.Except(ImmutableFieldNames).ToArray();
 
         var changeTrackerEntry = _dbset.Local.FindEntry(entity.ID) ?? _dbset.Entry(entity);
+
+        // Get the type once
+        var entityType = entity.GetType();
 
         foreach (var entryProperty in changeTrackerEntry.Properties)
         {
             if (properties.Contains(entryProperty.Metadata.Name))
             {
-                entryProperty.CurrentValue = entity.GetType().GetProperty(entryProperty.Metadata.Name).GetValue(entity);
+                entryProperty.CurrentValue = entityType.GetProperty(entryProperty.Metadata.Name)!.GetValue(entity);
                 entryProperty.IsModified = true;
             }
         }
@@ -99,14 +100,23 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
         var changeTrackerEntry = _dbset.Local.FindEntry(entity.ID) ?? _dbset.Entry(entity);
 
+        // Get the type once
+        var entityType = entity.GetType();
+
         foreach (var property in changeTrackerEntry.Properties)
         {
             if (!properties.Contains(property.Metadata.Name))
             {
-                property.CurrentValue = entity.GetType().GetProperty(property.Metadata.Name).GetValue(entity);
+                property.CurrentValue = entityType.GetProperty(property.Metadata.Name)!.GetValue(entity);
                 property.IsModified = true;
             }
         }
+    }
+
+    public void SoftDelete(Entity entity)
+    {
+        entity.Deleted = true;
+        SaveInclude(entity, nameof(entity.Deleted));
     }
 
     public void Delete(Entity entity)

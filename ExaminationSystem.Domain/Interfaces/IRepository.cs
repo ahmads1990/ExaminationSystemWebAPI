@@ -5,6 +5,7 @@ namespace ExaminationSystem.Domain.Interfaces;
 
 public interface IRepository<Entity> where Entity : BaseModel
 {
+    IQueryable<Entity> GetAllWithDeleted();
     IQueryable<Entity> GetAll();
     IQueryable<Entity> GetByCondition(Expression<Func<Entity, bool>> expression);
     Task<Entity?> GetByCondition(Expression<Func<Entity, bool>> expression, CancellationToken cancellationToken = default);
@@ -17,6 +18,7 @@ public interface IRepository<Entity> where Entity : BaseModel
     void Update(Entity entity);
     void SaveInclude(Entity entity, params string[] properties);
     void SaveExclude(Entity entity, params string[] properties);
+    void SoftDelete(Entity entity);
     void Delete(Entity entity);
     void DeleteRange(IEnumerable<Entity> entity);
     Task<bool> SaveChanges(CancellationToken cancellationToken = default);

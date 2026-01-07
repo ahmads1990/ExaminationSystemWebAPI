@@ -16,6 +16,8 @@ public static class ServiceExtensions
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IInstructorService, InstructorService>();
         services.AddScoped<IStudentService, StudentService>();
+        services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ICourseService, CourseService>();
 
         return services;
     }

@@ -1,9 +1,13 @@
-﻿public enum SortingDirection
-{
-    Ascending = 0,
-    Descending,
-}
+﻿using System.Text.Json.Serialization;
 
+public enum SortingDirection
+{
+    [JsonPropertyName("asc")]
+    Ascending,
+
+    [JsonPropertyName("desc")]
+    Descending
+}
 
 public enum QuestionLevel
 {

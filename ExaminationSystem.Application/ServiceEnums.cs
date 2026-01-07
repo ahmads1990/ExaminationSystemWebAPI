@@ -36,3 +36,13 @@ public enum EmailTemplate
 {
     Welcome
 }
+
+public enum CourseOperationResult
+{
+    Success,
+    NotFound,
+    MaxCoursesExceeded,
+    DuplicateTitle, 
+    ValidationFailed,
+    NotOwner
+}
