@@ -46,3 +46,14 @@ public enum CourseOperationResult
     ValidationFailed,
     NotOwner
 }
+
+public enum StudentCourseOperationResult
+{
+    Success,
+    CourseNotFound,
+    AlreadyEnrolled,
+    EnrollmentClosed,
+    MaxEnrollmentsExceeded,
+    ValidationFailed,
+    UnknownError
+}

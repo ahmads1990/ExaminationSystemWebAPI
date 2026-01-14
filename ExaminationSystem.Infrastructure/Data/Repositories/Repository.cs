@@ -19,12 +19,12 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 
     public IQueryable<Entity> GetAllWithDeleted()
     {
-        return _dbset.Where(e => !e.Deleted);
+        return _dbset;
     }
 
     public IQueryable<Entity> GetAll()
     {
-        return _dbset.Where(e=>!e.Deleted);
+        return _dbset.Where(e => !e.Deleted);
     }
 
     public IQueryable<Entity> GetByCondition(Expression<Func<Entity, bool>> expression)
