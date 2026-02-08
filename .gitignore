@@ -363,3 +363,5 @@ MigrationBackup/
 FodyWeavers.xsd
 /ExaminationSystem.API/appsettings.json
 /ExaminationSystem.API/appsettings.json
+
+agent/

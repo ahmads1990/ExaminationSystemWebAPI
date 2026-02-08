@@ -1,9 +1,12 @@
 using ExaminationSystem.API.Extensions;
+using ExaminationSystem.API.Middlewares;
 using ExaminationSystem.Application;
 using ExaminationSystem.Infrastructure;
 using FluentValidation.AspNetCore;
 using Hangfire;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.OpenApi.Models;
+using System.IO.Compression;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,9 +65,35 @@ builder.Services
 builder.Services
     .AddFluentValidation();
 
+// Add Response Compression
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+// Middleware order is critical!
+
+// 1. Response Compression - FIRST to compress all responses including errors
+app.UseResponseCompression();
+
+// 2. Global Exception Handler - Catch all unhandled exceptions
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -79,6 +108,10 @@ app.UseHangfireDashboard("/hangfire");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 3. Transaction Middleware - LAST before controllers (only wraps business logic)
+app.UseMiddleware<TransactionMiddleware>();
+
 app.MapControllers();
 
 app.Run();

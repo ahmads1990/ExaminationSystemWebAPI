@@ -41,7 +41,7 @@ public static class ProgramExtensions
 
                 var combinedErrorMessage = string.Join(" | ", errorMessages);
 
-                var response = new FailureResponse<object>(ErrorCode.Error, combinedErrorMessage);
+                var response = new ErrorResponse<object>(ApiErrorCode.ValidationFailed, combinedErrorMessage);
 
                 return new BadRequestObjectResult(response);
             };

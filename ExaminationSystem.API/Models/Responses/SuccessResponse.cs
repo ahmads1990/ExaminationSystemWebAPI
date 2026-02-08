@@ -1,12 +1,12 @@
 ﻿namespace ExaminationSystem.API.Models.Responses;
 
-public class SuccessResponse<T> : BaseResponse<T>
+public class SuccessResponse<T> : ApiResponse<T>
 {
-    public SuccessResponse(T data, string message = "")
+    public SuccessResponse(T data, string message = "Success")
     {
         Data = data;
-        IsSuccess = true;
+        Success = true;
         Message = message;
-        ErrorCode = ErrorCode.None;
+        ErrorCode = ApiErrorCode.None;
     }
 }

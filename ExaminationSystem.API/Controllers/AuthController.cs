@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.API.Models.Requests.Auth;
+﻿using ExaminationSystem.API.Extensions;
+using ExaminationSystem.API.Models.Requests.Auth;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.Interfaces;
@@ -22,14 +23,14 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if registration completed, otherwise failure with error details.</returns>
     [HttpPost]
-    public async Task<BaseResponse<int>> RegisterInstructor(RegisterInstructorRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<int>> RegisterInstructor(RegisterInstructorRequest request, CancellationToken cancellationToken = default)
     {
         var registerInstructorDto = request.Adapt<RegisterInstructorDto>();
         var (result, id) = await _authService.RegisterInstructorAsync(registerInstructorDto, cancellationToken);
 
         return result == UserOperationResult.Success
-            ? new SuccessResponse<int>(id, UserOperationResult.SuccessCheckMail.ToString())
-            : new FailureResponse<int>(ErrorCode.Error, result.ToString());
+            ? new SuccessResponse<int>(id, "Registration successful. Please check your email for verification.")
+            : new ErrorResponse<int>(result.ToApiErrorCode());
     }
 
     /// <summary>
@@ -39,14 +40,14 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if registration completed, otherwise failure with error details.</returns>
     [HttpPost]
-    public async Task<BaseResponse<int>> RegisterStudent(RegisterStudentRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<int>> RegisterStudent(RegisterStudentRequest request, CancellationToken cancellationToken = default)
     {
         var registerStudentDto = request.Adapt<RegisterStudentDto>();
         var (result, id) = await _authService.RegisterStudentAsync(registerStudentDto, cancellationToken);
 
         return result == UserOperationResult.Success
-            ? new SuccessResponse<int>(id, UserOperationResult.SuccessCheckMail.ToString())
-            : new FailureResponse<int>(ErrorCode.Error, result.ToString());
+            ? new SuccessResponse<int>(id, "Registration successful. Please check your email for verification.")
+            : new ErrorResponse<int>(result.ToApiErrorCode());
     }
 
     /// <summary>
@@ -56,14 +57,14 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>JWT token if login successful, otherwise failure with error details.</returns>
     [HttpPost]
-    public async Task<BaseResponse<string>> Login(UserLoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<string>> Login(UserLoginRequest request, CancellationToken cancellationToken = default)
     {
         var loginDto = request.Adapt<UserLoginDto>();
         var (loginResult, token) = await _authService.LoginAsync(loginDto, cancellationToken);
 
         return loginResult == UserOperationResult.Success
-            ? new SuccessResponse<string>(token, loginResult.ToString())
-            : new FailureResponse<string>(ErrorCode.Error, loginResult.ToString());
+            ? new SuccessResponse<string>(token)
+            : new ErrorResponse<string>(loginResult.ToApiErrorCode());
     }
 
     /// <summary>
@@ -74,13 +75,13 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if email verified, otherwise failure with error details.</returns>
     [HttpPost]
-    public async Task<BaseResponse<string>> VerifyEmail([FromQuery] int userId, [FromQuery] string token, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<string>> VerifyEmail([FromQuery] int userId, [FromQuery] string token, CancellationToken cancellationToken = default)
     {
         var verificationResult = await _authService.VerifyEmailAsync(userId, token, cancellationToken);
 
         return verificationResult == UserEmailVerificationResult.Success
-            ? new SuccessResponse<string>("", UserEmailVerificationResult.Success.ToString())
-            : new FailureResponse<string>(ErrorCode.Error, verificationResult.ToString());
+            ? new SuccessResponse<string>("")
+            : new ErrorResponse<string>(verificationResult.ToApiErrorCode());
     }
 
     /// <summary>
@@ -90,11 +91,11 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if token refresh initiated, otherwise failure with error details.</returns>
     [HttpPost]
-    public async Task<BaseResponse<string>> ResendVerificationEmail([FromQuery] int userId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<string>> ResendVerificationEmail([FromQuery] int userId, CancellationToken cancellationToken = default)
     {
         var result = await _authService.RefreshUserEmailVerificationToken(userId, cancellationToken);
         return result == UserEmailVerificationResult.EmailJobSent
-            ? new SuccessResponse<string>("", UserEmailVerificationResult.EmailJobSent.ToString())
-            : new FailureResponse<string>(ErrorCode.Error, result.ToString());
+            ? new SuccessResponse<string>("", "Verification email sent")
+            : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 }

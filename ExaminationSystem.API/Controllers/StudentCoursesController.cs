@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.API.Common;
+using ExaminationSystem.API.Common;
+using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.StudentCourses;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.StudentCourses;
@@ -101,7 +102,7 @@ public class StudentCoursesController : BaseController
     /// <response code="401">User is not authenticated.</response>
     [Authorize(Roles = Constants.StudentRoleName)]
     [HttpPost("enroll")]
-    public async Task<BaseResponse<string>> EnrollInCourse(StudentEnrollInCourseRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<string>> EnrollInCourse(StudentEnrollInCourseRequest request, CancellationToken cancellationToken = default)
     {
         var enrollInCourseDto = request.Adapt<StudentEnrollInCourseDto>();
         enrollInCourseDto.StudentId = CurrentUserId!.Value;
@@ -109,7 +110,7 @@ public class StudentCoursesController : BaseController
         var result = await _studentCourseService.EnrollInCourse(enrollInCourseDto, cancellationToken);
 
         return result == StudentCourseOperationResult.Success
-            ? new SuccessResponse<string>("", result.ToString())
-            : new FailureResponse<string>(ErrorCode.Error, result.ToString());
+            ? new SuccessResponse<string>("")
+            : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 }

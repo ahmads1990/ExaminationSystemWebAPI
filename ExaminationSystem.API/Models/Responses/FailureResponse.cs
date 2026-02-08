@@ -1,12 +1,14 @@
-﻿namespace ExaminationSystem.API.Models.Responses;
+﻿using ExaminationSystem.API.Extensions;
 
-public class FailureResponse<T> : BaseResponse<T>
+namespace ExaminationSystem.API.Models.Responses;
+
+public class ErrorResponse<T> : ApiResponse<T>
 {
-    public FailureResponse(ErrorCode errorCode, string message = "")
+    public ErrorResponse(ApiErrorCode errorCode, string? customMessage = null)
     {
-        Data = default!;
-        IsSuccess = false;
-        Message = message;
+        Success = false;
+        Data = default;
         ErrorCode = errorCode;
+        Message = customMessage ?? errorCode.GetErrorMessage();
     }
 }

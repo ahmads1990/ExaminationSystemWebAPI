@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.API.Models.Requests.Questions;
+using ExaminationSystem.API.Models.Requests.Questions;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Questions;
 using ExaminationSystem.Application.Interfaces;
@@ -46,12 +46,12 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The details of the question if found; otherwise, an error response.</returns>
     [HttpGet]
-    public async Task<BaseResponse<QuestionDto?>> GetDetails(int id, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<QuestionDto?>> GetDetails(int id, CancellationToken cancellationToken = default)
     {
         var question = await _questionService.GetByID(id, cancellationToken);
 
         if (question is null)
-            return new FailureResponse<QuestionDto?>(ErrorCode.EntityNotFound, "Couldnt find that entity");
+            return new ErrorResponse<QuestionDto?>(ApiErrorCode.ResourceNotFound, "Couldnt find that entity");
 
         return new SuccessResponse<QuestionDto?>(question);
     }
@@ -63,7 +63,7 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The added question.</returns>
     [HttpPost]
-    public async Task<BaseResponse<QuestionDto>> Add(AddQuestionRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<QuestionDto>> Add(AddQuestionRequest request, CancellationToken cancellationToken = default)
     {
         var addQuestionDto = request.Adapt<AddQuestionDto>();
         var questionDto = await _questionService.Add(addQuestionDto, cancellationToken);
@@ -78,14 +78,14 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The updated question if successful; otherwise, an error response.</returns>
     [HttpPut]
-    public async Task<BaseResponse<QuestionDto?>> Update(UpdateQuestionRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<QuestionDto?>> Update(UpdateQuestionRequest request, CancellationToken cancellationToken = default)
     {
         var updateQuestionDto = request.Adapt<UpdateQuestionDto>();
         var questionDto = await _questionService.Update(updateQuestionDto, cancellationToken);
 
         if (questionDto is null)
         {
-            return new FailureResponse<QuestionDto?>(ErrorCode.EntityNotFound, "Couldnt find that entity");
+            return new ErrorResponse<QuestionDto?>(ApiErrorCode.ResourceNotFound, "Couldnt find that entity");
         }
 
         return new SuccessResponse<QuestionDto?>(questionDto);
@@ -97,15 +97,15 @@ public class QuestionsController : BaseController
     /// <param name="idsToDelete">A list of question IDs to delete.</param>
     /// <returns>A success response if all questions were deleted; otherwise, a failure response with the IDs that could not be deleted.</returns>
     [HttpDelete]
-    public async Task<BaseResponse<object>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<object>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
     {
         var unDeletedIds = await _questionService.Delete(idsToDelete, cancellationToken);
 
         if (unDeletedIds is null || unDeletedIds.Any())
         {
-            return new FailureResponse<object>(ErrorCode.CannotDelete, string.Join(',', idsToDelete));
+            return new ErrorResponse<object>(ApiErrorCode.InsufficientPermissions, string.Join(',', idsToDelete));
         }
 
-        return new SuccessResponse<object>("Deleted succuesfully");
+        return new SuccessResponse<object>(null);
     }
 }

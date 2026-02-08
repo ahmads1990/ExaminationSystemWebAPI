@@ -1,0 +1,77 @@
+using ExaminationSystem.API.Models.Responses;
+
+namespace ExaminationSystem.API.Extensions;
+
+public static class ServiceResultExtensions
+{
+    /// <summary>
+    /// Converts UserOperationResult to ApiErrorCode
+    /// </summary>
+    public static ApiErrorCode ToApiErrorCode(this UserOperationResult result)
+    {
+        return result switch
+        {
+            UserOperationResult.Success => ApiErrorCode.None,
+            UserOperationResult.EmailDuplicated => ApiErrorCode.EmailAlreadyExists,
+            UserOperationResult.InvalidCredentials => ApiErrorCode.InvalidCredentials,
+            UserOperationResult.EmailNotConfirmed => ApiErrorCode.EmailNotVerified,
+            UserOperationResult.ValidationFailed => ApiErrorCode.ValidationFailed,
+            UserOperationResult.InvalidUserId => ApiErrorCode.ResourceNotFound,
+            UserOperationResult.UserNotFound => ApiErrorCode.ResourceNotFound,
+            UserOperationResult.TokenGenerationFailed => ApiErrorCode.InternalServerError,
+            UserOperationResult.UserCreationFailed => ApiErrorCode.InternalServerError,
+            _ => ApiErrorCode.InternalServerError
+        };
+    }
+    
+    /// <summary>
+    /// Converts UserEmailVerificationResult to ApiErrorCode
+    /// </summary>
+    public static ApiErrorCode ToApiErrorCode(this UserEmailVerificationResult result)
+    {
+        return result switch
+        {
+            UserEmailVerificationResult.Success => ApiErrorCode.None,
+            UserEmailVerificationResult.EmailJobSent => ApiErrorCode.None,
+            UserEmailVerificationResult.InvalidToken => ApiErrorCode.InvalidVerificationToken,
+            UserEmailVerificationResult.TokenExpired => ApiErrorCode.TokenExpired,
+            UserEmailVerificationResult.UserNotFound => ApiErrorCode.ResourceNotFound,
+            UserEmailVerificationResult.AlreadyConfirmed => ApiErrorCode.None,
+            _ => ApiErrorCode.InternalServerError
+        };
+    }
+    
+    /// <summary>
+    /// Converts CourseOperationResult to ApiErrorCode
+    /// </summary>
+    public static ApiErrorCode ToApiErrorCode(this CourseOperationResult result)
+    {
+        return result switch
+        {
+            CourseOperationResult.Success => ApiErrorCode.None,
+            CourseOperationResult.NotFound => ApiErrorCode.CourseNotFound,
+            CourseOperationResult.MaxCoursesExceeded => ApiErrorCode.InsufficientPermissions,
+            CourseOperationResult.DuplicateTitle => ApiErrorCode.ValidationFailed,
+            CourseOperationResult.ValidationFailed => ApiErrorCode.ValidationFailed,
+            CourseOperationResult.NotOwner => ApiErrorCode.Forbidden,
+            _ => ApiErrorCode.InternalServerError
+        };
+    }
+    
+    /// <summary>
+    /// Converts StudentCourseOperationResult to ApiErrorCode
+    /// </summary>
+    public static ApiErrorCode ToApiErrorCode(this StudentCourseOperationResult result)
+    {
+        return result switch
+        {
+            StudentCourseOperationResult.Success => ApiErrorCode.None,
+            StudentCourseOperationResult.CourseNotFound => ApiErrorCode.CourseNotFound,
+            StudentCourseOperationResult.AlreadyEnrolled => ApiErrorCode.AlreadyEnrolled,
+            StudentCourseOperationResult.EnrollmentClosed => ApiErrorCode.ExamDeadlinePassed,
+            StudentCourseOperationResult.MaxEnrollmentsExceeded => ApiErrorCode.InsufficientPermissions,
+            StudentCourseOperationResult.ValidationFailed => ApiErrorCode.ValidationFailed,
+            _ => ApiErrorCode.InternalServerError
+        };
+    }
+}

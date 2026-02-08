@@ -1,4 +1,5 @@
 ﻿using ExaminationSystem.API.Common;
+using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.Courses;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Courses;
@@ -48,7 +49,7 @@ public class CoursesController : BaseController
     /// or a failure response with an error code and message on failure.
     /// </returns>
     [HttpPost]
-    public async Task<BaseResponse<int>> Add(AddCourseRequest addCourseRequest, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<int>> Add(AddCourseRequest addCourseRequest, CancellationToken cancellationToken = default)
     {
         var addCourseDto = addCourseRequest.Adapt<AddCourseDto>();
         addCourseDto.InstructorID = CurrentUserId!.Value;
@@ -56,8 +57,8 @@ public class CoursesController : BaseController
         var (result, id) = await _courseService.Add(addCourseDto, cancellationToken);
 
         return result == CourseOperationResult.Success
-            ? new SuccessResponse<int>(id, CourseOperationResult.Success.ToString())
-            : new FailureResponse<int>(ErrorCode.Error, result.ToString());
+            ? new SuccessResponse<int>(id)
+            : new ErrorResponse<int>(result.ToApiErrorCode());
     }
 
     /// <summary>
@@ -70,15 +71,15 @@ public class CoursesController : BaseController
     /// or a failure response with an error code and message on failure.
     /// </returns>
     [HttpPut]
-    public async Task<BaseResponse<string>> Update(UpdateCourseRequest updateCourseRequest, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<string>> Update(UpdateCourseRequest updateCourseRequest, CancellationToken cancellationToken = default)
     {
         var updateCourseDto = updateCourseRequest.Adapt<UpdateCourseDto>();
 
         var result = await _courseService.UpdateInfo(updateCourseDto, cancellationToken);
 
         return result == CourseOperationResult.Success
-             ? new SuccessResponse<string>(string.Empty, CourseOperationResult.Success.ToString())
-             : new FailureResponse<string>(ErrorCode.Error, result.ToString());
+             ? new SuccessResponse<string>(string.Empty)
+             : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 
     /// <summary>
@@ -91,7 +92,7 @@ public class CoursesController : BaseController
     /// or a failure response with an error code and message on failure.
     /// </returns>
     [HttpDelete]
-    public async Task<BaseResponse<string>> Delete(int courseId, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<string>> Delete(int courseId, CancellationToken cancellationToken = default)
     {
         var deleteCourseDto = new DeleteCourseDto
         {
@@ -102,7 +103,7 @@ public class CoursesController : BaseController
         var result = await _courseService.Delete(deleteCourseDto, cancellationToken);
 
         return result == CourseOperationResult.Success
-             ? new SuccessResponse<string>(string.Empty, CourseOperationResult.Success.ToString())
-             : new FailureResponse<string>(ErrorCode.Error, result.ToString());
+             ? new SuccessResponse<string>(string.Empty)
+             : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 }
