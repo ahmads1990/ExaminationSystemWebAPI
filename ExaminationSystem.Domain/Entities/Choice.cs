@@ -3,7 +3,8 @@
 public class Choice : BaseModel
 {
     public string Body { get; set; } = string.Empty;
+    public bool IsCorrect { get; set; }
 
     public int QuestionId { get; set; }
-    public required Question Question { get; set; }
+    public Question Question { get; set; } = default!;
 }

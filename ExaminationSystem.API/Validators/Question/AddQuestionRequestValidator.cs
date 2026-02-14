@@ -18,7 +18,7 @@ public class AddQuestionRequestValidator : AbstractValidator<AddQuestionRequest>
 
         RuleFor(q => q.QuestionLevel)
             .IsInEnum()
-            .WithMessage("Question level is invalid.");
+            .WithMessage("Question level must be one of: Easy (0), Medium (1), Hard (2).");
 
         RuleFor(q => q.Choices)
             .NotEmpty()
@@ -26,11 +26,9 @@ public class AddQuestionRequestValidator : AbstractValidator<AddQuestionRequest>
             .Must(choices => choices.Count() >= Constants.MinChoicesCount)
             .WithMessage($"A question must have at least {Constants.MinChoicesCount} choices.")
             .Must(choices => choices.Count() <= Constants.MaxChoicesCount)
-            .WithMessage($"A question cannot have more than {Constants.MaxChoicesCount} choices.");
-
-        RuleFor(q => q.AnswerOrder)
-            .Must((q, order) => order >= 0 && order < q.Choices.Count())
-            .WithMessage(q => $"AnswerOrder must be between 0 and {Constants.MaxChoicesCount}.");
+            .WithMessage($"A question cannot have more than {Constants.MaxChoicesCount} choices.")
+            .Must(choices => choices.Count(c => c.IsCorrect) == 1)
+            .WithMessage("Exactly one choice must be marked as the correct answer.");
 
         // Inline validator for choices
         RuleForEach(q => q.Choices).ChildRules(choices =>

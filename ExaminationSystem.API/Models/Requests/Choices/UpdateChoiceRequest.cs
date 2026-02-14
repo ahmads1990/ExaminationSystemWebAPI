@@ -1,6 +1,6 @@
-﻿namespace ExaminationSystem.Application.DTOs.Choices;
+namespace ExaminationSystem.API.Models.Requests.Choices;
 
-public class ChoiceDto
+public class UpdateChoiceRequest
 {
     public int ID { get; set; }
     public string Body { get; set; } = string.Empty;

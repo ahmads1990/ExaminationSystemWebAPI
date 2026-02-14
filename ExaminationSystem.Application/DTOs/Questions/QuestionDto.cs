@@ -8,7 +8,5 @@ public class QuestionDto
     public string Body { get; set; } = string.Empty;
     public int Score { get; set; }
     public QuestionLevel QuestionLevel { get; set; }
-
-    public byte AnswerOrder { get; set; }
     public IEnumerable<ChoiceDto> Choices { get; set; } = new List<ChoiceDto>();
 }

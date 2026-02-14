@@ -21,20 +21,14 @@ public class QuestionsController : BaseController
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of questions.
     /// </summary>
-    /// <param name="pageIndex"></param>
-    /// <param name="pageSize"></param>
-    /// <param name="orderBy"></param>
-    /// <param name="sortDirection"></param>
-    /// <param name="examId"></param>
-    /// <param name="body"></param>
+    /// <param name="request"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet]
-    public async Task<PaginatedResponse<QuestionDto>> List(int pageIndex, int pageSize,
-        string? orderBy, string? sortDirection, int? examId, string? body, CancellationToken cancellationToken = default)
+    public async Task<PaginatedResponse<QuestionDto>> List([FromQuery] ListQuestionsRequest request, CancellationToken cancellationToken = default)
     {
-        var sortingDirection = sortDirection == "desc" ? SortingDirection.Descending : SortingDirection.Ascending;
-        var (questions, totalCount) = await _questionService.GetAll(pageIndex, pageSize, examId, orderBy, sortingDirection, body);
+        var listDto = request.Adapt<ListQuestionsDto>();
+        var (questions, totalCount) = await _questionService.GetAll(listDto, cancellationToken);
 
         return new PaginatedResponse<QuestionDto>(questions, totalCount);
     }
@@ -50,10 +44,9 @@ public class QuestionsController : BaseController
     {
         var question = await _questionService.GetByID(id, cancellationToken);
 
-        if (question is null)
-            return new ErrorResponse<QuestionDto?>(ApiErrorCode.ResourceNotFound, "Couldnt find that entity");
-
-        return new SuccessResponse<QuestionDto?>(question);
+        return question is null
+            ? new ErrorResponse<QuestionDto?>(ApiErrorCode.QuestionNotFound)
+            : new SuccessResponse<QuestionDto?>(question);
     }
 
     /// <summary>
@@ -83,12 +76,9 @@ public class QuestionsController : BaseController
         var updateQuestionDto = request.Adapt<UpdateQuestionDto>();
         var questionDto = await _questionService.Update(updateQuestionDto, cancellationToken);
 
-        if (questionDto is null)
-        {
-            return new ErrorResponse<QuestionDto?>(ApiErrorCode.ResourceNotFound, "Couldnt find that entity");
-        }
-
-        return new SuccessResponse<QuestionDto?>(questionDto);
+        return questionDto is null
+            ? new ErrorResponse<QuestionDto?>(ApiErrorCode.QuestionNotFound)
+            : new SuccessResponse<QuestionDto?>(questionDto);
     }
 
     /// <summary>

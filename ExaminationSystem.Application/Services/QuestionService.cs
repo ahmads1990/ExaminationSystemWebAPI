@@ -19,41 +19,35 @@ public class QuestionService : IQuestionService
         _choiceRepository = choiceRepository;
     }
 
+    #region Publich Methods
+
     /// <inheritdoc/>
-    public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, int? examId, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default)
+    public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(ListQuestionsDto listDto, CancellationToken cancellationToken = default)
     {
         var query = _questionRepository.GetAll();
-
-        if (examId.HasValue)
-        {
-            query.Where(q => q.ExamQuestions.Any(eq => eq.ExamId == examId.Value));
-        }
-
-        if (!string.IsNullOrEmpty(body))
-        {
-            query = query.Where(q => q.Body.Contains(body));
-        }
+        query = ApplySearchFilters(query, listDto);
 
         // Get count here
         var totalCount = await query.CountAsync();
 
         Expression<Func<Question, object>> sortingExpression = q => q.CreatedDate;
-        if (!string.IsNullOrEmpty(orderBy))
+        if (!string.IsNullOrEmpty(listDto.OrderBy))
         {
-            if (orderBy.Equals("QuestionLevel"))
+            if (listDto.OrderBy.Equals(nameof(Question.QuestionLevel)))
                 sortingExpression = q => q.QuestionLevel;
-            else if (orderBy.Equals("Score"))
+            else if (listDto.OrderBy.Equals(nameof(Question.Score)))
                 sortingExpression = q => q.Score;
+            else if (listDto.OrderBy.Equals(nameof(Question.ID)))
+                sortingExpression = q => q.ID;
             else
-                throw new ArgumentException($"Invalid orderBy field: {orderBy}");
-
+                throw new ArgumentException($"Invalid orderBy field: {listDto.OrderBy}");
         }
 
-        query = sortingDirection == SortingDirection.Ascending ?
-                  query.OrderBy(sortingExpression) :
-                  query.OrderByDescending(sortingExpression);
+        query = listDto.SortDirection == SortingDirection.Ascending
+                    ? query.OrderBy(sortingExpression)
+                    : query.OrderByDescending(sortingExpression);
 
-        var data = await query.Skip(pageIndex * pageSize).Take(pageSize)
+        var data = await query.Skip(listDto.PageIndex * listDto.PageSize).Take(listDto.PageSize)
                               .ProjectToType<QuestionDto>()
                               .ToListAsync(cancellationToken);
 
@@ -73,10 +67,8 @@ public class QuestionService : IQuestionService
     {
         var question = questionDto.Adapt<Question>();
 
-        await _choiceRepository.AddRange(question.Choices, cancellationToken);
-
         await _questionRepository.Add(question, cancellationToken);
-        await SaveChanges();
+        await SaveChanges(cancellationToken);
 
         return question.Adapt<QuestionDto>();
     }
@@ -84,19 +76,59 @@ public class QuestionService : IQuestionService
     /// <inheritdoc/>
     public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default)
     {
-        var question = await _questionRepository.GetByID(questionDto.ID, cancellationToken);
+        var question = await _questionRepository.GetByID(questionDto.ID)
+            .Include(q => q.Choices)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (question is null)
             return null;
 
-        question = questionDto.Adapt<Question>();
-        question.Choices = questionDto.Choices
-                                .Select(c => new Choice
-                                {
-                                    ID = c.ID,
-                                    Body = c.Body,
-                                    Question = question
-                                }).ToList();
+        // Map scalar properties onto the tracked entity
+        question.Body = questionDto.Body;
+        question.Score = questionDto.Score;
+        question.QuestionLevel = questionDto.QuestionLevel;
+
+        // Build a lookup of incoming choice IDs
+        var incomingIds = questionDto.Choices
+            .Where(c => c.ID > 0)
+            .Select(c => c.ID)
+            .ToHashSet();
+
+        // Remove choices that are no longer in the DTO
+        var choicesToRemove = question.Choices
+            .Where(c => !incomingIds.Contains(c.ID))
+            .ToList();
+
+        foreach (var choice in choicesToRemove)
+        {
+            question.Choices.Remove(choice);
+            _choiceRepository.Delete(choice);
+        }
+
+        // Update existing + add new
+        foreach (var choiceDto in questionDto.Choices)
+        {
+            if (choiceDto.ID > 0)
+            {
+                // Update existing choice
+                var existing = question.Choices.FirstOrDefault(c => c.ID == choiceDto.ID);
+                if (existing is not null)
+                {
+                    existing.Body = choiceDto.Body;
+                    existing.IsCorrect = choiceDto.IsCorrect;
+                }
+            }
+            else
+            {
+                // Add new choice
+                question.Choices.Add(new Choice
+                {
+                    Body = choiceDto.Body,
+                    IsCorrect = choiceDto.IsCorrect,
+                    QuestionId = question.ID
+                });
+            }
+        }
 
         _questionRepository.Update(question);
         await SaveChanges(cancellationToken);
@@ -129,4 +161,32 @@ public class QuestionService : IQuestionService
     {
         await _questionRepository.SaveChanges(cancellationToken);
     }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// Applies search filters to a collection of questions based on the specified criteria.
+    /// </summary>
+    /// <remarks>Filters are applied for exam association and question body text. The returned query can be
+    /// further composed or executed as needed.</remarks>
+    /// <param name="query">The queryable collection of questions to filter.</param>
+    /// <param name="listDto">The search criteria used to filter the questions. Cannot be null.</param>
+    /// <returns>An IQueryable<Question> containing questions that match the specified search filters.</returns>
+    private IQueryable<Question> ApplySearchFilters(IQueryable<Question> query, ListQuestionsDto listDto)
+    {
+        if (listDto.ExamID.HasValue)
+        {
+            query = query.Where(q => q.ExamQuestions.Any(eq => eq.ExamId == listDto.ExamID.Value));
+        }
+
+        if (!string.IsNullOrEmpty(listDto.Body))
+        {
+            query = query.Where(q => q.Body.Contains(listDto.Body));
+        }
+        return query;
+    }
+
+    #endregion
 }

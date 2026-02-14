@@ -1,9 +1,13 @@
-﻿using ExaminationSystem.Application.DTOs.Choices;
+﻿using ExaminationSystem.API.Models.Requests.Choices;
 
 namespace ExaminationSystem.API.Models.Requests.Questions;
 
-public class UpdateQuestionRequest : AddQuestionRequest
+public class UpdateQuestionRequest
 {
     public int ID { get; set; }
-    public new ICollection<UpdateChoiceDto> Choices { get; set; } = new List<UpdateChoiceDto>();
+    public string Body { get; set; } = string.Empty;
+    public int Score { get; set; }
+    public QuestionLevel QuestionLevel { get; set; }
+
+    public ICollection<UpdateChoiceRequest> Choices { get; set; } = new List<UpdateChoiceRequest>();
 }

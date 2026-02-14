@@ -2,8 +2,11 @@
 
 namespace ExaminationSystem.Application.DTOs.Questions;
 
-public class UpdateQuestionDto : AddQuestionDto
+public class UpdateQuestionDto
 {
     public int ID { get; set; }
-    public new ICollection<UpdateChoiceDto> Choices { get; set; } = new List<UpdateChoiceDto>();
+    public string Body { get; set; } = string.Empty;
+    public int Score { get; set; }
+    public QuestionLevel QuestionLevel { get; set; }
+    public ICollection<UpdateChoiceDto> Choices { get; set; } = new List<UpdateChoiceDto>();
 }

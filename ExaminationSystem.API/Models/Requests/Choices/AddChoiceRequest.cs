@@ -3,4 +3,5 @@
 public class AddChoiceRequest
 {
     public string Body { get; set; } = string.Empty;
+    public bool IsCorrect { get; set; }
 }

@@ -76,7 +76,7 @@ public enum ApiErrorCode
     
     [ErrorMessage("Cannot unenroll from this course")]
     CannotUnenrollFromCourse = 4007,
-    
+
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]
     InternalServerError = 5000,

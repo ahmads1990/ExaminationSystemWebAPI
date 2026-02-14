@@ -10,15 +10,10 @@ public interface IQuestionService
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of questions.
     /// </summary>
-    /// <param name="pageIndex"></param>
-    /// <param name="pageSize"></param>
-    /// <param name="examId"></param>
-    /// <param name="orderBy"></param>
-    /// <param name="sortingDirection"></param>
-    /// <param name="body"></param>
+    /// <param name="listDto"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, int? examId, string? orderBy, SortingDirection sortingDirection, string? body, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(ListQuestionsDto listDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a single question by its unique identifier.
