@@ -16,6 +16,8 @@
     // System / process issues
     UserCreationFailed,
     TokenGenerationFailed,
+    InvalidRefreshToken,
+    ExpiredRefreshToken,
 
     // Fallback
     UnknownError

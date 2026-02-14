@@ -6,20 +6,19 @@ using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Application.UseCases;
+using ExaminationSystem.Domain.Entities;
+using ExaminationSystem.Domain.Interfaces;
 using Hangfire;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
 namespace ExaminationSystem.Application.Services;
 
 public class AuthService : IAuthService
 {
-    #region Constants
+    #region Fields
 
     private const string CacheEmailConfirmationKey = "user:email_confirmation:";
-
-    #endregion
-
-    #region Fields
 
     private readonly IUserService _userService;
     private readonly IInstructorService _instructorService;
@@ -27,11 +26,16 @@ public class AuthService : IAuthService
     private readonly ITokenHelper _tokenHelper;
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ICachingService _cachingService;
-    private readonly IConfiguration _configuration;
+    private readonly IPasswordHelper _passwordHelper;
+    private readonly IRepository<RefreshToken> _refreshTokenRepo;
 
+    private readonly string BackendBaseUrl;
+    private readonly int RefreshTokenLifeInDays;
     #endregion
 
-    public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService, ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient, ICachingService cachingService, IConfiguration configuration)
+    public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService,
+        ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient, ICachingService cachingService,
+        IRepository<RefreshToken> refreshTokenRepo, IPasswordHelper passwordHelper, IConfiguration configuration)
     {
         _userService = userService;
         _instructorService = instructorService;
@@ -39,7 +43,16 @@ public class AuthService : IAuthService
         _tokenHelper = tokenHelper;
         _backgroundJobClient = backgroundJobClient;
         _cachingService = cachingService;
-        _configuration = configuration;
+        _refreshTokenRepo = refreshTokenRepo;
+        _passwordHelper = passwordHelper;
+
+        BackendBaseUrl = configuration.GetSection("BackendBaseUrl").Value
+            ?? throw new InvalidOperationException("Missing required configuration: 'BackendBaseUrl'.");
+
+        if (!int.TryParse(configuration.GetSection("JwtConfig:RefreshTokenLifeInDays").Value, out int parsedResult))
+            throw new InvalidOperationException("Missing or invalid configuration: 'JwtConfig:RefreshTokenLifeInDays' must be a positive integer.");
+
+        RefreshTokenLifeInDays = parsedResult;
     }
 
     #region Public Methods
@@ -128,28 +141,18 @@ public class AuthService : IAuthService
     /// <param name="userLoginDto"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public async Task<(UserOperationResult Result, string Token)> LoginAsync(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
+    public async Task<(UserOperationResult Result, UserTokensDto? tokensDto)> LoginAsync(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
     {
         var (result, userId) = await _userService.VerifyUserPassword(userLoginDto, cancellationToken);
         if (result != UserOperationResult.Success)
-            return (result, string.Empty);
+            return (result, null);
 
-        var userInfo = await _userService.GetUserBasicInfoById(userId!.Value, cancellationToken);
+        var jwtToken = await GenerateUserJWT(userId!.Value, cancellationToken);
+        if (string.IsNullOrEmpty(jwtToken))
+            return (UserOperationResult.TokenGenerationFailed, null);
 
-        // Create Token
-        var token = _tokenHelper.GenerateJWT(
-            new UserTokenBaseClaims(userInfo!.ID, userInfo.Role, userInfo.Name, userInfo.Email),
-            new List<UserClaim>
-            {
-                new(CustomClaimTypes.Username,  userInfo.Username)
-            }
-        );
-
-        if (string.IsNullOrEmpty(token))
-            return (UserOperationResult.TokenGenerationFailed, string.Empty);
-
-        // Return success
-        return (UserOperationResult.Success, token);
+        var newRefreshToken = await GenerateRefreshToken(userId!.Value, cancellationToken: cancellationToken);
+        return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
     }
 
     /// <summary>
@@ -203,6 +206,37 @@ public class AuthService : IAuthService
         return UserEmailVerificationResult.EmailJobSent;
     }
 
+    /// <summary>
+    /// Validates the provided refresh token and issues a new JWT and refresh token pair.
+    /// </summary>
+    /// <param name="userId">The ID of the user requesting a token refresh.</param>
+    /// <param name="refreshToken">The current refresh token to validate.</param>
+    /// <param name="cancellationToken">A cancellation token for the async operation.</param>
+    /// <returns>A tuple containing the operation result and, if successful, the new token pair.</returns>
+    public async Task<(UserOperationResult result, UserTokensDto? tokensDto)> RefreshUserToken(int userId, string refreshToken, CancellationToken cancellationToken = default)
+    {
+        var storedRefreshToken = await _refreshTokenRepo
+            .GetByCondition(rt => rt.UserId == userId && !rt.IsRevoked)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (storedRefreshToken is null)
+            return (UserOperationResult.InvalidRefreshToken, null);
+
+        if (storedRefreshToken.ExpirationDate < DateTime.UtcNow)
+            return (UserOperationResult.ExpiredRefreshToken, null);
+
+        var hashedToken = _passwordHelper.HashPassword(refreshToken);
+        if (storedRefreshToken.TokenHash != hashedToken)
+            return (UserOperationResult.InvalidRefreshToken, null);
+
+        var jwtToken = await GenerateUserJWT(userId, cancellationToken);
+        if (string.IsNullOrEmpty(jwtToken))
+            return (UserOperationResult.TokenGenerationFailed, null);
+
+        var newRefreshToken = await GenerateRefreshToken(userId, storedRefreshToken.ID, cancellationToken);
+        return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
+    }
+
     #endregion
 
     #region Private Methods
@@ -227,9 +261,7 @@ public class AuthService : IAuthService
     /// <param name="toEmail">The email address of the recipient who will receive the welcome email. Cannot be null or empty.</param>
     private void EnqueueSendWelcomeEmailJob(int userId, string toName, string toEmail, string otpCode)
     {
-        var baseUrl = _configuration.GetSection("BackendBaseUrl").Value ?? string.Empty;
-        baseUrl = $"{baseUrl.TrimEnd('/')}/VerifyEmail/token={otpCode}&userId={userId}";
-
+        var baseUrl = $"{BackendBaseUrl.TrimEnd('/')}/VerifyEmail/token={otpCode}&userId={userId}";
         var emailParameters = new Dictionary<string, string>
         {
             { "UserName", toName },
@@ -260,6 +292,61 @@ public class AuthService : IAuthService
 
         string uniquePart = Guid.NewGuid().ToString("N").Substring(0, 6).ToUpper();
         return $"{rolePrefix}-{uniquePart}";
+    }
+
+    /// <summary>
+    /// Generates a JWT access token for the specified user.
+    /// </summary>
+    /// <param name="userId">The ID of the user to generate the token for.</param>
+    /// <param name="cancellationToken">A cancellation token for the async operation.</param>
+    /// <returns>The generated JWT string, or empty if the user's claims are invalid.</returns>
+    private async Task<string> GenerateUserJWT(int userId, CancellationToken cancellationToken = default)
+    {
+        var userInfo = await _userService.GetUserBasicInfoById(userId, cancellationToken);
+
+        var token = _tokenHelper.GenerateJWT(
+            new UserTokenBaseClaims(userInfo!.ID, userInfo.Role, userInfo.Name, userInfo.Email),
+            new List<UserClaim>
+            {
+                new(CustomClaimTypes.Username, userInfo.Username)
+            }
+        );
+
+        return token;
+    }
+
+    /// <summary>
+    /// Generates a new refresh token, hashes it, and persists it to the database.
+    /// If a <paramref name="tokenId"/> is provided, the existing token record is updated; otherwise a new record is created.
+    /// </summary>
+    /// <param name="userId">The ID of the user who owns the refresh token.</param>
+    /// <param name="tokenId">Optional ID of an existing token record to update (for token rotation).</param>
+    /// <param name="cancellationToken">A cancellation token for the async operation.</param>
+    /// <returns>The raw (unhashed) refresh token to return to the client.</returns>
+    private async Task<string> GenerateRefreshToken(int userId, int? tokenId = null, CancellationToken cancellationToken = default)
+    {
+        var refreshToken = _tokenHelper.GenerateRefreshToken();
+        var hashedToken = _passwordHelper.HashPassword(refreshToken);
+
+        var entity = new RefreshToken
+        {
+            TokenHash = hashedToken,
+            UserId = userId,
+            ExpirationDate = DateTime.UtcNow.AddDays(RefreshTokenLifeInDays),
+        };
+
+        if (tokenId.HasValue)
+        {
+            entity.ID = tokenId.Value;
+            _refreshTokenRepo.SaveInclude(entity, nameof(RefreshToken.ExpirationDate), nameof(RefreshToken.TokenHash));
+        }
+        else
+        {
+            await _refreshTokenRepo.Add(entity, cancellationToken);
+        }
+
+        await _refreshTokenRepo.SaveChanges(cancellationToken);
+        return refreshToken;
     }
 
     #endregion

@@ -1,21 +1,36 @@
 ﻿using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Infrastructure.Configs;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using OtpNet;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-
 namespace ExaminationSystem.Infrastructure.Services.Auth;
 
 public class TokenHelper : ITokenHelper
 {
-    private const int OTP_LENGTH = 6;
+    #region Fields
 
-    // Temporary
-    private const string SECRET_KEY = "VerySecretKey";
+    private const int OTP_LENGTH = 6;
+    private const int REFRESH_TOKEN_LENGTH = 32;
+    private readonly string SECRET_KEY;
+
+    #endregion
+
+    #region Constructor
+
+    public TokenHelper(IConfiguration configuration)
+    {
+        SECRET_KEY = configuration.GetSection("OTPSecretKey")?.Value
+            ?? throw new InvalidOperationException("Missing required configuration: 'OTPSecretKey'.");
+    }
+
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// Generates a JWT token based on the provided user claims.
@@ -60,6 +75,15 @@ public class TokenHelper : ITokenHelper
     }
 
     /// <summary>
+    /// Generates a new refresh token as a random string suitable for authentication scenarios.
+    /// </summary>
+    /// <returns>A string containing the newly generated refresh token.</returns>
+    public string GenerateRefreshToken()
+    {
+        return GenerateOTP(REFRESH_TOKEN_LENGTH);
+    }
+
+    /// <summary>
     /// Generates a one-time password (OTP) using the configured secret key and specified length.
     /// </summary>
     /// <returns>A string containing the generated OTP of the specified length.</returns>
@@ -68,5 +92,6 @@ public class TokenHelper : ITokenHelper
         var totp = new Totp(Encoding.UTF8.GetBytes(SECRET_KEY), totpSize: length);
         return totp.ComputeTotp();
     }
-}
 
+    #endregion
+}

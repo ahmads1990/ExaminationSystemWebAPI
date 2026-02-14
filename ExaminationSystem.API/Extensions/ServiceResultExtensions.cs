@@ -20,6 +20,8 @@ public static class ServiceResultExtensions
             UserOperationResult.UserNotFound => ApiErrorCode.ResourceNotFound,
             UserOperationResult.TokenGenerationFailed => ApiErrorCode.InternalServerError,
             UserOperationResult.UserCreationFailed => ApiErrorCode.InternalServerError,
+            UserOperationResult.InvalidRefreshToken => ApiErrorCode.InvalidCredentials,
+            UserOperationResult.ExpiredRefreshToken => ApiErrorCode.ExpiredToken,
             _ => ApiErrorCode.InternalServerError
         };
     }
@@ -34,7 +36,7 @@ public static class ServiceResultExtensions
             UserEmailVerificationResult.Success => ApiErrorCode.None,
             UserEmailVerificationResult.EmailJobSent => ApiErrorCode.None,
             UserEmailVerificationResult.InvalidToken => ApiErrorCode.InvalidVerificationToken,
-            UserEmailVerificationResult.TokenExpired => ApiErrorCode.TokenExpired,
+            UserEmailVerificationResult.TokenExpired => ApiErrorCode.ExpiredToken,
             UserEmailVerificationResult.UserNotFound => ApiErrorCode.ResourceNotFound,
             UserEmailVerificationResult.AlreadyConfirmed => ApiErrorCode.None,
             _ => ApiErrorCode.InternalServerError

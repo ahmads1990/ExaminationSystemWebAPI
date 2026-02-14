@@ -21,6 +21,7 @@
     "Audience": "https://localhost.com/",
     "DurationInHours": 1
   },
+  "OTPSecretKey": "This is a sample secret key - please don't use in production environment.'",
   "SMTPConfig": {
     "Host": "localhost",
     "Port": 25,

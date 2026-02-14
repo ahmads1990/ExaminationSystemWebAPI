@@ -22,6 +22,7 @@ public class AppDbContext : DbContext
     public DbSet<AppUser> AppUsers { get; set; }
     public DbSet<Instructor> Instructors { get; set; }
     public DbSet<Student> Students { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     #endregion
 

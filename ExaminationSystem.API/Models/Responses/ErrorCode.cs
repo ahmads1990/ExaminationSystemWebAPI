@@ -24,14 +24,17 @@ public enum ApiErrorCode
     InvalidVerificationToken = 1005,
     
     [ErrorMessage("Your session has expired. Please login again")]
-    TokenExpired = 1006,
+    ExpiredToken = 1006,
     
     [ErrorMessage("You must be logged in to access this resource")]
     Unauthorized = 1007,
     
     [ErrorMessage("You don't have permission to access this resource")]
     Forbidden = 1008,
-    
+
+    [ErrorMessage("Invalid token")]
+    InvalidToken = 1009,
+
     // Validation Errors (2000-2999)
     [ErrorMessage("Validation failed")]
     ValidationFailed = 2000,

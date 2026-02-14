@@ -5,6 +5,8 @@ using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Application.Services;
+using ExaminationSystem.Domain.Entities;
+using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
 using Hangfire;
 using Hangfire.Common;
@@ -22,6 +24,8 @@ public class AuthServiceTests
     private readonly Mock<ITokenHelper> _tokenHelperMock;
     private readonly Mock<IBackgroundJobClient> _backgroundJobClientMock;
     private readonly Mock<ICachingService> _cachingServiceMock;
+    private readonly Mock<IRepository<RefreshToken>> _refreshTokenRepo;
+    private readonly Mock<IPasswordHelper> _passwordHelper;
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly AuthService _authService;
 
@@ -33,6 +37,8 @@ public class AuthServiceTests
         _tokenHelperMock = new Mock<ITokenHelper>();
         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
         _cachingServiceMock = new Mock<ICachingService>();
+        _refreshTokenRepo = new Mock<IRepository<RefreshToken>>();
+        _passwordHelper = new Mock<IPasswordHelper>();
         _configurationMock = new Mock<IConfiguration>();
 
         // Setup configuration mock
@@ -47,6 +53,8 @@ public class AuthServiceTests
             _tokenHelperMock.Object,
             _backgroundJobClientMock.Object,
             _cachingServiceMock.Object,
+            _refreshTokenRepo.Object,
+            _passwordHelper.Object,
             _configurationMock.Object
         );
     }
@@ -311,11 +319,11 @@ public class AuthServiceTests
             .Returns("valid.jwt.token");
 
         // Act
-        var (result, token) = await _authService.LoginAsync(loginDto, cancellationToken);
+        var (result, tokens) = await _authService.LoginAsync(loginDto, cancellationToken);
 
         // Assert
         result.Should().Be(UserOperationResult.Success);
-        token.Should().Be("valid.jwt.token");
+        tokens.JwtToken.Should().Be("valid.jwt.token");
     }
 
     [Theory]
@@ -336,11 +344,11 @@ public class AuthServiceTests
             .ReturnsAsync((expectedResult, default));
 
         // Act
-        var (result, token) = await _authService.LoginAsync(loginDto, cancellationToken);
+        var (result, tokens) = await _authService.LoginAsync(loginDto, cancellationToken);
 
         // Assert
         result.Should().Be(expectedResult);
-        token.Should().BeEmpty();
+        tokens.JwtToken.Should().BeEmpty();
         _tokenHelperMock.Verify(x => x.GenerateJWT(
             It.IsAny<UserTokenBaseClaims>(),
             It.IsAny<List<UserClaim>>()), Times.Never);
@@ -380,11 +388,11 @@ public class AuthServiceTests
             .Returns(string.Empty);
 
         // Act
-        var (result, token) = await _authService.LoginAsync(loginDto, cancellationToken);
+        var (result, tokens) = await _authService.LoginAsync(loginDto, cancellationToken);
 
         // Assert
         result.Should().Be(UserOperationResult.TokenGenerationFailed);
-        token.Should().BeEmpty();
+        tokens.JwtToken.Should().BeEmpty();
     }
 
     #endregion

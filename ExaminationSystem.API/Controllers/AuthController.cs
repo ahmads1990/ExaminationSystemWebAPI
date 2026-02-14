@@ -3,6 +3,7 @@ using ExaminationSystem.API.Models.Requests.Auth;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExaminationSystem.API.Controllers;
@@ -57,14 +58,14 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>JWT token if login successful, otherwise failure with error details.</returns>
     [HttpPost]
-    public async Task<ApiResponse<string>> Login(UserLoginRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<UserTokensDto>> Login(UserLoginRequest request, CancellationToken cancellationToken = default)
     {
         var loginDto = request.Adapt<UserLoginDto>();
-        var (loginResult, token) = await _authService.LoginAsync(loginDto, cancellationToken);
+        var (loginResult, tokens) = await _authService.LoginAsync(loginDto, cancellationToken);
 
         return loginResult == UserOperationResult.Success
-            ? new SuccessResponse<string>(token)
-            : new ErrorResponse<string>(loginResult.ToApiErrorCode());
+            ? new SuccessResponse<UserTokensDto>(tokens!)
+            : new ErrorResponse<UserTokensDto>(loginResult.ToApiErrorCode());
     }
 
     /// <summary>
@@ -97,5 +98,20 @@ public class AuthController : BaseController
         return result == UserEmailVerificationResult.EmailJobSent
             ? new SuccessResponse<string>("", "Verification email sent")
             : new ErrorResponse<string>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
+    /// Refreshes an expired JWT token using a valid refresh token.
+    /// </summary>
+    /// <param name="request">The refresh token request containing user ID and refresh token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A new JWT and refresh token pair if successful, otherwise failure with error details.</returns>
+    [HttpPost]
+    public async Task<ApiResponse<UserTokensDto>> RefreshToken(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        var (result, tokens) = await _authService.RefreshUserToken(request.UserId, request.RefreshToken, cancellationToken);
+        return result == UserOperationResult.Success
+            ? new SuccessResponse<UserTokensDto>(tokens!)
+            : new ErrorResponse<UserTokensDto>(result.ToApiErrorCode());
     }
 }
