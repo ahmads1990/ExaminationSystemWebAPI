@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
 
@@ -38,6 +39,7 @@ public static class InfrastructureServiceExtensions
     public static IServiceCollection AddInfraStructureConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
+        services.Configure<JwtConfig>(configuration.GetSection("Jwt"));
 
         services.AddDatabaseConfiguration(configuration);
         services.AddRedisCacheConfiguration(configuration);
@@ -88,8 +90,8 @@ public static class InfrastructureServiceExtensions
 
     public static IServiceCollection AddSecurityConfiguration(this IServiceCollection services, IConfiguration configuration)
     {
-        // Configure jwt helper class to use jwt config info
-        SetJwtConfiguration(configuration);
+        var jwtConfig = configuration.GetSection("Jwt").Get<JwtConfig>()
+            ?? throw new InvalidOperationException("Missing required configuration section: 'Jwt'.");
 
         // Add Authentication with jwt config
         services.AddAuthentication(options =>
@@ -107,21 +109,13 @@ public static class InfrastructureServiceExtensions
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
-                ValidIssuer = JwtConfig.Issuer,
-                ValidAudience = JwtConfig.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(JwtConfig.Key)),
+                ValidIssuer = jwtConfig.Issuer,
+                ValidAudience = jwtConfig.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtConfig.Key)),
             };
         });
 
         return services;
-    }
-
-    private static void SetJwtConfiguration(IConfiguration configuration)
-    {
-        JwtConfig.Key = configuration.GetSection("Jwt:Key")?.Value ?? string.Empty;
-        JwtConfig.Issuer = configuration.GetSection("Jwt:Issuer")?.Value ?? string.Empty;
-        JwtConfig.Audience = configuration.GetSection("Jwt:Audience")?.Value ?? string.Empty;
-        JwtConfig.DurationInHours = int.Parse(configuration.GetSection("Jwt:DurationInHours")?.Value ?? "0");
     }
 
     #endregion

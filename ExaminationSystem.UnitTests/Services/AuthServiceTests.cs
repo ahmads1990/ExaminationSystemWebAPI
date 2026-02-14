@@ -298,7 +298,7 @@ public class AuthServiceTests
         };
         var cancellationToken = new CancellationToken();
 
-        var userInfo = new UserBasicInfo
+        var userInfo = new UserBasicInfoDto
         {
             ID = userId,
             Username = "testuser",
@@ -367,7 +367,7 @@ public class AuthServiceTests
         };
         var cancellationToken = new CancellationToken();
 
-        var userInfo = new UserBasicInfo
+        var userInfo = new UserBasicInfoDto
         {
             ID = userId,
             Username = "testuser",
@@ -500,7 +500,7 @@ public class AuthServiceTests
         var userId = 42;
         var cancellationToken = new CancellationToken();
 
-        var userData = new UserBasicInfo
+        var userData = new UserBasicInfoDto
         {
             ID = userId,
             Name = "Test User",
@@ -551,7 +551,7 @@ public class AuthServiceTests
             .Returns(Task.CompletedTask);
 
         _userServiceMock.Setup(x => x.GetUserBasicInfoById(userId, cancellationToken))
-            .ReturnsAsync((UserBasicInfo?)null);
+            .ReturnsAsync((UserBasicInfoDto?)null);
 
         // Act
         var result = await _authService.RefreshUserEmailVerificationToken(userId, cancellationToken);

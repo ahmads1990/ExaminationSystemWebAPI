@@ -49,8 +49,8 @@ public class AuthService : IAuthService
         BackendBaseUrl = configuration.GetSection("BackendBaseUrl").Value
             ?? throw new InvalidOperationException("Missing required configuration: 'BackendBaseUrl'.");
 
-        if (!int.TryParse(configuration.GetSection("JwtConfig:RefreshTokenLifeInDays").Value, out int parsedResult))
-            throw new InvalidOperationException("Missing or invalid configuration: 'JwtConfig:RefreshTokenLifeInDays' must be a positive integer.");
+        if (!int.TryParse(configuration.GetSection("Jwt:RefreshTokenLifeInDays").Value, out int parsedResult))
+            throw new InvalidOperationException("Missing or invalid configuration: 'Jwt:RefreshTokenLifeInDays' must be a positive integer.");
 
         RefreshTokenLifeInDays = parsedResult;
     }

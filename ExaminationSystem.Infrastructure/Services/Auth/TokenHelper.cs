@@ -2,6 +2,7 @@
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Infrastructure.Configs;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OtpNet;
 using System.IdentityModel.Tokens.Jwt;
@@ -17,13 +18,15 @@ public class TokenHelper : ITokenHelper
     private const int OTP_LENGTH = 6;
     private const int REFRESH_TOKEN_LENGTH = 32;
     private readonly string SECRET_KEY;
+    private readonly JwtConfig _jwtConfig;
 
     #endregion
 
     #region Constructor
 
-    public TokenHelper(IConfiguration configuration)
+    public TokenHelper(IOptions<JwtConfig> jwtOptions, IConfiguration configuration)
     {
+        _jwtConfig = jwtOptions.Value;
         SECRET_KEY = configuration.GetSection("OTPSecretKey")?.Value
             ?? throw new InvalidOperationException("Missing required configuration: 'OTPSecretKey'.");
     }
@@ -58,15 +61,15 @@ public class TokenHelper : ITokenHelper
             .Select(c => new Claim(c.Type, c.Value));
 
         // Specify the signing key and algorithm
-        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtConfig.Key));
+        var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key));
         var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
 
         // Create the JWT token
         var jwtSecurityToken = new JwtSecurityToken(
-            issuer: JwtConfig.Issuer,
-            audience: JwtConfig.Audience,
+            issuer: _jwtConfig.Issuer,
+            audience: _jwtConfig.Audience,
             claims: allClaims,
-            expires: DateTime.UtcNow.AddHours(JwtConfig.DurationInHours),
+            expires: DateTime.UtcNow.AddHours(_jwtConfig.DurationInHours),
             signingCredentials: signingCredentials
         );
 

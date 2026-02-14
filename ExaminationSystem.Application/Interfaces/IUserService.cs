@@ -9,8 +9,7 @@ public interface IUserService
 
     Task<(UserOperationResult Result, int? Id)> VerifyUserPassword(UserLoginDto userLoginDto, CancellationToken cancellationToken = default);
 
-    Task<UserBasicInfo?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default);
+    Task<UserBasicInfoDto?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default);
 
     Task<UserEmailVerificationResult> ConfirmUserEmail(int userId, CancellationToken cancellationToken = default);
 }
-

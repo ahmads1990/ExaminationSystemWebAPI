@@ -78,12 +78,12 @@ public class UserService : IUserService
     /// </summary>
     /// <param name="userId">The unique identifier of the user whose basic information is to be retrieved.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-    /// <returns>A <see cref="UserBasicInfo"/> object containing the user's basic information if found; otherwise, <see
+    /// <returns>A <see cref="UserBasicInfoDto"/> object containing the user's basic information if found; otherwise, <see
     /// langword="null"/>.</returns>
-    public async Task<UserBasicInfo?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default)
+    public async Task<UserBasicInfoDto?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default)
     {
         return await _userRepository.GetByCondition(u => u.ID == userId)
-                                              .ProjectToType<UserBasicInfo>()
+                                              .ProjectToType<UserBasicInfoDto>()
                                               .FirstOrDefaultAsync();
     }
 

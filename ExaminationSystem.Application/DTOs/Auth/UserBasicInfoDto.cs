@@ -1,6 +1,6 @@
 ﻿namespace ExaminationSystem.Application.DTOs.Auth;
 
-public class UserBasicInfo
+public class UserBasicInfoDto
 {
     public int ID { get; set; }
     public string Name { get; set; } = string.Empty;
