@@ -2,15 +2,22 @@
 
 public class Exam : BaseModel
 {
-    public ExamType ExamType { get; set; }
     public string Title { get; set; } = string.Empty;
-    public int MaxDuration { get; set; }
-    public int TotalGrade { get; set; }
-    public int PassMark { get; set; }
-    public bool IsPublished { get; set; }
+    public ExamType ExamType { get; set; }
+    public ExamStatus ExamStatus { get; set; } = ExamStatus.Draft;
     public DateTime DeadlineDate { get; set; }
+    public DateTime? PublishDate { get; set; }
+
+    // Settings
+    public int MaxDurationInMinutes { get; set; }
+    public int TotalGrade { get; set; }
+    public decimal PassingScore { get; set; }
+    public int MaxAttempts { get; set; } = 1;
+    public bool ShuffleQuestions { get; set; }
+    public bool ShowResultsImmediately { get; set; } = true;
 
     public int CourseID { get; set; }
     public required Course Course { get; set; }
     public ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
+    public ICollection<ExamAttempt> ExamAttempts { get; set; } = new List<ExamAttempt>();
 }

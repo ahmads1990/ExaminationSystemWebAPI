@@ -1,11 +1,11 @@
-﻿using ExaminationSystem.API.Models.Requests.Exams;
+using ExaminationSystem.API.Models.Requests.Exams;
 using FluentValidation;
 
 namespace ExaminationSystem.API.Validators.Exam;
 
-public class AddExamRequestValidator : AbstractValidator<AddExamRequest>
+public class UpdateExamRequestValidator : AbstractValidator<UpdateExamRequest>
 {
-    public AddExamRequestValidator()
+    public UpdateExamRequestValidator()
     {
         RuleFor(e => e.ExamType).ApplyExamTypeRules();
         RuleFor(e => e.MaxDurationInMinutes).ApplyMaxDurationRules();
@@ -18,9 +18,5 @@ public class AddExamRequestValidator : AbstractValidator<AddExamRequest>
 
         RuleFor(e => e.MaxAttempts).ApplyMaxAttemptsRules();
         RuleFor(e => e.DeadlineDate).ApplyDeadlineDateRules();
-
-        RuleFor(e => e.CourseID)
-            .GreaterThan(0)
-            .WithMessage("Course ID must be a positive number.");
     }
 }

@@ -23,6 +23,8 @@ public class AppDbContext : DbContext
     public DbSet<Instructor> Instructors { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<ExamAttempt> ExamAttempts { get; set; }
+    public DbSet<ExamQuestion> ExamQuestions { get; set; }
 
     #endregion
 
@@ -61,5 +63,6 @@ public class AppDbContext : DbContext
         modelBuilder.ConfigureStudentExamsAnswers();
         modelBuilder.ConfigureAppUserStudent();
         modelBuilder.ConfigureAppUserInstructor();
+        modelBuilder.ConfigureExamAttempt();
     }
 }

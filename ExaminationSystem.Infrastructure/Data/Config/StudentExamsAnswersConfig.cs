@@ -14,12 +14,6 @@ public static class StudentExamsAnswersConfig
             .OnDelete(DeleteBehavior.NoAction);
 
         modelBuilder.Entity<StudentExamsAnswers>()
-            .HasOne(sea => sea.Exam)
-            .WithMany()
-            .HasForeignKey(sea => sea.ExamID)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<StudentExamsAnswers>()
             .HasOne(sea => sea.Question)
             .WithMany()
             .HasForeignKey(sea => sea.QuestionID)
@@ -30,5 +24,11 @@ public static class StudentExamsAnswersConfig
             .WithMany()
             .HasForeignKey(sea => sea.ChoiceID)
             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<StudentExamsAnswers>()
+            .HasOne(sea => sea.ExamAttempt)
+            .WithMany(a => a.Answers)
+            .HasForeignKey(sea => sea.ExamAttemptID)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

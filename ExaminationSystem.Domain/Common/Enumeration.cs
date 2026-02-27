@@ -28,3 +28,18 @@ public enum UserRole
     Instructor,
     Admin
 }
+
+public enum ExamStatus
+{
+    Draft = 0,
+    Published,
+    Archived
+}
+
+public enum ExamAttemptStatus
+{
+    NotStarted = 0,
+    InProgress,
+    Completed,
+    TimedOut
+}

@@ -3,14 +3,12 @@
 public class StudentExamsAnswers : BaseModel
 {
     public int StudentID { get; set; }
-    public required Student Student { get; set; }
-
-    public int ExamID { get; set; }
-    public required Exam Exam { get; set; }
-
     public int QuestionID { get; set; }
-    public required Question Question { get; set; }
-
     public int ChoiceID { get; set; }
-    public required Choice Choice { get; set; }
+    public int ExamAttemptID { get; set; }
+
+    public Student Student { get; set; } = default!;
+    public Question Question { get; set; } = default!;
+    public Choice Choice { get; set; } = default!;
+    public ExamAttempt ExamAttempt { get; set; } = default!;
 }

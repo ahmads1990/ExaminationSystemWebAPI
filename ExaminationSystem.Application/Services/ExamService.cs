@@ -90,7 +90,7 @@ public class ExamService : IExamService
     public async Task<IEnumerable<int>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
     {
         var exams = await _examRepository
-                     .GetByCondition(q => idsToDelete.Contains(q.ID) && !q.IsPublished)
+                     .GetByCondition(q => idsToDelete.Contains(q.ID) && q.ExamStatus != ExamStatus.Published)
                      .Include(q => q.ExamQuestions)
                      .ToListAsync(cancellationToken);
 
