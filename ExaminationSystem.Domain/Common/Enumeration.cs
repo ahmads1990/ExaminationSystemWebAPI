@@ -43,3 +43,10 @@ public enum ExamAttemptStatus
     Completed,
     TimedOut
 }
+
+public enum RejectionReason
+{
+    NotFound,
+    AlreadyAssigned,
+    NotAssigned
+}

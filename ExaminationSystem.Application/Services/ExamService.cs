@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.Application.DTOs.Exams;
+﻿using ExaminationSystem.Application.DTOs;
+using ExaminationSystem.Application.DTOs.Exams;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
@@ -12,16 +13,18 @@ public class ExamService : IExamService
     #region Fields
 
     private readonly IRepository<Exam> _examRepository;
-    private readonly IQuestionService _questionService;
+    private readonly IRepository<ExamQuestion> _examQuestionRepository;
+    private readonly IRepository<Question> _questionRepository;
 
     #endregion
 
     #region Constructor
 
-    public ExamService(IRepository<Exam> examRepository, IQuestionService questionService)
+    public ExamService(IRepository<Exam> examRepository, IRepository<ExamQuestion> examQuestionRepository, IRepository<Question> questionRepository)
     {
         _examRepository = examRepository;
-        _questionService = questionService;
+        _examQuestionRepository = examQuestionRepository;
+        _questionRepository = questionRepository;
     }
 
     #endregion
@@ -161,6 +164,89 @@ public class ExamService : IExamService
         _examRepository.SaveInclude(examToUpdate, nameof(Exam.ExamStatus), nameof(Exam.PublishDate));
         await _examRepository.SaveChanges(cancellationToken);
         return ExamOperationResult.Success;
+    }
+
+    /// <inheritdoc />
+    public async Task<(ExamOperationResult Result, IEnumerable<RejectedEntityDto> Rejected)> AssignQuestions(AssignQuestionsDto dto, CancellationToken cancellationToken = default)
+    {
+        var exam = await _examRepository.GetByCondition(e => e.ID == dto.ExamId)
+                                        .Select(e => new { e.ID, e.ExamStatus })
+                                        .FirstOrDefaultAsync(cancellationToken);
+
+        if (exam is null)
+            return (ExamOperationResult.NotFound, []);
+        if (exam.ExamStatus == ExamStatus.Archived)
+            return (ExamOperationResult.ExamArchived, []);
+        if (exam.ExamStatus == ExamStatus.Published)
+            return (ExamOperationResult.ExamPublished, []);
+
+        // Get existing assignments for this exam
+        var assignedQuestionIds = await _examQuestionRepository
+            .GetByCondition(eq => eq.ExamId == dto.ExamId)
+            .Select(eq => eq.QuestionId)
+            .ToListAsync(cancellationToken);
+
+        // Get valid question IDs that actually exist
+        var validQuestionIds = await _questionRepository
+            .GetByCondition(q => dto.QuestionIds.Contains(q.ID))
+            .Select(q => q.ID)
+            .ToListAsync(cancellationToken);
+
+        var rejected = new List<RejectedEntityDto>();
+        var toAssign = new List<ExamQuestion>();
+
+        foreach (var questionId in dto.QuestionIds)
+        {
+            if (!validQuestionIds.Contains(questionId))
+                rejected.Add(new RejectedEntityDto { Id = questionId, Reason = RejectionReason.NotFound });
+            else if (assignedQuestionIds.Contains(questionId))
+                rejected.Add(new RejectedEntityDto { Id = questionId, Reason = RejectionReason.AlreadyAssigned });
+            else
+                toAssign.Add(new ExamQuestion { ExamId = dto.ExamId, QuestionId = questionId, Exam = null!, Question = null! });
+        }
+
+        if (toAssign.Any())
+        {
+            await _examQuestionRepository.AddRange(toAssign, cancellationToken);
+            await _examQuestionRepository.SaveChanges(cancellationToken);
+        }
+
+        return (ExamOperationResult.Success, rejected);
+    }
+
+    /// <inheritdoc />
+    public async Task<(ExamOperationResult Result, IEnumerable<RejectedEntityDto> Rejected)> UnassignQuestions(AssignQuestionsDto dto, CancellationToken cancellationToken = default)
+    {
+        var exam = await _examRepository.GetByCondition(e => e.ID == dto.ExamId)
+                                        .Select(e => new { e.ID, e.ExamStatus, HasSubmissions = e.ExamAttempts.Any() })
+                                        .FirstOrDefaultAsync(cancellationToken);
+
+        if (exam is null)
+            return (ExamOperationResult.NotFound, []);
+        if (exam.ExamStatus == ExamStatus.Archived)
+            return (ExamOperationResult.ExamArchived, []);
+        if (exam.HasSubmissions)
+            return (ExamOperationResult.HasSubmissions, []);
+
+        // Get existing assignments for this exam that match the requested IDs
+        var existingAssignments = await _examQuestionRepository
+            .GetByCondition(eq => eq.ExamId == dto.ExamId && dto.QuestionIds.Contains(eq.QuestionId))
+            .ToListAsync(cancellationToken);
+
+        var assignedQuestionIds = existingAssignments.Select(eq => eq.QuestionId).ToHashSet();
+
+        var rejected = dto.QuestionIds
+            .Where(id => !assignedQuestionIds.Contains(id))
+            .Select(id => new RejectedEntityDto { Id = id, Reason = RejectionReason.NotAssigned })
+            .ToList();
+
+        if (existingAssignments.Any())
+        {
+            _examQuestionRepository.DeleteRange(existingAssignments);
+            await _examQuestionRepository.SaveChanges(cancellationToken);
+        }
+
+        return (ExamOperationResult.Success, rejected);
     }
 
     #endregion

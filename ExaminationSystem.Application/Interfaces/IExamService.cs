@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.Application.DTOs.Exams;
+﻿using ExaminationSystem.Application.DTOs;
+using ExaminationSystem.Application.DTOs.Exams;
 
 namespace ExaminationSystem.Application.Interfaces;
 
@@ -75,5 +76,27 @@ public interface IExamService
     /// <param name="cancellationToken"></param>
     /// <returns>An <see cref="ExamOperationResult"/> indicating success or the reason for failure.</returns>
     Task<ExamOperationResult> UnPublish(int id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Assigns questions to an exam. Already-assigned or non-existent questions are returned as rejected.
+    /// </summary>
+    /// <param name="dto">The exam ID and question IDs to assign.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    /// A tuple of the exam-level result and a collection of rejected question entries.
+    /// An empty rejected list means all questions were assigned successfully.
+    /// </returns>
+    Task<(ExamOperationResult Result, IEnumerable<RejectedEntityDto> Rejected)> AssignQuestions(AssignQuestionsDto dto, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Unassigns questions from an exam. Non-assigned or non-existent questions are returned as rejected.
+    /// </summary>
+    /// <param name="dto">The exam ID and question IDs to unassign.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>
+    /// A tuple of the exam-level result and a collection of rejected question entries.
+    /// An empty rejected list means all questions were unassigned successfully.
+    /// </returns>
+    Task<(ExamOperationResult Result, IEnumerable<RejectedEntityDto> Rejected)> UnassignQuestions(AssignQuestionsDto dto, CancellationToken cancellationToken = default);
 }
 

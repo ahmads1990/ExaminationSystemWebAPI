@@ -95,6 +95,9 @@ public enum ApiErrorCode
     [ErrorMessage("Cannot unpublish an exam that has student submissions")]
     ExamHasSubmissions = 4012,
 
+    [ErrorMessage("Cannot modify questions on a published exam")]
+    ExamIsPublished = 4013,
+
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]
     InternalServerError = 5000,

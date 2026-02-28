@@ -91,6 +91,7 @@ public static class ServiceResultExtensions
             ExamOperationResult.ExamArchived => ApiErrorCode.ExamArchived,
             ExamOperationResult.NoQuestions => ApiErrorCode.ExamHasNoQuestions,
             ExamOperationResult.HasSubmissions => ApiErrorCode.ExamHasSubmissions,
+            ExamOperationResult.ExamPublished => ApiErrorCode.ExamIsPublished,
             _ => ApiErrorCode.InternalServerError
         };
     }

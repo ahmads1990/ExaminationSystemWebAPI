@@ -1,6 +1,7 @@
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.Exams;
 using ExaminationSystem.API.Models.Responses;
+using ExaminationSystem.Application.DTOs;
 using ExaminationSystem.Application.DTOs.Exams;
 using ExaminationSystem.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -133,5 +134,39 @@ public class ExamsController : BaseController
         return result == ExamOperationResult.Success
             ? new SuccessResponse<string>("Exam unpublished successfully.")
             : new ErrorResponse<string>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
+    /// Assigns questions to an exam. Returns a list of rejected questions with reasons.
+    /// </summary>
+    /// <param name="request">The exam ID and question IDs to assign.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
+    [HttpPatch]
+    public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> AssignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
+    {
+        var dto = request.Adapt<AssignQuestionsDto>();
+        var (result, rejected) = await _examService.AssignQuestions(dto, cancellationToken);
+
+        return result == ExamOperationResult.Success
+            ? new SuccessResponse<IEnumerable<RejectedEntityDto>>(rejected)
+            : new ErrorResponse<IEnumerable<RejectedEntityDto>>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
+    /// Unassigns questions from an exam. Returns a list of rejected questions with reasons.
+    /// </summary>
+    /// <param name="request">The exam ID and question IDs to unassign.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
+    [HttpPatch]
+    public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> UnassignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
+    {
+        var dto = request.Adapt<AssignQuestionsDto>();
+        var (result, rejected) = await _examService.UnassignQuestions(dto, cancellationToken);
+
+        return result == ExamOperationResult.Success
+            ? new SuccessResponse<IEnumerable<RejectedEntityDto>>(rejected)
+            : new ErrorResponse<IEnumerable<RejectedEntityDto>>(result.ToApiErrorCode());
     }
 }

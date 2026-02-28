@@ -67,6 +67,7 @@ public enum ExamOperationResult
     AlreadyPublished,
     AlreadyUnpublished,
     ExamArchived,
+    ExamPublished,
     NoQuestions,
     HasSubmissions,
 }
