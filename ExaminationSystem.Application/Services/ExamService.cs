@@ -34,21 +34,17 @@ public class ExamService : IExamService
         var query = _examRepository.GetAll();
         query = ApplySearchFilters(query, listDto);
 
-        // Get count here
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        Expression<Func<Exam, object>> sortingExpression = q => q.CreatedDate;
-        if (!string.IsNullOrEmpty(listDto.OrderBy))
+        Expression<Func<Exam, object>> sortingExpression = listDto.OrderBy switch
         {
-            if (listDto.OrderBy.Equals(nameof(Exam.DeadlineDate)))
-                sortingExpression = q => q.DeadlineDate;
-            else
-                throw new ArgumentException($"Invalid orderBy field: {listDto.OrderBy}");
-        }
+            nameof(Exam.DeadlineDate) => q => q.DeadlineDate,
+            _ => q => q.CreatedDate
+        };
 
         query = listDto.SortDirection == SortingDirection.Ascending ?
                   query.OrderBy(sortingExpression) :
                   query.OrderByDescending(sortingExpression);
+
+        var totalCount = await query.CountAsync(cancellationToken);
 
         var data = await query.Skip(listDto.PageIndex * listDto.PageSize).Take(listDto.PageSize)
                               .ProjectToType<ExamListDto>()

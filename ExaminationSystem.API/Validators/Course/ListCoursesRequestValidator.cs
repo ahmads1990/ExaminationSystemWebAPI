@@ -1,4 +1,5 @@
 ﻿using ExaminationSystem.API.Models.Requests.Courses;
+using ExaminationSystem.Application.DTOs.Courses;
 using FluentValidation;
 
 namespace ExaminationSystem.API.Validators.Course;
@@ -22,5 +23,10 @@ public class ListCoursesRequestValidator : AbstractValidator<ListCoursesRequest>
         RuleFor(x => x.InstructorID)
             .GreaterThan(0)
                 .When(x => x.InstructorID.HasValue);
+
+        RuleFor(x => x.OrderBy)
+            .Must(v => ListCoursesDto.AllowedSortFields.Contains(v))
+            .When(x => !string.IsNullOrEmpty(x.OrderBy))
+            .WithMessage($"OrderBy must be one of: {string.Join(", ", ListCoursesDto.AllowedSortFields)}.");
     }
 }

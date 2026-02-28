@@ -27,25 +27,19 @@ public class QuestionService : IQuestionService
         var query = _questionRepository.GetAll();
         query = ApplySearchFilters(query, listDto);
 
-        // Get count here
-        var totalCount = await query.CountAsync();
-
-        Expression<Func<Question, object>> sortingExpression = q => q.CreatedDate;
-        if (!string.IsNullOrEmpty(listDto.OrderBy))
+        Expression<Func<Question, object>> sortingExpression = listDto.OrderBy switch
         {
-            if (listDto.OrderBy.Equals(nameof(Question.QuestionLevel)))
-                sortingExpression = q => q.QuestionLevel;
-            else if (listDto.OrderBy.Equals(nameof(Question.Score)))
-                sortingExpression = q => q.Score;
-            else if (listDto.OrderBy.Equals(nameof(Question.ID)))
-                sortingExpression = q => q.ID;
-            else
-                throw new ArgumentException($"Invalid orderBy field: {listDto.OrderBy}");
-        }
+            nameof(Question.QuestionLevel) => q => q.QuestionLevel,
+            nameof(Question.Score) => q => q.Score,
+            nameof(Question.ID) => q => q.ID,
+            _ => q => q.CreatedDate
+        };
 
         query = listDto.SortDirection == SortingDirection.Ascending
                     ? query.OrderBy(sortingExpression)
                     : query.OrderByDescending(sortingExpression);
+
+        var totalCount = await query.CountAsync(cancellationToken);
 
         var data = await query.Skip(listDto.PageIndex * listDto.PageSize).Take(listDto.PageSize)
                               .ProjectToType<QuestionDto>()

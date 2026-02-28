@@ -33,27 +33,19 @@ public class CourseService : ICourseService
         var query = _courseRepository.GetAll();
         query = ApplySearchFilters(query, listDto);
 
-        // Get count here
-        var totalCount = await query.CountAsync();
-
-        Expression<Func<Course, object>> sortingExpression = q => q.CreatedDate;
-        if (!string.IsNullOrEmpty(listDto.OrderBy))
+        Expression<Func<Course, object>> sortingExpression = listDto.OrderBy switch
         {
-            if (listDto.OrderBy.Equals(nameof(Course.InstructorID)))
-                sortingExpression = q => q.InstructorID;
-            else if (listDto.OrderBy.Equals(nameof(Course.CreditHours)))
-                sortingExpression = q => q.CreditHours;
-            else if (listDto.OrderBy.Equals(nameof(Course.CreatedDate)))
-                sortingExpression = q => q.CreatedDate;
-            else if (listDto.OrderBy.Equals(nameof(Course.ID)))
-                sortingExpression = q => q.ID;
-            else
-                throw new ArgumentException($"Invalid orderBy field: {listDto.OrderBy}");
-        }
+            nameof(Course.InstructorID) => q => q.InstructorID,
+            nameof(Course.CreditHours) => q => q.CreditHours,
+            nameof(Course.ID) => q => q.ID,
+            _ => q => q.CreatedDate
+        };
 
         query = listDto.SortDirection == SortingDirection.Ascending
                     ? query.OrderBy(sortingExpression)
                     : query.OrderByDescending(sortingExpression);
+
+        var totalCount = await query.CountAsync(cancellationToken);
 
         var data = await query.Skip(listDto.PageIndex * listDto.PageSize).Take(listDto.PageSize)
                       .ProjectToType<CourseDto>()
