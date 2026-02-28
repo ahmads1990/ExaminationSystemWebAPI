@@ -80,6 +80,21 @@ public enum ApiErrorCode
     [ErrorMessage("Cannot unenroll from this course")]
     CannotUnenrollFromCourse = 4007,
 
+    [ErrorMessage("This exam is already published")]
+    ExamAlreadyPublished = 4008,
+
+    [ErrorMessage("This exam is already unpublished")]
+    ExamAlreadyUnpublished = 4009,
+
+    [ErrorMessage("Cannot modify an archived exam")]
+    ExamArchived = 4010,
+
+    [ErrorMessage("Cannot publish an exam with no questions")]
+    ExamHasNoQuestions = 4011,
+
+    [ErrorMessage("Cannot unpublish an exam that has student submissions")]
+    ExamHasSubmissions = 4012,
+
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]
     InternalServerError = 5000,

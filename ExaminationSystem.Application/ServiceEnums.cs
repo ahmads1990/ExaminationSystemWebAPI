@@ -44,7 +44,7 @@ public enum CourseOperationResult
     Success,
     NotFound,
     MaxCoursesExceeded,
-    DuplicateTitle, 
+    DuplicateTitle,
     ValidationFailed,
     NotOwner
 }
@@ -58,4 +58,15 @@ public enum StudentCourseOperationResult
     MaxEnrollmentsExceeded,
     ValidationFailed,
     UnknownError
+}
+
+public enum ExamOperationResult
+{
+    NotFound,
+    Success,
+    AlreadyPublished,
+    AlreadyUnpublished,
+    ExamArchived,
+    NoQuestions,
+    HasSubmissions,
 }

@@ -58,5 +58,24 @@ public interface IExamService
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task SaveChanges(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Publishes an exam, making it visible and available to students.
+    /// </summary>
+    /// <param name="publishExamDto">The publish request containing the exam ID and optional publish date.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>An <see cref="ExamOperationResult"/> indicating success or the reason for failure.</returns>
+    /// <remarks>
+    /// If <see cref="PublishExamDto.PublishDate"/> is null, the publish date defaults to <see cref="DateTime.UtcNow"/>.
+    /// </remarks>
+    Task<ExamOperationResult> Publish(PublishExamDto publishExamDto, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Unpublishes an exam, reverting it to draft status and clearing its publish date.
+    /// </summary>
+    /// <param name="id">The ID of the exam to unpublish.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>An <see cref="ExamOperationResult"/> indicating success or the reason for failure.</returns>
+    Task<ExamOperationResult> UnPublish(int id, CancellationToken cancellationToken = default);
 }
 

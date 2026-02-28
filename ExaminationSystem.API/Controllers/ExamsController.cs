@@ -1,3 +1,4 @@
+using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.Exams;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Exams;
@@ -105,5 +106,40 @@ public class ExamsController : BaseController
         }
 
         return new SuccessResponse<object>(null);
+    }
+
+    /// <summary>
+    /// Publishes an exam, making it visible and available to students.
+    /// If no publish date is provided, it defaults to now.
+    /// </summary>
+    /// <param name="publishExamRequest">The publish request containing the exam ID and optional publish date.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>A success or error response based on the operation result.</returns>
+    [HttpPatch]
+    public async Task<ApiResponse<string>> Publish(PublishExamRequest publishExamRequest, CancellationToken cancellationToken = default)
+    {
+        var publishExamDto = publishExamRequest.Adapt<PublishExamDto>();
+
+        var result = await _examService.Publish(publishExamDto, cancellationToken);
+
+        return result == ExamOperationResult.Success
+            ? new SuccessResponse<string>("Exam published successfully.")
+            : new ErrorResponse<string>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
+    /// Unpublishes an exam, reverting it to draft status and clearing its publish date.
+    /// </summary>
+    /// <param name="id">The ID of the exam to unpublish.</param>
+    /// <param name="cancellationToken"></param>
+    /// <returns>A success or error response based on the operation result.</returns>
+    [HttpPatch]
+    public async Task<ApiResponse<string>> UnPublish(int id, CancellationToken cancellationToken = default)
+    {
+        var result = await _examService.UnPublish(id, cancellationToken);
+
+        return result == ExamOperationResult.Success
+            ? new SuccessResponse<string>("Exam unpublished successfully.")
+            : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 }

@@ -110,5 +110,55 @@ public class ExamService : IExamService
     {
         await _examRepository.SaveChanges(cancellationToken);
     }
+
+    /// <inheritdoc />
+    public async Task<ExamOperationResult> Publish(PublishExamDto dto, CancellationToken cancellationToken = default)
+    {
+        var exam = await _examRepository.GetByCondition(e => e.ID == dto.ID)
+                                        .Select(e => new { e.ID, e.ExamStatus, HasQuestions = e.ExamQuestions.Any() })
+                                        .FirstOrDefaultAsync(cancellationToken);
+
+        if (exam is null)
+            return ExamOperationResult.NotFound;
+          if (exam.ExamStatus == ExamStatus.Archived)
+            return ExamOperationResult.ExamArchived;
+          if (exam.ExamStatus == ExamStatus.Published)
+            return ExamOperationResult.AlreadyPublished;
+
+        var examToUpdate = new Exam
+        {
+            ID = exam.ID,
+            ExamStatus = ExamStatus.Published,
+            PublishDate = dto.PublishDate ?? DateTime.UtcNow
+        };
+        _examRepository.SaveInclude(examToUpdate, nameof(Exam.ExamStatus), nameof(Exam.PublishDate));
+        await _examRepository.SaveChanges(cancellationToken);
+        return ExamOperationResult.Success;
+    }
+
+    /// <inheritdoc />
+    public async Task<ExamOperationResult> UnPublish(int id, CancellationToken cancellationToken = default)
+    {
+        var exam = await _examRepository.GetByCondition(e => e.ID == id)
+                                   .Select(e => new { e.ID, e.ExamStatus, HasSubmissions = e.ExamAttempts.Any() })
+                                   .FirstOrDefaultAsync(cancellationToken);
+
+        if (exam is null)
+            return ExamOperationResult.NotFound;
+          if (exam.ExamStatus == ExamStatus.Archived)
+            return ExamOperationResult.ExamArchived;
+          if (exam.ExamStatus != ExamStatus.Published)
+            return ExamOperationResult.AlreadyUnpublished;
+
+        var examToUpdate = new Exam
+        {
+            ID = exam.ID,
+            ExamStatus = ExamStatus.Draft,
+            PublishDate = null
+        };
+        _examRepository.SaveInclude(examToUpdate, nameof(Exam.ExamStatus), nameof(Exam.PublishDate));
+        await _examRepository.SaveChanges(cancellationToken);
+        return ExamOperationResult.Success;
+    }
 }
 

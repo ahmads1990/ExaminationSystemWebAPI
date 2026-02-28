@@ -17,7 +17,7 @@ public class Exam : BaseModel
     public bool ShowResultsImmediately { get; set; } = true;
 
     public int CourseID { get; set; }
-    public required Course Course { get; set; }
+    public Course Course { get; set; }
     public ICollection<ExamQuestion> ExamQuestions { get; set; } = new List<ExamQuestion>();
     public ICollection<ExamAttempt> ExamAttempts { get; set; } = new List<ExamAttempt>();
 }

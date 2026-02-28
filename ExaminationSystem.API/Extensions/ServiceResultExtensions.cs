@@ -76,4 +76,22 @@ public static class ServiceResultExtensions
             _ => ApiErrorCode.InternalServerError
         };
     }
+
+    /// <summary>
+    /// Converts ExamOperationResult to ApiErrorCode.
+    /// </summary>
+    public static ApiErrorCode ToApiErrorCode(this ExamOperationResult result)
+    {
+        return result switch
+        {
+            ExamOperationResult.Success => ApiErrorCode.None,
+            ExamOperationResult.NotFound => ApiErrorCode.ExamNotFound,
+            ExamOperationResult.AlreadyPublished => ApiErrorCode.ExamAlreadyPublished,
+            ExamOperationResult.AlreadyUnpublished => ApiErrorCode.ExamAlreadyUnpublished,
+            ExamOperationResult.ExamArchived => ApiErrorCode.ExamArchived,
+            ExamOperationResult.NoQuestions => ApiErrorCode.ExamHasNoQuestions,
+            ExamOperationResult.HasSubmissions => ApiErrorCode.ExamHasSubmissions,
+            _ => ApiErrorCode.InternalServerError
+        };
+    }
 }
