@@ -46,6 +46,10 @@ public class AuthServiceTests
         configSectionMock.Setup(x => x.Value).Returns("https://example.com");
         _configurationMock.Setup(x => x.GetSection("BackendBaseUrl")).Returns(configSectionMock.Object);
 
+        var refreshTokenLifeSectionMock = new Mock<IConfigurationSection>();
+        refreshTokenLifeSectionMock.Setup(x => x.Value).Returns("7");
+        _configurationMock.Setup(x => x.GetSection("Jwt:RefreshTokenLifeInDays")).Returns(refreshTokenLifeSectionMock.Object);
+
         _authService = new AuthService(
             _userServiceMock.Object,
             _instructorServiceMock.Object,
@@ -348,7 +352,7 @@ public class AuthServiceTests
 
         // Assert
         result.Should().Be(expectedResult);
-        tokens.JwtToken.Should().BeEmpty();
+        tokens.Should().BeNull();
         _tokenHelperMock.Verify(x => x.GenerateJWT(
             It.IsAny<UserTokenBaseClaims>(),
             It.IsAny<List<UserClaim>>()), Times.Never);
@@ -392,7 +396,7 @@ public class AuthServiceTests
 
         // Assert
         result.Should().Be(UserOperationResult.TokenGenerationFailed);
-        tokens.JwtToken.Should().BeEmpty();
+        tokens.Should().BeNull();
     }
 
     #endregion
