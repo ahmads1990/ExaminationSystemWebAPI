@@ -10,4 +10,6 @@ public class UpdateExamRequest
     public bool ShuffleQuestions { get; set; }
     public bool ShowResultsImmediately { get; set; }
     public DateTime DeadlineDate { get; set; }
+
+    public int CourseID { get; set; }
 }

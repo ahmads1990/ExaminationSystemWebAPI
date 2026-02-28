@@ -10,15 +10,10 @@ public interface IExamService
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of exams.
     /// </summary>
-    /// <param name="pageIndex"></param>
-    /// <param name="pageSize"></param>
-    /// <param name="orderBy"></param>
-    /// <param name="sortingDirection"></param>
-    /// <param name="title"></param>
-    /// <param name="examType"></param>
+    /// <param name="listDto">The search, pagination, and sorting criteria.</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<(IEnumerable<ExamListDto> Data, int TotalCount)> GetAll(int pageIndex, int pageSize, string? orderBy, SortingDirection sortingDirection, string? title, ExamType? examType, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<ExamListDto> Data, int TotalCount)> GetAll(ListExamsDto listDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Retrieves a single exam by its id.
@@ -31,18 +26,21 @@ public interface IExamService
     /// <summary>
     /// Adds a new exam.
     /// </summary>
-    /// <param name="examDto"></param>
+    /// <param name="examDto">The data for the new exam.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task<ExamDto> Add(AddExamDto examDto, CancellationToken cancellationToken = default);
+    /// <returns>
+    /// A tuple containing the <see cref="ExamOperationResult"/> indicating the outcome
+    /// and the generated ID of the new exam if successful; otherwise, 0.
+    /// </returns>
+    Task<(ExamOperationResult Result, int Id)> Add(AddExamDto examDto, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates an existing exam.
+    /// Updates an existing exam's settings.
     /// </summary>
-    /// <param name="examDto"></param>
+    /// <param name="examDto">The updated exam data.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    Task<ExamDto?> Update(UpdateExamDto examDto, CancellationToken cancellationToken = default);
+    /// <returns>An <see cref="ExamOperationResult"/> indicating success or the reason for failure.</returns>
+    Task<ExamOperationResult> Update(UpdateExamDto examDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes the specified exams

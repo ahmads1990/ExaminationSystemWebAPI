@@ -19,20 +19,14 @@ public class ExamsController : BaseController
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of exams.
     /// </summary>
-    /// <param name="pageIndex"></param>
-    /// <param name="pageSize"></param>
-    /// <param name="orderBy"></param>
-    /// <param name="sortDirection"></param>
-    /// <param name="title"></param>
-    /// <param name="examType"></param>
+    /// <param name="request">The search, pagination, and sorting criteria.</param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     [HttpGet]
-    public async Task<PaginatedResponse<ExamListDto>> List(int pageIndex, int pageSize,
-        string? orderBy, string? sortDirection, string? title, ExamType? examType, CancellationToken cancellationToken = default)
+    public async Task<PaginatedResponse<ExamListDto>> List([FromQuery] ListExamsRequest request, CancellationToken cancellationToken = default)
     {
-        var sortingDirection = sortDirection == "desc" ? SortingDirection.Descending : SortingDirection.Ascending;
-        var (exams, totalCount) = await _examService.GetAll(pageIndex, pageSize, orderBy, sortingDirection, title, examType, cancellationToken);
+        var listDto = request.Adapt<ListExamsDto>();
+        var (exams, totalCount) = await _examService.GetAll(listDto, cancellationToken);
 
         return new PaginatedResponse<ExamListDto>(exams, totalCount);
     }
@@ -48,49 +42,47 @@ public class ExamsController : BaseController
     {
         var exam = await _examService.GetByID(id, cancellationToken);
 
-        if (exam is null)
-            return new ErrorResponse<ExamDto?>(ApiErrorCode.ResourceNotFound, "Couldnt find that entity");
-
-        return new SuccessResponse<ExamDto?>(exam);
+        return exam is null
+            ? new ErrorResponse<ExamDto?>(ApiErrorCode.ExamNotFound)
+            : new SuccessResponse<ExamDto?>(exam);
     }
 
     /// <summary>
-    /// Adds new exam
+    /// Adds new exam.
     /// </summary>
-    /// <param name="request"></param>
+    /// <param name="request">The exam creation request.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <returns>A success response with the new exam ID, or an error response.</returns>
     [HttpPost]
-    public async Task<ApiResponse<ExamDto>> Add(AddExamRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<int>> Add(AddExamRequest request, CancellationToken cancellationToken = default)
     {
         var addExamDto = request.Adapt<AddExamDto>();
-        var result = await _examService.Add(addExamDto, cancellationToken);
+        var (result, id) = await _examService.Add(addExamDto, cancellationToken);
 
-        return new SuccessResponse<ExamDto>(result);
+        return result == ExamOperationResult.Success
+            ? new SuccessResponse<int>(id)
+            : new ErrorResponse<int>(result.ToApiErrorCode());
     }
 
     /// <summary>
-    /// Update an existing exam
+    /// Updates an existing exam's settings.
     /// </summary>
-    /// <param name="request"></param>
+    /// <param name="request">The request containing updated exam data.</param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <returns>A success or error response based on the operation result.</returns>
     [HttpPut]
-    public async Task<ApiResponse<ExamDto?>> Update(UpdateExamRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<string>> Update(UpdateExamRequest request, CancellationToken cancellationToken = default)
     {
         var updateExamDto = request.Adapt<UpdateExamDto>();
-        var examDto = await _examService.Update(updateExamDto, cancellationToken);
+        var result = await _examService.Update(updateExamDto, cancellationToken);
 
-        if (examDto is null)
-        {
-            return new ErrorResponse<ExamDto?>(ApiErrorCode.ResourceNotFound, "Couldnt find that entity");
-        }
-
-        return new SuccessResponse<ExamDto?>(examDto);
+        return result == ExamOperationResult.Success
+            ? new SuccessResponse<string>(string.Empty)
+            : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 
     /// <summary>
-    /// Deletes questions by their IDs.
+    /// Deletes exams by their IDs.
     /// </summary>
     /// <param name="idsToDelete"></param>
     /// <param name="cancellationToken"></param>

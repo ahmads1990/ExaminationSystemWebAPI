@@ -16,6 +16,13 @@ public static class Constants
     public const int MaxAttempts = 5;
     public const int MaxDeadlineYears = 1;
 
+    // Question rules
+    public const int MinQuestionBodyLength = 5;
+    public const int MaxQuestionBodyLength = 100;
+    public const int MinQuestionScore = 1;
+    public const int MaxQuestionScore = 10;
+    public const int MaxChoiceBodyLength = 200;
+
     // System
     public const string DBConnectionStringName = "DefaultConnection";
 }
