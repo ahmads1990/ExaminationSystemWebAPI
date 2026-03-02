@@ -19,7 +19,7 @@ public class QuestionService : IQuestionService
         _choiceRepository = choiceRepository;
     }
 
-    #region Publich Methods
+    #region Public Methods
 
     /// <inheritdoc/>
     public async Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(ListQuestionsDto listDto, CancellationToken cancellationToken = default)
@@ -57,64 +57,59 @@ public class QuestionService : IQuestionService
     }
 
     /// <inheritdoc/>
-    public async Task<QuestionDto> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default)
+    public async Task<QuestionOperationResult> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default)
     {
         var question = questionDto.Adapt<Question>();
 
         await _questionRepository.Add(question, cancellationToken);
         await SaveChanges(cancellationToken);
 
-        return question.Adapt<QuestionDto>();
+        return QuestionOperationResult.Success;
     }
 
     /// <inheritdoc/>
-    public async Task<QuestionDto?> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default)
+    public async Task<QuestionOperationResult> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default)
     {
         var question = await _questionRepository.GetByID(questionDto.ID)
             .Include(q => q.Choices)
+            .Include(q => q.ExamQuestions)
+            .ThenInclude(eq => eq.Exam)
+            .ThenInclude(e => e.ExamAttempts)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (question is null)
-            return null;
+            return QuestionOperationResult.NotFound;
+            
+        // Lock question if it belongs to an exam with submissions
+        if (question.ExamQuestions.Any(eq => eq.Exam.ExamAttempts.Any()))
+            return QuestionOperationResult.Locked;
 
         // Map scalar properties onto the tracked entity
         question.Body = questionDto.Body;
         question.Score = questionDto.Score;
         question.QuestionLevel = questionDto.QuestionLevel;
 
-        // Build a lookup of incoming choice IDs
-        var incomingIds = questionDto.Choices
-            .Where(c => c.ID > 0)
-            .Select(c => c.ID)
-            .ToHashSet();
-
         // Remove choices that are no longer in the DTO
-        var choicesToRemove = question.Choices
-            .Where(c => !incomingIds.Contains(c.ID))
-            .ToList();
-
+        var incomingIds = questionDto.Choices.Select(c => c.ID).Where(id => id > 0).ToHashSet();
+        var choicesToRemove = question.Choices.Where(c => !incomingIds.Contains(c.ID)).ToList();
+        
         foreach (var choice in choicesToRemove)
         {
             question.Choices.Remove(choice);
             _choiceRepository.Delete(choice);
         }
 
-        // Update existing + add new
+        // Add or Update remaining choices
         foreach (var choiceDto in questionDto.Choices)
         {
-            if (choiceDto.ID > 0)
+            var existing = question.Choices.FirstOrDefault(c => c.ID == choiceDto.ID && choiceDto.ID > 0);
+            if (existing is not null)
             {
-                // Update existing choice
-                var existing = question.Choices.FirstOrDefault(c => c.ID == choiceDto.ID);
-                if (existing is not null)
-                {
-                    existing.Body = choiceDto.Body;
-                    existing.IsCorrect = choiceDto.IsCorrect;
-                }
+                existing.Body = choiceDto.Body;
+                existing.IsCorrect = choiceDto.IsCorrect;
             }
             else
             {
-                // Add new choice
                 question.Choices.Add(new Choice
                 {
                     Body = choiceDto.Body,
@@ -127,7 +122,7 @@ public class QuestionService : IQuestionService
         _questionRepository.Update(question);
         await SaveChanges(cancellationToken);
 
-        return question.Adapt<QuestionDto>();
+        return QuestionOperationResult.Success;
     }
 
     /// <inheritdoc/>

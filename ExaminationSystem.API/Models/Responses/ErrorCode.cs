@@ -98,6 +98,10 @@ public enum ApiErrorCode
     [ErrorMessage("Cannot modify questions on a published exam")]
     ExamIsPublished = 4013,
 
+    [ErrorMessage("This question is locked because it belongs to an exam with active submissions")]
+    QuestionLocked = 4014,
+
+
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]
     InternalServerError = 5000,

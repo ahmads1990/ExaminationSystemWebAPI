@@ -95,4 +95,19 @@ public static class ServiceResultExtensions
             _ => ApiErrorCode.InternalServerError
         };
     }
+
+    /// <summary>
+    /// Converts QuestionOperationResult to ApiErrorCode.
+    /// </summary>
+    public static ApiErrorCode ToApiErrorCode(this QuestionOperationResult result)
+    {
+        return result switch
+        {
+            QuestionOperationResult.Success => ApiErrorCode.None,
+            QuestionOperationResult.NotFound => ApiErrorCode.QuestionNotFound,
+            QuestionOperationResult.Locked => ApiErrorCode.QuestionLocked,
+            QuestionOperationResult.ValidationFailed => ApiErrorCode.ValidationFailed,
+            _ => ApiErrorCode.InternalServerError
+        };
+    }
 }

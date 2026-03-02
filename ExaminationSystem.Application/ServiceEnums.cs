@@ -71,3 +71,11 @@ public enum ExamOperationResult
     NoQuestions,
     HasSubmissions,
 }
+
+public enum QuestionOperationResult
+{
+    Success,
+    NotFound,
+    Locked,
+    ValidationFailed
+}

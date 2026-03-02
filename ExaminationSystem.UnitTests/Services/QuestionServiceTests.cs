@@ -27,7 +27,7 @@ public class QuestionServiceTests
 
     [Fact]
     [Trait("Category", TestCategories.Happy)]
-    public async Task Add_ValidDto_ReturnsQuestionDto()
+    public async Task Add_ValidDto_ReturnsSuccess()
     {
         // Arrange
         var dto = new AddQuestionDto
@@ -50,7 +50,7 @@ public class QuestionServiceTests
         var result = await _service.Add(dto);
 
         // Assert
-        result.Should().NotBeNull();
+        result.Should().Be(QuestionOperationResult.Success);
         _questionRepoMock.Verify(x => x.Add(It.IsAny<Question>(), It.IsAny<CancellationToken>()), Times.Once);
         _questionRepoMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -61,7 +61,7 @@ public class QuestionServiceTests
 
     [Fact]
     [Trait("Category", TestCategories.Happy)]
-    public async Task Update_ExistsWithChoices_ReturnsUpdatedDto()
+    public async Task Update_ExistsWithChoices_ReturnsSuccess()
     {
         // Arrange
         var dto = new UpdateQuestionDto
@@ -98,7 +98,7 @@ public class QuestionServiceTests
         var result = await _service.Update(dto);
 
         // Assert
-        result.Should().NotBeNull();
+        result.Should().Be(QuestionOperationResult.Success);
         _choiceRepoMock.Verify(x => x.Delete(It.Is<Choice>(c => c.ID == 200)), Times.Once);
         _questionRepoMock.Verify(x => x.Update(It.IsAny<Question>()), Times.Once);
         _questionRepoMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
@@ -106,7 +106,7 @@ public class QuestionServiceTests
 
     [Fact]
     [Trait("Category", TestCategories.Business)]
-    public async Task Update_NotFound_ReturnsNull()
+    public async Task Update_NotFound_ReturnsNotFound()
     {
         // Arrange
         var dto = new UpdateQuestionDto { ID = 999, Body = "Body" };
@@ -119,7 +119,7 @@ public class QuestionServiceTests
         var result = await _service.Update(dto);
 
         // Assert
-        result.Should().BeNull();
+        result.Should().Be(QuestionOperationResult.NotFound);
         _questionRepoMock.Verify(x => x.Update(It.IsAny<Question>()), Times.Never);
     }
 
@@ -155,10 +155,42 @@ public class QuestionServiceTests
         var result = await _service.Update(dto);
 
         // Assert
-        result.Should().NotBeNull();
+        result.Should().Be(QuestionOperationResult.Success);
         existing.Choices.Should().HaveCount(2);
         existing.Choices.First(c => c.ID == 10).Body.Should().Be("Updated");
         existing.Choices.First(c => c.ID == 10).IsCorrect.Should().BeTrue();
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Business)]
+    public async Task Update_QuestionLocked_ReturnsLocked()
+    {
+        // Arrange
+        var dto = new UpdateQuestionDto { ID = 1, Body = "Q" };
+
+        var existingQuestion = new Question { ID = 1 };
+        existingQuestion.ExamQuestions = new List<ExamQuestion>
+        {
+            new ExamQuestion 
+            { 
+                Exam = new Exam 
+                { 
+                    ExamAttempts = new List<ExamAttempt> { new ExamAttempt { ID = 1 } } 
+                },
+                Question = existingQuestion
+            }
+        };
+
+        _questionRepoMock
+            .Setup(x => x.GetByID(1))
+            .Returns(new List<Question> { existingQuestion }.AsQueryable().BuildMock());
+
+        // Act
+        var result = await _service.Update(dto);
+
+        // Assert
+        result.Should().Be(QuestionOperationResult.Locked);
+        _questionRepoMock.Verify(x => x.Update(It.IsAny<Question>()), Times.Never);
     }
 
     #endregion

@@ -28,16 +28,16 @@ public interface IQuestionService
     /// </summary>
     /// <param name="questionDto">The data for the new question.</param>
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>The added <see cref="QuestionDto"/>.</returns>
-    Task<QuestionDto> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default);
+    /// <returns>A <see cref="QuestionOperationResult"/> indicating the result of the operation.</returns>
+    Task<QuestionOperationResult> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing question.
     /// </summary>
     /// <param name="questionDto">The updated question data.</param>
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>The updated <see cref="QuestionDto"/> if successful; otherwise, null.</returns>
-    Task<QuestionDto?> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default);
+    /// <returns>A <see cref="QuestionOperationResult"/> indicating the result of the operation.</returns>
+    Task<QuestionOperationResult> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes the specified questions if they are not linked to any exams.

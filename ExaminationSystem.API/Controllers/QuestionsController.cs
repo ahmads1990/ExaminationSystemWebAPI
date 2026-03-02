@@ -56,12 +56,15 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The added question.</returns>
     [HttpPost]
-    public async Task<ApiResponse<QuestionDto>> Add(AddQuestionRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<object>> Add(AddQuestionRequest request, CancellationToken cancellationToken = default)
     {
         var addQuestionDto = request.Adapt<AddQuestionDto>();
-        var questionDto = await _questionService.Add(addQuestionDto, cancellationToken);
+        var result = await _questionService.Add(addQuestionDto, cancellationToken);
 
-        return new SuccessResponse<QuestionDto>(questionDto);
+        if (result != QuestionOperationResult.Success)
+            return new ErrorResponse<object>(result.ToApiErrorCode());
+
+        return new SuccessResponse<object>(null);
     }
 
     /// <summary>
@@ -71,14 +74,15 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The updated question if successful; otherwise, an error response.</returns>
     [HttpPut]
-    public async Task<ApiResponse<QuestionDto?>> Update(UpdateQuestionRequest request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<object>> Update(UpdateQuestionRequest request, CancellationToken cancellationToken = default)
     {
         var updateQuestionDto = request.Adapt<UpdateQuestionDto>();
-        var questionDto = await _questionService.Update(updateQuestionDto, cancellationToken);
+        var result = await _questionService.Update(updateQuestionDto, cancellationToken);
 
-        return questionDto is null
-            ? new ErrorResponse<QuestionDto?>(ApiErrorCode.QuestionNotFound)
-            : new SuccessResponse<QuestionDto?>(questionDto);
+        if (result != QuestionOperationResult.Success)
+            return new ErrorResponse<object>(result.ToApiErrorCode());
+
+        return new SuccessResponse<object>(null);
     }
 
     /// <summary>
