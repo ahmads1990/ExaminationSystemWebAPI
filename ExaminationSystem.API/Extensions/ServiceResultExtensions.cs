@@ -90,6 +90,7 @@ public static class ServiceResultExtensions
             ExamOperationResult.AlreadyUnpublished => ApiErrorCode.ExamAlreadyUnpublished,
             ExamOperationResult.ExamArchived => ApiErrorCode.ExamArchived,
             ExamOperationResult.NoQuestions => ApiErrorCode.ExamHasNoQuestions,
+            ExamOperationResult.ScoresMismatch => ApiErrorCode.ScoresMismatch,
             ExamOperationResult.HasSubmissions => ApiErrorCode.ExamHasSubmissions,
             ExamOperationResult.ExamPublished => ApiErrorCode.ExamIsPublished,
             _ => ApiErrorCode.InternalServerError

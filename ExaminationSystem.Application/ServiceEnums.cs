@@ -70,6 +70,7 @@ public enum ExamOperationResult
     ExamPublished,
     NoQuestions,
     HasSubmissions,
+    ScoresMismatch,
 }
 
 public enum QuestionOperationResult

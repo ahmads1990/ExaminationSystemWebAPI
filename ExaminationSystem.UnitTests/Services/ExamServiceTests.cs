@@ -116,13 +116,22 @@ public class ExamServiceTests
     {
         // Arrange
         var dto = new PublishExamDto { ID = 1, PublishDate = new DateTime(2026, 6, 1) };
-        var exams = new[] { new { ID = 1, ExamStatus = ExamStatus.Draft, HasQuestions = true } };
 
         _examRepoMock
             .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
             .Returns(new List<Exam>
             {
-                new Exam { ID = 1, ExamStatus = ExamStatus.Draft, ExamQuestions = new List<ExamQuestion> { new ExamQuestion { Exam = null!, Question = null! } }, Course = null! }
+                new Exam
+                {
+                    ID = 1,
+                    ExamStatus = ExamStatus.Draft,
+                    TotalGrade = 10,
+                    ExamQuestions = new List<ExamQuestion>
+                    {
+                        new ExamQuestion { Exam = null!, Question = new Question { Score = 10 } }
+                    },
+                    Course = null!
+                }
             }.AsQueryable().BuildMock());
 
         // Act
@@ -145,7 +154,17 @@ public class ExamServiceTests
             .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
             .Returns(new List<Exam>
             {
-                new Exam { ID = 1, ExamStatus = ExamStatus.Draft, ExamQuestions = new List<ExamQuestion> { new ExamQuestion { Exam = null!, Question = null! } }, Course = null! }
+                new Exam
+                {
+                    ID = 1,
+                    ExamStatus = ExamStatus.Draft,
+                    TotalGrade = 10,
+                    ExamQuestions = new List<ExamQuestion>
+                    {
+                        new ExamQuestion { Exam = null!, Question = new Question { Score = 10 } }
+                    },
+                    Course = null!
+                }
             }.AsQueryable().BuildMock());
 
         Exam? capturedExam = null;
@@ -194,7 +213,17 @@ public class ExamServiceTests
             .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
             .Returns(new List<Exam>
             {
-                new Exam { ID = 1, ExamStatus = ExamStatus.Published, ExamQuestions = new List<ExamQuestion> { new ExamQuestion { Exam = null!, Question = null! } }, Course = null! }
+                new Exam
+                {
+                    ID = 1,
+                    ExamStatus = ExamStatus.Published,
+                    TotalGrade = 10,
+                    ExamQuestions = new List<ExamQuestion>
+                    {
+                        new ExamQuestion { Exam = null!, Question = new Question { Score = 10 } }
+                    },
+                    Course = null!
+                }
             }.AsQueryable().BuildMock());
 
         // Act
@@ -236,7 +265,7 @@ public class ExamServiceTests
             .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
             .Returns(new List<Exam>
             {
-                new Exam { ID = 1, ExamStatus = ExamStatus.Draft, ExamQuestions = new List<ExamQuestion>(), Course = null! }
+                new Exam { ID = 1, ExamStatus = ExamStatus.Draft, TotalGrade = 10, ExamQuestions = new List<ExamQuestion>(), Course = null! }
             }.AsQueryable().BuildMock());
 
         // Act
@@ -244,6 +273,39 @@ public class ExamServiceTests
 
         // Assert
         result.Should().Be(ExamOperationResult.NoQuestions);
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Business)]
+    public async Task Publish_QuestionScoresMismatch_ReturnsScoresMismatch()
+    {
+        // Arrange
+        var dto = new PublishExamDto { ID = 1 };
+
+        _examRepoMock
+            .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
+            .Returns(new List<Exam>
+            {
+                new Exam
+                {
+                    ID = 1,
+                    ExamStatus = ExamStatus.Draft,
+                    TotalGrade = 100,       // expects 100 but questions only sum to 30
+                    ExamQuestions = new List<ExamQuestion>
+                    {
+                        new ExamQuestion { Exam = null!, Question = new Question { Score = 10 } },
+                        new ExamQuestion { Exam = null!, Question = new Question { Score = 20 } }
+                    },
+                    Course = null!
+                }
+            }.AsQueryable().BuildMock());
+
+        // Act
+        var result = await _service.Publish(dto);
+
+        // Assert
+        result.Should().Be(ExamOperationResult.ScoresMismatch);
+        _examRepoMock.Verify(x => x.SaveInclude(It.IsAny<Exam>(), It.IsAny<string[]>()), Times.Never);
     }
 
     #endregion

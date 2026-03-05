@@ -116,7 +116,14 @@ public class ExamService : IExamService
     public async Task<ExamOperationResult> Publish(PublishExamDto dto, CancellationToken cancellationToken = default)
     {
         var exam = await _examRepository.GetByCondition(e => e.ID == dto.ID)
-                                        .Select(e => new { e.ID, e.ExamStatus, HasQuestions = e.ExamQuestions.Any() })
+                                        .Select(e => new
+                                        {
+                                            e.ID,
+                                            e.ExamStatus,
+                                            e.TotalGrade,
+                                            HasQuestions = e.ExamQuestions.Any(),
+                                            QuestionsScoreSum = e.ExamQuestions.Sum(eq => eq.Question.Score)
+                                        })
                                         .FirstOrDefaultAsync(cancellationToken);
 
         if (exam is null)
@@ -127,6 +134,8 @@ public class ExamService : IExamService
             return ExamOperationResult.AlreadyPublished;
         if (!exam.HasQuestions)
             return ExamOperationResult.NoQuestions;
+        if (exam.QuestionsScoreSum != exam.TotalGrade)
+            return ExamOperationResult.ScoresMismatch;
 
         var examToUpdate = new Exam
         {

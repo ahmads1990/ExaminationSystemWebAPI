@@ -95,27 +95,30 @@ public enum ApiErrorCode
     [ErrorMessage("Cannot publish an exam with no questions")]
     ExamHasNoQuestions = 4011,
 
+    [ErrorMessage("The sum of all question scores does not match the exam's total grade")]
+    ScoresMismatch = 4012,
+
     [ErrorMessage("Cannot unpublish an exam that has student submissions")]
-    ExamHasSubmissions = 4012,
+    ExamHasSubmissions = 4013,
 
     [ErrorMessage("Cannot modify questions on a published exam")]
-    ExamIsPublished = 4013,
+    ExamIsPublished = 4014,
 
     [ErrorMessage("This question is locked because it belongs to an exam with active submissions")]
-    QuestionLocked = 4014,
+    QuestionLocked = 4015,
 
 
     [ErrorMessage("You are not enrolled in this exam's course")]
-    NotEnrolledInCourse = 4015,
+    NotEnrolledInCourse = 4016,
 
     [ErrorMessage("You have reached the maximum number of attempts for this exam")]
-    MaxAttemptsExceeded = 4016,
+    MaxAttemptsExceeded = 4017,
 
     [ErrorMessage("This exam attempt has already been completed")]
-    AttemptAlreadyCompleted = 4017,
+    AttemptAlreadyCompleted = 4018,
 
     [ErrorMessage("You already have an active attempt for this exam")]
-    HasActiveAttempt = 4020,
+    HasActiveAttempt = 4019,
 
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]
