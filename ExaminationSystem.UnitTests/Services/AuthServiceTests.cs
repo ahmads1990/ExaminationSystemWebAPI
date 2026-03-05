@@ -319,7 +319,8 @@ public class AuthServiceTests
 
         _tokenHelperMock.Setup(x => x.GenerateJWT(
             It.IsAny<UserTokenBaseClaims>(),
-            It.IsAny<List<UserClaim>>()))
+            It.IsAny<List<UserClaim>>(),
+            It.IsAny<int>()))
             .Returns("valid.jwt.token");
 
         // Act
@@ -355,7 +356,8 @@ public class AuthServiceTests
         tokens.Should().BeNull();
         _tokenHelperMock.Verify(x => x.GenerateJWT(
             It.IsAny<UserTokenBaseClaims>(),
-            It.IsAny<List<UserClaim>>()), Times.Never);
+            It.IsAny<List<UserClaim>>(),
+            It.IsAny<int>()), Times.Never);
     }
 
     [Fact]
@@ -388,7 +390,8 @@ public class AuthServiceTests
 
         _tokenHelperMock.Setup(x => x.GenerateJWT(
             It.IsAny<UserTokenBaseClaims>(),
-            It.IsAny<List<UserClaim>>()))
+            It.IsAny<List<UserClaim>>(),
+            It.IsAny<int>()))
             .Returns(string.Empty);
 
         // Act

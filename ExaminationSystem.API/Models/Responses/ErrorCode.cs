@@ -35,6 +35,9 @@ public enum ApiErrorCode
     [ErrorMessage("Invalid token")]
     InvalidToken = 1009,
 
+    [ErrorMessage("Your exam time has expired")]
+    ExamTimeout = 1010,
+
     // Validation Errors (2000-2999)
     [ErrorMessage("Validation failed")]
     ValidationFailed = 2000,
@@ -101,6 +104,18 @@ public enum ApiErrorCode
     [ErrorMessage("This question is locked because it belongs to an exam with active submissions")]
     QuestionLocked = 4014,
 
+
+    [ErrorMessage("You are not enrolled in this exam's course")]
+    NotEnrolledInCourse = 4015,
+
+    [ErrorMessage("You have reached the maximum number of attempts for this exam")]
+    MaxAttemptsExceeded = 4016,
+
+    [ErrorMessage("This exam attempt has already been completed")]
+    AttemptAlreadyCompleted = 4017,
+
+    [ErrorMessage("You already have an active attempt for this exam")]
+    HasActiveAttempt = 4020,
 
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]

@@ -10,6 +10,7 @@ using ExaminationSystem.Infrastructure.Services.Auth;
 using ExaminationSystem.Infrastructure.Services.Email;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -112,6 +113,72 @@ public static class InfrastructureServiceExtensions
                 ValidIssuer = jwtConfig.Issuer,
                 ValidAudience = jwtConfig.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtConfig.Key)),
+            };
+            
+            o.Events = new JwtBearerEvents
+            {
+                OnChallenge = async context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = 401;
+                    context.Response.ContentType = "application/json";
+
+                    var isExamEndpoint = context.Request.Path.StartsWithSegments("/api/studentexams");
+                    bool isExpired = context.AuthenticateFailure is SecurityTokenExpiredException;
+
+                    int code = 1007; // Unauthorized
+                    string msg = "You must be logged in to access this resource";
+
+                    if (isExpired)
+                    {
+                        if (isExamEndpoint)
+                        {
+                            code = 1010; // ExamTimeout
+                            msg = "Your exam time has expired";
+                        }
+                        else
+                        {
+                            code = 1006; // ExpiredToken
+                            msg = "Your session has expired. Please login again";
+                        }
+                    }
+                    else if (context.AuthenticateFailure != null)
+                    {
+                        code = 1009; // InvalidToken
+                        msg = "Invalid token";
+                    }
+
+                    var payload = new 
+                    {
+                        success = false,
+                        data = (object?)null,
+                        errorCode = code,
+                        message = msg
+                    };
+
+                    var options = new System.Text.Json.JsonSerializerOptions 
+                    { 
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
+                    };
+                    await context.Response.WriteAsJsonAsync(payload, options);
+                },
+                OnForbidden = async context =>
+                {
+                    context.Response.StatusCode = 403;
+                    context.Response.ContentType = "application/json";
+                    var payload = new 
+                    {
+                        success = false,
+                        data = (object?)null,
+                        errorCode = 1008, // Forbidden
+                        message = "You don't have permission to access this resource"
+                    };
+                    var options = new System.Text.Json.JsonSerializerOptions 
+                    { 
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
+                    };
+                    await context.Response.WriteAsJsonAsync(payload, options);
+                }
             };
         });
 

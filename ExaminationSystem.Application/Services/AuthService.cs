@@ -16,9 +16,13 @@ namespace ExaminationSystem.Application.Services;
 
 public class AuthService : IAuthService
 {
-    #region Fields
+    #region Constants
 
     private const string CacheEmailConfirmationKey = "user:email_confirmation:";
+
+    #endregion
+
+    #region Fields
 
     private readonly IUserService _userService;
     private readonly IInstructorService _instructorService;
@@ -31,6 +35,7 @@ public class AuthService : IAuthService
 
     private readonly string BackendBaseUrl;
     private readonly int RefreshTokenLifeInDays;
+
     #endregion
 
     public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService,
@@ -147,7 +152,7 @@ public class AuthService : IAuthService
         if (result != UserOperationResult.Success)
             return (result, null);
 
-        var jwtToken = await GenerateUserJWT(userId!.Value, cancellationToken);
+        var jwtToken = await GenerateUserJWT(userId!.Value, cancellationToken: cancellationToken);
         if (string.IsNullOrEmpty(jwtToken))
             return (UserOperationResult.TokenGenerationFailed, null);
 
@@ -229,12 +234,28 @@ public class AuthService : IAuthService
         if (storedRefreshToken.TokenHash != hashedToken)
             return (UserOperationResult.InvalidRefreshToken, null);
 
-        var jwtToken = await GenerateUserJWT(userId, cancellationToken);
+        var jwtToken = await GenerateUserJWT(userId, cancellationToken: cancellationToken);
         if (string.IsNullOrEmpty(jwtToken))
             return (UserOperationResult.TokenGenerationFailed, null);
 
         var newRefreshToken = await GenerateRefreshToken(userId, storedRefreshToken.ID, cancellationToken);
         return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
+    }
+
+    public async Task<(UserOperationResult result, string token)> CreateExamAttemptToken(CreateExamTokenDto createTokenDto, CancellationToken cancellationToken = default)
+    {
+        var extraClaims = new List<UserClaim>
+        {
+            new(CustomClaimTypes.ExamAttemptId, createTokenDto.ExamAttemptId.ToString()),
+            new(CustomClaimTypes.ExamStartDate, DateTime.UtcNow.ToString("O")),
+            new(CustomClaimTypes.ExamDeadline, DateTime.UtcNow.AddMinutes(createTokenDto.MaxDurationInMinutes).ToString("O")),
+            new(CustomClaimTypes.Scope, ScopeNames.ExamAnswer)
+        };
+
+        var jwtToken = await GenerateUserJWT(createTokenDto.StudentId, extraClaims, createTokenDto.MaxDurationInMinutes, cancellationToken);
+        return string.IsNullOrEmpty(jwtToken)
+               ? (UserOperationResult.TokenGenerationFailed, string.Empty)
+               : (UserOperationResult.Success, jwtToken);
     }
 
     #endregion
@@ -300,19 +321,16 @@ public class AuthService : IAuthService
     /// <param name="userId">The ID of the user to generate the token for.</param>
     /// <param name="cancellationToken">A cancellation token for the async operation.</param>
     /// <returns>The generated JWT string, or empty if the user's claims are invalid.</returns>
-    private async Task<string> GenerateUserJWT(int userId, CancellationToken cancellationToken = default)
+    private async Task<string> GenerateUserJWT(int userId, List<UserClaim>? extraClaims = default, int expiresInMinutes = 0, CancellationToken cancellationToken = default)
     {
         var userInfo = await _userService.GetUserBasicInfoById(userId, cancellationToken);
+        var userClaims = new List<UserClaim> { new(CustomClaimTypes.Username, userInfo!.Username) };
 
-        var token = _tokenHelper.GenerateJWT(
+        return _tokenHelper.GenerateJWT(
             new UserTokenBaseClaims(userInfo!.ID, userInfo.Role, userInfo.Name, userInfo.Email),
-            new List<UserClaim>
-            {
-                new(CustomClaimTypes.Username, userInfo.Username)
-            }
+            userClaims.Concat(extraClaims ?? Enumerable.Empty<UserClaim>()).ToList(),
+            expiresInMinutes
         );
-
-        return token;
     }
 
     /// <summary>

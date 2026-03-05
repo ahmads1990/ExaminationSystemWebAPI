@@ -1,6 +1,8 @@
+using ExaminationSystem.API.Authorization;
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Middlewares;
 using ExaminationSystem.Application;
+using ExaminationSystem.Application.Common;
 using ExaminationSystem.Infrastructure;
 using FluentValidation.AspNetCore;
 using Hangfire;
@@ -65,6 +67,14 @@ builder.Services
 builder.Services
     .AddFluentValidation();
 
+// Add Authorization Policies
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, ScopeHandler>();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(PolicyNames.ExamAnswer,
+        policy => policy.Requirements.Add(new ScopeRequirement(ScopeNames.ExamAnswer)));
+});
+
 // Add Response Compression
 builder.Services.AddResponseCompression(options =>
 {
@@ -86,12 +96,8 @@ builder.Services.Configure<GzipCompressionProviderOptions>(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-// Middleware order is critical!
-
-// 1. Response Compression - FIRST to compress all responses including errors
 app.UseResponseCompression();
 
-// 2. Global Exception Handler - Catch all unhandled exceptions
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -109,7 +115,6 @@ app.UseHangfireDashboard("/hangfire");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 3. Transaction Middleware - LAST before controllers (only wraps business logic)
 app.UseMiddleware<TransactionMiddleware>();
 
 app.MapControllers();

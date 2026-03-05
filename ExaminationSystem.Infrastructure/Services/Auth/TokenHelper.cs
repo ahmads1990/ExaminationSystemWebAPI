@@ -41,7 +41,7 @@ public class TokenHelper : ITokenHelper
     /// <param name="baseUserClaims">Required claims</param>
     /// <param name="userClaims"></param>
     /// <returns></returns>
-    public string GenerateJWT(UserTokenBaseClaims baseUserClaims, List<UserClaim> userClaims)
+    public string GenerateJWT(UserTokenBaseClaims baseUserClaims, List<UserClaim> userClaims, int expiresInMinutes = 0)
     {
         // Validate base user claims
         if (baseUserClaims.AreClaimsInValid())
@@ -64,12 +64,16 @@ public class TokenHelper : ITokenHelper
         var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key));
         var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
 
+        var expirationDate = expiresInMinutes > 0
+            ? DateTime.UtcNow.AddMinutes(expiresInMinutes)
+            : DateTime.UtcNow.AddHours(_jwtConfig.DurationInHours);
+
         // Create the JWT token
         var jwtSecurityToken = new JwtSecurityToken(
             issuer: _jwtConfig.Issuer,
             audience: _jwtConfig.Audience,
             claims: allClaims,
-            expires: DateTime.UtcNow.AddHours(_jwtConfig.DurationInHours),
+            expires: expirationDate,
             signingCredentials: signingCredentials
         );
 

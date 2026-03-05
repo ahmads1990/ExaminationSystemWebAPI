@@ -110,4 +110,24 @@ public static class ServiceResultExtensions
             _ => ApiErrorCode.InternalServerError
         };
     }
+
+    /// <summary>
+    /// Converts StudentExamAttemptResult to ApiErrorCode.
+    /// </summary>
+    public static ApiErrorCode ToApiErrorCode(this StudentExamAttemptResult result)
+    {
+        return result switch
+        {
+            StudentExamAttemptResult.Success => ApiErrorCode.None,
+            StudentExamAttemptResult.ExamNotFound => ApiErrorCode.ExamNotFound,
+            StudentExamAttemptResult.StudentNotFound => ApiErrorCode.StudentNotFound,
+            StudentExamAttemptResult.ExamNotPublished => ApiErrorCode.ExamNotPublished,
+            StudentExamAttemptResult.ExamDeadlinePassed => ApiErrorCode.ExamDeadlinePassed,
+            StudentExamAttemptResult.MaxAttemptsExceeded => ApiErrorCode.MaxAttemptsExceeded,
+            StudentExamAttemptResult.NotEnrolled => ApiErrorCode.NotEnrolledInCourse,
+            StudentExamAttemptResult.HasActiveAttempt => ApiErrorCode.HasActiveAttempt,
+            StudentExamAttemptResult.AttemptAlreadyCompleted => ApiErrorCode.AttemptAlreadyCompleted,
+            _ => ApiErrorCode.InternalServerError
+        };
+    }
 }

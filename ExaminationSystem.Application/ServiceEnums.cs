@@ -79,3 +79,17 @@ public enum QuestionOperationResult
     Locked,
     ValidationFailed
 }
+
+public enum StudentExamAttemptResult
+{
+    Success,
+    ExamNotFound,
+    StudentNotFound,
+    ExamNotPublished,
+    ExamDeadlinePassed,
+    MaxAttemptsExceeded,
+    NotEnrolled,
+    HasActiveAttempt,
+    AttemptAlreadyCompleted,
+    UnknownError
+}
