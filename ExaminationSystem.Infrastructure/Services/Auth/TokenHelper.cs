@@ -13,16 +13,21 @@ namespace ExaminationSystem.Infrastructure.Services.Auth;
 
 public class TokenHelper : ITokenHelper
 {
-    #region Fields
+    #region Constants
 
     private const int OTP_LENGTH = 6;
     private const int REFRESH_TOKEN_LENGTH = 32;
+
+    #endregion
+
+    #region Fields
+
     private readonly string SECRET_KEY;
     private readonly JwtConfig _jwtConfig;
 
     #endregion
 
-    #region Constructor
+    #region Constructors
 
     public TokenHelper(IOptions<JwtConfig> jwtOptions, IConfiguration configuration)
     {
@@ -35,12 +40,7 @@ public class TokenHelper : ITokenHelper
 
     #region Public Methods
 
-    /// <summary>
-    /// Generates a JWT token based on the provided user claims.
-    /// </summary>
-    /// <param name="baseUserClaims">Required claims</param>
-    /// <param name="userClaims"></param>
-    /// <returns></returns>
+    /// <inheritdoc />
     public string GenerateJWT(UserTokenBaseClaims baseUserClaims, List<UserClaim> userClaims, int expiresInMinutes = 0)
     {
         // Validate base user claims
@@ -81,19 +81,13 @@ public class TokenHelper : ITokenHelper
         return new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
     }
 
-    /// <summary>
-    /// Generates a new refresh token as a random string suitable for authentication scenarios.
-    /// </summary>
-    /// <returns>A string containing the newly generated refresh token.</returns>
+    /// <inheritdoc />
     public string GenerateRefreshToken()
     {
         return GenerateOTP(REFRESH_TOKEN_LENGTH);
     }
 
-    /// <summary>
-    /// Generates a one-time password (OTP) using the configured secret key and specified length.
-    /// </summary>
-    /// <returns>A string containing the generated OTP of the specified length.</returns>
+    /// <inheritdoc />
     public string GenerateOTP(int length = OTP_LENGTH)
     {
         var totp = new Totp(Encoding.UTF8.GetBytes(SECRET_KEY), totpSize: length);

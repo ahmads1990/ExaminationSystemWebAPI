@@ -17,17 +17,34 @@ namespace ExaminationSystem.API.Controllers;
 [Route("api/[controller]")]
 public class StudentExamsController : BaseController
 {
+    #region Fields
+
     private readonly IStudentExamService _studentExamService;
 
+    #endregion
+
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StudentExamsController"/> class.
+    /// </summary>
+    /// <param name="studentExamService">The student exam service.</param>
     public StudentExamsController(IStudentExamService studentExamService)
     {
         _studentExamService = studentExamService;
     }
 
+    #endregion
+
+    #region Public Methods
+
     /// <summary>
     /// Starts a new exam attempt for the current student.
     /// Returns an exam-scoped access token on success.
     /// </summary>
+    /// <param name="request">The start exam attempt request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response with the exam access token, or an error response.</returns>
     [HttpPost("start")]
     public async Task<ApiResponse<string>> StartExamAttempt([FromBody] StartExamAttemptRequest request, CancellationToken cancellationToken = default)
     {
@@ -44,6 +61,8 @@ public class StudentExamsController : BaseController
     /// Gets the exam questions for the current attempt (no IsCorrect).
     /// Requires the exam-scoped JWT (exam:answer scope).
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response with the list of questions, or an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpGet("questions")]
     public async Task<ApiResponse<List<ExamQuestionDto>>> GetExamQuestions(CancellationToken cancellationToken = default)
@@ -62,6 +81,9 @@ public class StudentExamsController : BaseController
     /// Submits a single answer for the current exam attempt.
     /// Requires the exam-scoped JWT (exam:answer scope).
     /// </summary>
+    /// <param name="answer">The answer to submit.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response if the answer was submitted, otherwise an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpPost("answer")]
     public async Task<ApiResponse<string>> SubmitAnswer([FromBody] SubmitAnswerDto answer, CancellationToken cancellationToken = default)
@@ -80,6 +102,9 @@ public class StudentExamsController : BaseController
     /// Submits multiple answers for the current exam attempt.
     /// Requires the exam-scoped JWT (exam:answer scope).
     /// </summary>
+    /// <param name="answers">The list of answers to submit.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response if all answers were submitted, otherwise an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpPost("answers")]
     public async Task<ApiResponse<string>> SubmitAnswers([FromBody] List<SubmitAnswerDto> answers, CancellationToken cancellationToken = default)
@@ -98,6 +123,8 @@ public class StudentExamsController : BaseController
     /// Closes the current exam attempt, marking it as completed.
     /// Requires the exam-scoped JWT (exam:answer scope).
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response if the attempt was closed, otherwise an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpPost("submit-attempt")]
     public async Task<ApiResponse<string>> SubmitAttempt(CancellationToken cancellationToken = default)
@@ -112,11 +139,14 @@ public class StudentExamsController : BaseController
             : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 
+    #endregion
+
     #region Private Methods
 
     /// <summary>
     /// Extracts the ExamAttemptId from the current user's JWT claims.
     /// </summary>
+    /// <returns>The exam attempt identifier if found, otherwise null.</returns>
     private int? GetExamAttemptId()
     {
         var claimValue = User.FindFirst(CustomClaimTypes.ExamAttemptId)?.Value;

@@ -12,19 +12,33 @@ namespace ExaminationSystem.API.Controllers;
 /// </summary>
 public class QuestionsController : BaseController
 {
+    #region Fields
+
     private readonly IQuestionService _questionService;
 
+    #endregion
+
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="QuestionsController"/> class.
+    /// </summary>
+    /// <param name="questionService">The question service.</param>
     public QuestionsController(IQuestionService questionService) : base()
     {
         _questionService = questionService;
     }
 
+    #endregion
+
+    #region Public Methods
+
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of questions.
     /// </summary>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="request">The listing and filtering request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paginated list of questions.</returns>
     [HttpGet]
     public async Task<PaginatedResponse<QuestionDto>> List([FromQuery] ListQuestionsRequest request, CancellationToken cancellationToken = default)
     {
@@ -55,7 +69,7 @@ public class QuestionsController : BaseController
     /// </summary>
     /// <param name="request">The request model containing question details.</param>
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>The added question.</returns>
+    /// <returns>The added question results.</returns>
     [HttpPost]
     public async Task<ApiResponse<object>> Add(AddQuestionRequest request, CancellationToken cancellationToken = default)
     {
@@ -73,7 +87,7 @@ public class QuestionsController : BaseController
     /// </summary>
     /// <param name="request">The request model containing updated question details.</param>
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>The updated question if successful; otherwise, an error response.</returns>
+    /// <returns>The update results.</returns>
     [HttpPut]
     public async Task<ApiResponse<object>> Update(UpdateQuestionRequest request, CancellationToken cancellationToken = default)
     {
@@ -90,6 +104,7 @@ public class QuestionsController : BaseController
     /// Deletes questions by their IDs.
     /// </summary>
     /// <param name="idsToDelete">A list of question IDs to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response if all questions were deleted; otherwise, a failure response with the IDs that could not be deleted.</returns>
     [HttpDelete]
     public async Task<ApiResponse<object>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
@@ -103,4 +118,6 @@ public class QuestionsController : BaseController
 
         return new SuccessResponse<object>(null);
     }
+
+    #endregion
 }

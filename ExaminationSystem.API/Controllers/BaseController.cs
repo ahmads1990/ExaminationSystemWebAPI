@@ -10,6 +10,19 @@ namespace ExaminationSystem.API.Controllers;
 [Produces("application/json")]
 public class BaseController : ControllerBase
 {
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BaseController"/> class.
+    /// </summary>
+    public BaseController()
+    {
+    }
+
+    #endregion
+
+    #region Public Methods
+
     /// <summary>
     /// Gets the unique identifier of the currently authenticated user.
     /// Returns <c>null</c> if the user is not authenticated or the ID claim is missing.
@@ -28,10 +41,5 @@ public class BaseController : ControllerBase
     /// </summary>
     public bool IsAuthenticated => User.Identity?.IsAuthenticated ?? false;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="BaseController"/> class.
-    /// </summary>
-    public BaseController()
-    {
-    }
+    #endregion
 }

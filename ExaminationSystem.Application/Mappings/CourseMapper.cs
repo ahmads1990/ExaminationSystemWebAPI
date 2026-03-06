@@ -3,8 +3,17 @@ using ExaminationSystem.Domain.Entities;
 
 namespace ExaminationSystem.Application.Mappings;
 
+/// <summary>
+/// Configures mapping rules for Course entities.
+/// </summary>
 public class CourseMapper : IRegister
 {
+    #region Public Methods
+
+    /// <summary>
+    /// Registers mapping configurations for Course entities.
+    /// </summary>
+    /// <param name="config">The type adapter configuration.</param>
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<Course, CourseDto>()
@@ -12,4 +21,6 @@ public class CourseMapper : IRegister
                 ? src.Instructor.AppUser.Name
                 : null);
     }
+
+    #endregion
 }

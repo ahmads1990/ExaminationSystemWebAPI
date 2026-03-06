@@ -16,7 +16,7 @@ public class CourseService : ICourseService
 
     #endregion
 
-    #region Constructor
+    #region Constructors
 
     public CourseService(IRepository<Course> courseRepository)
     {
@@ -126,7 +126,7 @@ public class CourseService : ICourseService
     /// Checks if the specified instructor has reached the maximum number of allowed courses.
     /// </summary>
     /// <param name="instructorId">The unique identifier of the instructor.</param>
-    /// <param name="cancellationToken">A token to observe while waiting for the task to complete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><see langword="true"/> if the instructor has reached or exceeded the limit; otherwise, <see langword="false"/>.</returns>
     private async Task<bool> HasInstructorExceededCourseLimit(int instructorId, CancellationToken cancellationToken = default)
     {
@@ -137,12 +137,9 @@ public class CourseService : ICourseService
     /// <summary>
     /// Applies search filters to the specified course query based on the criteria provided in the filter DTO.
     /// </summary>
-    /// <remarks>Filters are applied only for criteria that are set in the filter DTO. The returned query is
-    /// not executed until enumerated, allowing for further composition or deferred execution.</remarks>
     /// <param name="query">The initial queryable collection of courses to filter.</param>
-    /// <param name="listDto">An object containing search criteria such as title, description, and instructor ID to apply to the query. Cannot
-    /// be null.</param>
-    /// <returns>An IQueryable<Course> representing the filtered set of courses that match the specified criteria.</returns>
+    /// <param name="listDto">An object containing search criteria.</param>
+    /// <returns>An IQueryable of Course representing the filtered set of courses.</returns>
     private IQueryable<Course> ApplySearchFilters(IQueryable<Course> query, ListCoursesDto listDto)
     {
         if (!string.IsNullOrEmpty(listDto.Title))

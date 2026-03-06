@@ -15,7 +15,13 @@ namespace ExaminationSystem.API.Controllers;
 [Authorize(Roles = Constants.InstructorRoleName)]
 public class CoursesController : BaseController
 {
+    #region Fields
+
     private readonly ICourseService _courseService;
+
+    #endregion
+
+    #region Constructors
 
     /// <summary>
     /// Creates a new instance of <see cref="CoursesController"/>.
@@ -26,6 +32,16 @@ public class CoursesController : BaseController
         _courseService = courseService;
     }
 
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// Lists courses based on the provided search and pagination criteria.
+    /// </summary>
+    /// <param name="request">The listing and filtering request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paginated list of courses.</returns>
     [HttpGet]
     [Authorize]
     public async Task<PaginatedResponse<CourseDto>> List([FromQuery] ListCoursesRequest request, CancellationToken cancellationToken = default)
@@ -104,4 +120,6 @@ public class CoursesController : BaseController
              ? new SuccessResponse<string>(string.Empty)
              : new ErrorResponse<string>(result.ToApiErrorCode());
     }
+
+    #endregion
 }

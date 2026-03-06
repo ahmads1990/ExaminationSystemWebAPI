@@ -6,13 +6,24 @@ namespace ExaminationSystem.Application.Services;
 
 public class CurrentUserService : ICurrentUserService
 {
+    #region Fields
+
     private readonly IHttpContextAccessor _httpContextAccessor;
+
+    #endregion
+
+    #region Constructors
 
     public CurrentUserService(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
     }
 
+    #endregion
+
+    #region Public Methods
+
+    /// <inheritdoc />
     public int? UserId
     {
         get
@@ -22,6 +33,7 @@ public class CurrentUserService : ICurrentUserService
         }
     }
 
+    /// <inheritdoc />
     public bool IsAuthenticated
     {
         get
@@ -32,4 +44,6 @@ public class CurrentUserService : ICurrentUserService
                        .IsAuthenticated ?? false;
         }
     }
+
+    #endregion
 }

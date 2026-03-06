@@ -7,15 +7,24 @@ namespace ExaminationSystem.Application.Services;
 
 public class StudentService : IStudentService
 {
+    #region Fields
+
     private readonly IRepository<Student> _studentsRepo;
+
+    #endregion
+
+    #region Constructors
 
     public StudentService(IRepository<Student> studentsRepo)
     {
         _studentsRepo = studentsRepo;
     }
 
+    #endregion
+
     #region Public Methods
 
+    /// <inheritdoc />
     public async Task<UserOperationResult> AddAsync(AddStudentDto studentDto, CancellationToken cancellationToken = default)
     {
         // Validate the required fields

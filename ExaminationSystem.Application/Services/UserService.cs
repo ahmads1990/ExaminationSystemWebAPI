@@ -10,8 +10,14 @@ namespace ExaminationSystem.Application.Services;
 
 public class UserService : IUserService
 {
+    #region Fields
+
     private readonly IRepository<AppUser> _userRepository;
     private readonly IPasswordHelper _passwordHelper;
+
+    #endregion
+
+    #region Constructors
 
     public UserService(IRepository<AppUser> userRepository, IPasswordHelper passwordHelper)
     {
@@ -19,14 +25,11 @@ public class UserService : IUserService
         _passwordHelper = passwordHelper;
     }
 
+    #endregion
+
     #region Public Methods
 
-    /// <summary>
-    /// Adds a new user to the system after validating the input and ensuring email uniqueness.
-    /// </summary>
-    /// <param name="userDto"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <inheritdoc />
     public async Task<(UserOperationResult Result, int Id)> AddAsync(AddUserDto userDto, CancellationToken cancellationToken = default)
     {
         // Validate required fields
@@ -55,12 +58,7 @@ public class UserService : IUserService
         return (UserOperationResult.Success, user.ID);
     }
 
-    /// <summary>
-    /// Gets user information for login by validating credentials.
-    /// </summary>
-    /// <param name="userLoginDto"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <inheritdoc />
     public async Task<(UserOperationResult Result, int? Id)> VerifyUserPassword(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
     {
         // Find user by email and hashed password
@@ -73,13 +71,7 @@ public class UserService : IUserService
           : (UserOperationResult.InvalidCredentials, null);
     }
 
-    /// <summary>
-    /// Asynchronously retrieves basic information for a user identified by the specified user ID.
-    /// </summary>
-    /// <param name="userId">The unique identifier of the user whose basic information is to be retrieved.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-    /// <returns>A <see cref="UserBasicInfoDto"/> object containing the user's basic information if found; otherwise, <see
-    /// langword="null"/>.</returns>
+    /// <inheritdoc />
     public async Task<UserBasicInfoDto?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default)
     {
         return await _userRepository.GetByCondition(u => u.ID == userId)
@@ -87,15 +79,7 @@ public class UserService : IUserService
                                               .FirstOrDefaultAsync();
     }
 
-    /// <summary>
-    /// Confirms the email address for the specified user if it has not already been confirmed.
-    /// </summary>
-    /// <param name="userId">The unique identifier of the user whose email address is to be confirmed.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-    /// <returns>A value indicating the result of the email confirmation attempt. Returns <see
-    /// cref="UserEmailVerificationResult.Success"/> if the email was successfully confirmed; <see
-    /// cref="UserEmailVerificationResult.AlreadyConfirmed"/> if the email was already confirmed; or <see
-    /// cref="UserEmailVerificationResult.UserNotFound"/> if the user does not exist.</returns>
+    /// <inheritdoc />
     public async Task<UserEmailVerificationResult> ConfirmUserEmail(int userId, CancellationToken cancellationToken = default)
     {
         var userData = await _userRepository.GetByCondition(u => u.ID == userId)
@@ -124,11 +108,11 @@ public class UserService : IUserService
     #region Private Methods
 
     /// <summary>
-    /// verifies if the provided email is unique in the DB.
+    /// Verifies if the provided email is unique in the database.
     /// </summary>
-    /// <param name="email"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="email">The email to check.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if the email is unique, otherwise false.</returns>
     private async Task<bool> IsUserEmailUnique(string email, CancellationToken cancellationToken = default)
     {
         var userExist = await _userRepository.CheckExistsByCondition(u => u.Email.Equals(email), cancellationToken);

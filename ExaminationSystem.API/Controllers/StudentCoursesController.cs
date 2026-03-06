@@ -20,12 +20,26 @@ namespace ExaminationSystem.API.Controllers;
 [Route("api/[controller]")]
 public class StudentCoursesController : BaseController
 {
+    #region Fields
+
     private readonly IStudentCourseService _studentCourseService;
 
+    #endregion
+
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StudentCoursesController"/> class.
+    /// </summary>
+    /// <param name="studentCourseService">The student course service.</param>
     public StudentCoursesController(IStudentCourseService studentCourseService)
     {
         _studentCourseService = studentCourseService;
     }
+
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// Returns the authenticated student's enrolled courses.
@@ -41,6 +55,9 @@ public class StudentCoursesController : BaseController
     /// <item><description><c>CreatedDate</c> (default)</description></item>
     /// </list>
     /// </remarks>
+    /// <param name="request">The listing and filtering request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paginated list of the student's own enrollments.</returns>
     /// <response code="200">The paginated list of enrolled courses.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="403">User is not a student.</response>
@@ -71,6 +88,9 @@ public class StudentCoursesController : BaseController
     /// </list>
     /// </remarks>
     /// <param name="studentId">The identifier of the student.</param>
+    /// <param name="request">The listing and filtering request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paginated list of the specified student's enrollments.</returns>
     /// <response code="200">The paginated list of the student's enrollments.</response>
     /// <response code="401">User is not authenticated.</response>
     /// <response code="403">User is not an instructor.</response>
@@ -97,6 +117,9 @@ public class StudentCoursesController : BaseController
     /// <item><description>The maximum allowed enrollments is exceeded.</description></item>
     /// </list>
     /// </remarks>
+    /// <param name="request">The enrollment request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response if enrollment succeeded, otherwise an error response.</returns>
     /// <response code="200">Enrollment succeeded.</response>
     /// <response code="400">Enrollment failed due to a business rule.</response>
     /// <response code="401">User is not authenticated.</response>
@@ -113,4 +136,6 @@ public class StudentCoursesController : BaseController
             ? new SuccessResponse<string>("")
             : new ErrorResponse<string>(result.ToApiErrorCode());
     }
+
+    #endregion
 }

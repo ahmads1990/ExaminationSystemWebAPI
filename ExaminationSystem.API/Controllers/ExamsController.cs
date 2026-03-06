@@ -8,21 +8,38 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ExaminationSystem.API.Controllers;
 
+/// <summary>
+/// Controller for managing exams, including CRUD operations, publishing, and question assignment.
+/// </summary>
 public class ExamsController : BaseController
 {
+    #region Fields
+
     private readonly IExamService _examService;
 
+    #endregion
+
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ExamsController"/> class.
+    /// </summary>
+    /// <param name="examService">The exam service.</param>
     public ExamsController(IExamService examService)
     {
         _examService = examService;
     }
 
+    #endregion
+
+    #region Public Methods
+
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of exams.
     /// </summary>
     /// <param name="request">The search, pagination, and sorting criteria.</param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paginated response containing the list of exams.</returns>
     [HttpGet]
     public async Task<PaginatedResponse<ExamListDto>> List([FromQuery] ListExamsRequest request, CancellationToken cancellationToken = default)
     {
@@ -35,9 +52,9 @@ public class ExamsController : BaseController
     /// <summary>
     /// Retrieves the details of a specific exam by its ID.
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="id">The exam identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The exam details if found, otherwise an error response.</returns>
     [HttpGet]
     public async Task<ApiResponse<ExamDto?>> GetDetails(int id, CancellationToken cancellationToken = default)
     {
@@ -52,7 +69,7 @@ public class ExamsController : BaseController
     /// Adds new exam.
     /// </summary>
     /// <param name="request">The exam creation request.</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with the new exam ID, or an error response.</returns>
     [HttpPost]
     public async Task<ApiResponse<int>> Add(AddExamRequest request, CancellationToken cancellationToken = default)
@@ -69,7 +86,7 @@ public class ExamsController : BaseController
     /// Updates an existing exam's settings.
     /// </summary>
     /// <param name="request">The request containing updated exam data.</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
     [HttpPut]
     public async Task<ApiResponse<string>> Update(UpdateExamRequest request, CancellationToken cancellationToken = default)
@@ -85,9 +102,9 @@ public class ExamsController : BaseController
     /// <summary>
     /// Deletes exams by their IDs.
     /// </summary>
-    /// <param name="idsToDelete"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="idsToDelete">List of exam IDs to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response if all exams were deleted, otherwise an error response.</returns>
     [HttpDelete]
     public async Task<ApiResponse<object>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
     {
@@ -106,7 +123,7 @@ public class ExamsController : BaseController
     /// If no publish date is provided, it defaults to now.
     /// </summary>
     /// <param name="publishExamRequest">The publish request containing the exam ID and optional publish date.</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
     [HttpPatch]
     public async Task<ApiResponse<string>> Publish(PublishExamRequest publishExamRequest, CancellationToken cancellationToken = default)
@@ -124,7 +141,7 @@ public class ExamsController : BaseController
     /// Unpublishes an exam, reverting it to draft status and clearing its publish date.
     /// </summary>
     /// <param name="id">The ID of the exam to unpublish.</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
     [HttpPatch]
     public async Task<ApiResponse<string>> UnPublish(int id, CancellationToken cancellationToken = default)
@@ -140,7 +157,7 @@ public class ExamsController : BaseController
     /// Assigns questions to an exam. Returns a list of rejected questions with reasons.
     /// </summary>
     /// <param name="request">The exam ID and question IDs to assign.</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
     [HttpPatch]
     public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> AssignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
@@ -157,7 +174,7 @@ public class ExamsController : BaseController
     /// Unassigns questions from an exam. Returns a list of rejected questions with reasons.
     /// </summary>
     /// <param name="request">The exam ID and question IDs to unassign.</param>
-    /// <param name="cancellationToken"></param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
     [HttpPatch]
     public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> UnassignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
@@ -169,4 +186,6 @@ public class ExamsController : BaseController
             ? new SuccessResponse<IEnumerable<RejectedEntityDto>>(rejected)
             : new ErrorResponse<IEnumerable<RejectedEntityDto>>(result.ToApiErrorCode());
     }
+
+    #endregion
 }

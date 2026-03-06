@@ -10,46 +10,47 @@ public interface IQuestionService
     /// <summary>
     /// Retrieves a paginated, sorted, and filtered list of questions.
     /// </summary>
-    /// <param name="listDto"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <param name="listDto">The search, pagination, and sorting criteria.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A tuple containing the list of questions and the total count.</returns>
     Task<(IEnumerable<QuestionDto> Data, int TotalCount)> GetAll(ListQuestionsDto listDto, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves a single question by its unique identifier.
+    /// Retrieves a single question by its identifier.
     /// </summary>
-    /// <param name="id">The unique identifier of the question.</param>
-    /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>A <see cref="QuestionDto"/> if found; otherwise, null.</returns>
+    /// <param name="id">The question identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The question details if found, otherwise null.</returns>
     Task<QuestionDto?> GetByID(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a new question to a question bank.
+    /// Adds a new question.
     /// </summary>
     /// <param name="questionDto">The data for the new question.</param>
-    /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>A <see cref="QuestionOperationResult"/> indicating the result of the operation.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The operation result.</returns>
     Task<QuestionOperationResult> Add(AddQuestionDto questionDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing question.
     /// </summary>
     /// <param name="questionDto">The updated question data.</param>
-    /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>A <see cref="QuestionOperationResult"/> indicating the result of the operation.</returns>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The operation result.</returns>
     Task<QuestionOperationResult> Update(UpdateQuestionDto questionDto, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes the specified questions if they are not linked to any exams.
+    /// Deletes the specified questions.
     /// </summary>
-    /// <param name="idsToDelete">A list of question IDs to delete.</param>
-    /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
-    /// <returns>A list of question IDs that could not be deleted (e.g., linked to exams).</returns>
+    /// <param name="idsToDelete">List of question IDs to delete.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A collection of IDs that could not be deleted.</returns>
     Task<IEnumerable<int>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Persists changes made in the service to the underlying data store.
     /// </summary>
-    /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
     Task SaveChanges(CancellationToken cancellationToken = default);
 }

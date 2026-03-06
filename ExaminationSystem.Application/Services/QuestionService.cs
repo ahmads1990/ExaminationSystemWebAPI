@@ -10,14 +10,22 @@ namespace ExaminationSystem.Application.Services;
 /// <inheritdoc/>
 public class QuestionService : IQuestionService
 {
+    #region Fields
+
     private readonly IRepository<Question> _questionRepository;
     private readonly IRepository<Choice> _choiceRepository;
+
+    #endregion
+
+    #region Constructors
 
     public QuestionService(IRepository<Question> questionRepository, IRepository<Choice> choiceRepository)
     {
         _questionRepository = questionRepository;
         _choiceRepository = choiceRepository;
     }
+
+    #endregion
 
     #region Public Methods
 
@@ -158,11 +166,9 @@ public class QuestionService : IQuestionService
     /// <summary>
     /// Applies search filters to a collection of questions based on the specified criteria.
     /// </summary>
-    /// <remarks>Filters are applied for exam association and question body text. The returned query can be
-    /// further composed or executed as needed.</remarks>
     /// <param name="query">The queryable collection of questions to filter.</param>
-    /// <param name="listDto">The search criteria used to filter the questions. Cannot be null.</param>
-    /// <returns>An IQueryable<Question> containing questions that match the specified search filters.</returns>
+    /// <param name="listDto">The search criteria used to filter the questions.</param>
+    /// <returns>An IQueryable of Question containing questions that match the specified search filters.</returns>
     private IQueryable<Question> ApplySearchFilters(IQueryable<Question> query, ListQuestionsDto listDto)
     {
         if (listDto.ExamID.HasValue)

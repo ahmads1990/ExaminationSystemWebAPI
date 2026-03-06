@@ -38,6 +38,8 @@ public class AuthService : IAuthService
 
     #endregion
 
+    #region Constructors
+
     public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService,
         ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient, ICachingService cachingService,
         IRepository<RefreshToken> refreshTokenRepo, IPasswordHelper passwordHelper, IConfiguration configuration)
@@ -60,20 +62,11 @@ public class AuthService : IAuthService
         RefreshTokenLifeInDays = parsedResult;
     }
 
+    #endregion
+
     #region Public Methods
 
-    /// <summary>
-    /// Registers a new instructor and returns a result with a token if successful.
-    /// </summary>
-    /// <param name="registerInstructorDto">Instructor registration data.</param>
-    /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>
-    /// A tuple with:
-    /// <list type="bullet">
-    ///   <item><description>The operation result.</description></item>
-    ///   <item><description>A JWT token if successful, otherwise empty.</description></item>
-    /// </list>
-    /// </returns>
+    /// <inheritdoc />
     public async Task<(UserOperationResult Result, int Id)> RegisterInstructorAsync(RegisterInstructorDto registerInstructorDto, CancellationToken cancellationToken = default)
     {
         // Prepare user dto
@@ -104,12 +97,7 @@ public class AuthService : IAuthService
         return (UserOperationResult.Success, userId);
     }
 
-    /// <summary>
-    /// Registers a new student and returns a result with a token if successful.
-    /// </summary>
-    /// <param name="registerStudentDto"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <inheritdoc />
     public async Task<(UserOperationResult Result, int Id)> RegisterStudentAsync(RegisterStudentDto registerStudentDto, CancellationToken cancellationToken = default)
     {
         // Prepare user dto
@@ -140,12 +128,7 @@ public class AuthService : IAuthService
         return (UserOperationResult.Success, userId);
     }
 
-    /// <summary>
-    /// Logins a user and returns a result with a token if successful.
-    /// </summary>
-    /// <param name="userLoginDto"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
+    /// <inheritdoc />
     public async Task<(UserOperationResult Result, UserTokensDto? tokensDto)> LoginAsync(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
     {
         var (result, userId) = await _userService.VerifyUserPassword(userLoginDto, cancellationToken);
@@ -160,15 +143,7 @@ public class AuthService : IAuthService
         return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
     }
 
-    /// <summary>
-    /// Verifies a user's email address using the provided confirmation token.
-    /// </summary>
-    /// <param name="userId">The unique identifier of the user whose email address is being verified.</param>
-    /// <param name="token">The email confirmation token to validate against the user's pending verification.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-    /// <returns>A value indicating the result of the email verification attempt. Returns <see
-    /// cref="UserEmailVerificationResult.Success"/> if the email was successfully verified; otherwise, returns a value
-    /// indicating the reason for failure, such as an expired or invalid token.</returns>
+    /// <inheritdoc />
     public async Task<UserEmailVerificationResult> VerifyEmailAsync(int userId, string token, CancellationToken cancellationToken = default)
     {
         var userOtp = await _cachingService.GetAsync(CacheEmailConfirmationKey + userId, cancellationToken);
@@ -188,14 +163,7 @@ public class AuthService : IAuthService
         return UserEmailVerificationResult.Success;
     }
 
-    /// <summary>
-    /// Refreshes the email verification token for the specified user and schedules a welcome email to be sent with the
-    /// new token.
-    /// </summary>
-    /// <param name="userId">The unique identifier of the user whose email verification token will be refreshed.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if the user specified by <paramref name="userId"/> does not exist.</exception>
+    /// <inheritdoc />
     public async Task<UserEmailVerificationResult> RefreshUserEmailVerificationToken(int userId, CancellationToken cancellationToken = default)
     {
         // Simply remove the existing token from cache to allow regeneration
@@ -211,13 +179,7 @@ public class AuthService : IAuthService
         return UserEmailVerificationResult.EmailJobSent;
     }
 
-    /// <summary>
-    /// Validates the provided refresh token and issues a new JWT and refresh token pair.
-    /// </summary>
-    /// <param name="userId">The ID of the user requesting a token refresh.</param>
-    /// <param name="refreshToken">The current refresh token to validate.</param>
-    /// <param name="cancellationToken">A cancellation token for the async operation.</param>
-    /// <returns>A tuple containing the operation result and, if successful, the new token pair.</returns>
+    /// <inheritdoc />
     public async Task<(UserOperationResult result, UserTokensDto? tokensDto)> RefreshUserToken(int userId, string refreshToken, CancellationToken cancellationToken = default)
     {
         var storedRefreshToken = await _refreshTokenRepo
@@ -242,6 +204,7 @@ public class AuthService : IAuthService
         return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
     }
 
+    /// <inheritdoc />
     public async Task<(UserOperationResult result, string token)> CreateExamAttemptToken(CreateExamTokenDto createTokenDto, CancellationToken cancellationToken = default)
     {
         var extraClaims = new List<UserClaim>
@@ -267,6 +230,7 @@ public class AuthService : IAuthService
     /// verification.
     /// </summary>
     /// <param name="userId">The unique identifier of the user for whom the email confirmation token is generated.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A string containing the generated email confirmation token.</returns>
     private async Task<string> CreateEmailConfirmationToken(int userId, CancellationToken cancellationToken = default)
     {
@@ -278,8 +242,10 @@ public class AuthService : IAuthService
     /// <summary>
     /// Enqueues a background job to send a welcome email to the specified recipient.
     /// </summary>
+    /// <param name="userId">The user identifier.</param>
     /// <param name="toName">The display name of the recipient to whom the welcome email will be addressed. Cannot be null or empty.</param>
     /// <param name="toEmail">The email address of the recipient who will receive the welcome email. Cannot be null or empty.</param>
+    /// <param name="otpCode">The verification code.</param>
     private void EnqueueSendWelcomeEmailJob(int userId, string toName, string toEmail, string otpCode)
     {
         var baseUrl = $"{BackendBaseUrl.TrimEnd('/')}/VerifyEmail/token={otpCode}&userId={userId}";
@@ -319,6 +285,8 @@ public class AuthService : IAuthService
     /// Generates a JWT access token for the specified user.
     /// </summary>
     /// <param name="userId">The ID of the user to generate the token for.</param>
+    /// <param name="extraClaims">Optional extra claims to include in the token.</param>
+    /// <param name="expiresInMinutes">Token expiration time in minutes.</param>
     /// <param name="cancellationToken">A cancellation token for the async operation.</param>
     /// <returns>The generated JWT string, or empty if the user's claims are invalid.</returns>
     private async Task<string> GenerateUserJWT(int userId, List<UserClaim>? extraClaims = default, int expiresInMinutes = 0, CancellationToken cancellationToken = default)

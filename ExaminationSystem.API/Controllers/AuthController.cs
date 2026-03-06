@@ -7,14 +7,31 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ExaminationSystem.API.Controllers;
 
+/// <summary>
+/// Controller for authentication and user registration operations.
+/// </summary>
 public class AuthController : BaseController
 {
+    #region Fields
+
     private readonly IAuthService _authService;
 
+    #endregion
+
+    #region Constructors
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthController"/> class with the specified authentication service.
+    /// </summary>
+    /// <param name="authService">The authentication service.</param>
     public AuthController(IAuthService authService)
     {
         _authService = authService;
     }
+
+    #endregion
+
+    #region Public Methods
 
     /// <summary>
     /// Registers a new instructor to the system. A verification email will be sent.
@@ -113,4 +130,6 @@ public class AuthController : BaseController
             ? new SuccessResponse<UserTokensDto>(tokens!)
             : new ErrorResponse<UserTokensDto>(result.ToApiErrorCode());
     }
+
+    #endregion
 }

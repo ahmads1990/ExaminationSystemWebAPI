@@ -13,6 +13,8 @@ namespace ExaminationSystem.Application.Services;
 /// </summary>
 public class StudentExamService : IStudentExamService
 {
+    #region Fields
+
     private readonly IRepository<Exam> _examRepo;
     private readonly IRepository<Student> _studentRepo;
     private readonly IRepository<ExamAttempt> _examAttemptRepo;
@@ -20,6 +22,10 @@ public class StudentExamService : IStudentExamService
     private readonly IRepository<StudentExamsAnswers> _answersRepo;
     private readonly IAuthService _authService;
     private readonly IBackgroundJobClient _backgroundJobClient;
+
+    #endregion
+
+    #region Constructors
 
     public StudentExamService(
         IRepository<Exam> examRepo,
@@ -38,6 +44,8 @@ public class StudentExamService : IStudentExamService
         _authService = authService;
         _backgroundJobClient = backgroundJobClient;
     }
+
+    #endregion
 
     #region Public Methods
 
@@ -163,6 +171,10 @@ public class StudentExamService : IStudentExamService
     /// <summary>
     /// Validates that an attempt exists, belongs to the student, and is still in progress.
     /// </summary>
+    /// <param name="examAttemptId">The exam attempt identifier.</param>
+    /// <param name="studentId">The student identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The operation result.</returns>
     private async Task<StudentExamAttemptResult> ValidateAttemptForSubmission(int examAttemptId, int studentId, CancellationToken cancellationToken)
     {
         var attempt = await _examAttemptRepo.GetByID(examAttemptId, cancellationToken);
@@ -176,10 +188,9 @@ public class StudentExamService : IStudentExamService
     }
 
     /// <summary>
-    /// Schedules a Hangfire background job to automatically close the exam attempt once the maximum duration expires.
-    /// This ensures we track timed-out attempts separately from completed ones.
+    /// Schedules a Hangfire background job to automatically close the exam attempt.
     /// </summary>
-    /// <param name="examTokenInfoDto">The DTO containing the attempt ID and max duration.</param>
+    /// <param name="examTokenInfoDto">The DTO containing attempt information.</param>
     private void EnqueueAutoCloseJob(CreateExamTokenDto examTokenInfoDto)
     {
         // Enqueue auto-close job after exam duration expires → sets status to TimedOut
@@ -189,8 +200,11 @@ public class StudentExamService : IStudentExamService
     }
 
     /// <summary>
-    /// Validates business rules and creates a new exam attempt record.
+    /// Validates business rules and creates a new exam attempt.
     /// </summary>
+    /// <param name="startExamDto">The attempt details.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A tuple containing the operation result and token details if successful.</returns>
     private async Task<(StudentExamAttemptResult Result, CreateExamTokenDto? TokenDto)> CreateExamAttempt(StartExamAttemptDto startExamDto, CancellationToken cancellationToken = default)
     {
         // Validate student exists

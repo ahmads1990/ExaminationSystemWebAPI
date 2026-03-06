@@ -13,16 +13,21 @@ namespace ExaminationSystem.Infrastructure.Services.Email
     /// </summary>
     public class EmailService : IEmailService
     {
-        #region Fields
+        #region Constants
 
         private const string TemplatesFolder = "Templates";
         private const string EmailTemplatesFolder = "EmailTemplates";
+
+        #endregion
+
+        #region Fields
+
         private readonly SMTPConfig _smtpConfig;
         private readonly string _templateRoot;
 
         #endregion
 
-        #region Constructor
+        #region Constructors
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EmailService"/> class.
@@ -74,14 +79,13 @@ namespace ExaminationSystem.Infrastructure.Services.Email
 
         #endregion
 
-        #region Private Helpers
+        #region Private Methods
 
         /// <summary>
         /// Validates that essential email parameters are provided.
         /// </summary>
         /// <param name="toEmail">The recipient's email address.</param>
         /// <param name="subject">The subject of the email.</param>
-        /// <exception cref="ArgumentException">Thrown when email or subject is missing.</exception>
         private void ValidateEmailParameters(string toEmail, string subject)
         {
             if (string.IsNullOrWhiteSpace(toEmail))
@@ -94,6 +98,12 @@ namespace ExaminationSystem.Infrastructure.Services.Email
         /// <summary>
         /// Creates a new email message based on the provided parameters and template.
         /// </summary>
+        /// <param name="toName">Recipient name.</param>
+        /// <param name="toEmail">Recipient email.</param>
+        /// <param name="subject">Email subject.</param>
+        /// <param name="template">Template identifier.</param>
+        /// <param name="templateModel">Template model.</param>
+        /// <returns>A MimeMessage object.</returns>
         private async Task<MimeMessage> CreateEmailMessage(
             string toName, string toEmail, string subject, EmailTemplate template,
             Dictionary<string, string> templateModel)
@@ -108,8 +118,11 @@ namespace ExaminationSystem.Infrastructure.Services.Email
         }
 
         /// <summary>
-        /// Builds the email body from the specified HTML and text templates.
+        /// Builds the email body from the specified template.
         /// </summary>
+        /// <param name="template">Template identifier.</param>
+        /// <param name="templateModel">Template model.</param>
+        /// <returns>A MimeEntity representing the email body.</returns>
         private async Task<MimeEntity> BuildEmailBody(EmailTemplate template, Dictionary<string, string> templateModel)
         {
             var htmlEmailBody = await FetchEmailTemplate(template, templateModel);
@@ -128,8 +141,9 @@ namespace ExaminationSystem.Infrastructure.Services.Email
         /// Loads and replaces placeholders within an email template file.
         /// </summary>
         /// <param name="template">The template identifier.</param>
-        /// <param name="templateModel">The placeholder values to inject into the template.</param>
-        /// <param name="isHtml">Determines whether to load the HTML or text version of the template.</param>
+        /// <param name="templateModel">The placeholder values to inject.</param>
+        /// <param name="isHtml">Determines whether to load the HTML or text version.</param>
+        /// <returns>The processed template string.</returns>
         private async Task<string> FetchEmailTemplate(EmailTemplate template, Dictionary<string, string> templateModel, bool isHtml = true)
         {
             var templateName = template.ToString();

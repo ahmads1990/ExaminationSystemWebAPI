@@ -17,14 +17,17 @@ public class StudentCourseService : IStudentCourseService
 
     #endregion
 
-    #region Public Methods
+    #region Constructors
 
-    /// <inheritdoc />
     public StudentCourseService(IRepository<Course> courseRepository, IRepository<StudentCourses> studentCoursesRepository)
     {
         _courseRepository = courseRepository;
         _studentCoursesRepository = studentCoursesRepository;
     }
+
+    #endregion
+
+    #region Public Methods
 
     /// <inheritdoc />
     public async Task<(IEnumerable<StudentEnrollmentDto> Data, int TotalCount)> ListStudentEnrollments(ListStudentEnrollmentsDto listDto, CancellationToken cancellationToken = default)
@@ -97,15 +100,14 @@ public class StudentCourseService : IStudentCourseService
 
     #endregion
 
+    #region Private Methods
+
     /// <summary>
     /// Applies search filters to the student course query based on the specified enrollment criteria.
     /// </summary>
-    /// <remarks>If the CourseTitle property of <paramref name="listDto"/> is not null or empty, the query is
-    /// filtered to include only enrollments for courses with a matching title.</remarks>
     /// <param name="query">The initial queryable collection of student course enrollments to filter.</param>
-    /// <param name="listDto">An object containing search criteria, such as course title, to apply to the query. Cannot be null.</param>
-    /// <returns>An IQueryable<StudentCourses> representing the filtered student course enrollments that match the specified
-    /// criteria.</returns>
+    /// <param name="listDto">An object containing search criteria.</param>
+    /// <returns>An IQueryable of StudentCourses representing the filtered student course enrollments.</returns>
     private IQueryable<StudentCourses> ApplySearchFilters(IQueryable<StudentCourses> query, ListStudentEnrollmentsDto listDto)
     {
         if (!string.IsNullOrEmpty(listDto.CourseTitle))
@@ -114,4 +116,6 @@ public class StudentCourseService : IStudentCourseService
         }
         return query;
     }
+
+    #endregion
 }

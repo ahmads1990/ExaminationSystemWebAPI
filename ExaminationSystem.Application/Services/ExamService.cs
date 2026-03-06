@@ -18,7 +18,7 @@ public class ExamService : IExamService
 
     #endregion
 
-    #region Constructor
+    #region Constructors
 
     public ExamService(IRepository<Exam> examRepository, IRepository<ExamQuestion> examQuestionRepository, IRepository<Question> questionRepository)
     {
@@ -267,7 +267,7 @@ public class ExamService : IExamService
     /// </summary>
     /// <param name="query">The initial queryable collection of exams to filter.</param>
     /// <param name="listDto">The search criteria used to filter the exams.</param>
-    /// <returns>An IQueryable&lt;Exam&gt; representing the filtered set of exams.</returns>
+    /// <returns>An IQueryable of Exam representing the filtered set of exams.</returns>
     private IQueryable<Exam> ApplySearchFilters(IQueryable<Exam> query, ListExamsDto listDto)
     {
         if (!string.IsNullOrEmpty(listDto.Title))
