@@ -120,6 +120,12 @@ public enum ApiErrorCode
     [ErrorMessage("You already have an active attempt for this exam")]
     HasActiveAttempt = 4019,
 
+    [ErrorMessage("This exam attempt has not been completed yet")]
+    AttemptNotCompleted = 4020,
+
+    [ErrorMessage("Grading is still in progress for this exam attempt. Please check back later")]
+    GradingInProgress = 4021,
+
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]
     InternalServerError = 5000,

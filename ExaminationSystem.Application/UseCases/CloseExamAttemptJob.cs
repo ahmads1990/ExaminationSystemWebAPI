@@ -1,27 +1,41 @@
 using ExaminationSystem.Application.Interfaces;
+using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
+using Hangfire;
+using Microsoft.EntityFrameworkCore;
 
-namespace ExaminationSystem.Infrastructure.Jobs;
+namespace ExaminationSystem.Application.UseCases;
 
 /// <summary>
 /// Hangfire job that auto-closes an exam attempt when the time expires.
 /// Sets status to <see cref="ExamAttemptStatus.TimedOut"/> so it can be
 /// distinguished from student-submitted (<see cref="ExamAttemptStatus.Completed"/>).
+/// Enqueues grading job if the exam has more than 10 questions.
 /// </summary>
 public class CloseExamAttemptJob : ICloseExamAttemptJob
 {
     private readonly IRepository<ExamAttempt> _examAttemptRepo;
+    private readonly IBackgroundJobClient _backgroundJobClient;
 
-    public CloseExamAttemptJob(IRepository<ExamAttempt> examAttemptRepo)
+    public CloseExamAttemptJob(IRepository<ExamAttempt> examAttemptRepo, IBackgroundJobClient backgroundJobClient)
     {
         _examAttemptRepo = examAttemptRepo;
+        _backgroundJobClient = backgroundJobClient;
     }
 
     /// <inheritdoc/>
     public async Task ExecuteAsync(int examAttemptId, CancellationToken cancellationToken = default)
     {
-        var attempt = await _examAttemptRepo.GetByID(examAttemptId, cancellationToken);
+        var attemptData = await _examAttemptRepo.GetByID(examAttemptId)
+            .Select(a => new
+            {
+                Attempt = a,
+                QuestionCount = a.Exam != null ? a.Exam.ExamQuestions.Count : 0
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var attempt = attemptData?.Attempt;
 
         // Idempotent — do nothing if already closed by student submission
         if (attempt is null || attempt.ExamAttemptStatus != ExamAttemptStatus.InProgress)
@@ -32,5 +46,12 @@ public class CloseExamAttemptJob : ICloseExamAttemptJob
 
         _examAttemptRepo.Update(attempt);
         await _examAttemptRepo.SaveChanges(cancellationToken);
+
+        // Enqueue grading job if it has > threshold
+        if (attemptData?.QuestionCount > Constants.ImmediateExamGradingThreshold)
+        {
+            _backgroundJobClient.Enqueue<IGradeExamAttemptJob>(
+                job => job.GradeAttemptAsync(attempt.ID, CancellationToken.None));
+        }
     }
 }

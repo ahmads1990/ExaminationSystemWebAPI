@@ -92,5 +92,7 @@ public enum StudentExamAttemptResult
     NotEnrolled,
     HasActiveAttempt,
     AttemptAlreadyCompleted,
+    GradingInProgress,
+    AttemptNotCompleted,
     UnknownError
 }

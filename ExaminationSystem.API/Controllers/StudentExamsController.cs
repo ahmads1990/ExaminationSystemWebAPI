@@ -139,6 +139,37 @@ public class StudentExamsController : BaseController
             : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 
+    /// <summary>
+    /// Gets the result of an exam attempt. Grades it synchronously if <= 10 questions and not graded.
+    /// Requires the standard user JWT (not exam-scoped).
+    /// </summary>
+    /// <param name="attemptId">The optional exam attempt identifier; if null, gets the latest.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response with the attempt result, or an error response.</returns>
+    [Authorize]
+    [HttpGet("result")]
+    public async Task<ApiResponse<AttemptResultDto>> GetAttemptResult([FromQuery] int? attemptId, CancellationToken cancellationToken = default)
+    {
+        var (result, attemptResult) = await _studentExamService.GetAttemptResult(attemptId, CurrentUserId!.Value, cancellationToken);
+        return result == StudentExamAttemptResult.Success
+            ? new SuccessResponse<AttemptResultDto>(attemptResult!)
+            : new ErrorResponse<AttemptResultDto>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
+    /// Lists all previous exam attempts for the student.
+    /// Requires the standard user JWT (not exam-scoped).
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response with the list of previous attempts.</returns>
+    [Authorize]
+    [HttpGet("attempts")]
+    public async Task<ApiResponse<List<AttemptSummaryDto>>> ListAttempts(CancellationToken cancellationToken = default)
+    {
+        var attempts = await _studentExamService.ListAttempts(CurrentUserId!.Value, cancellationToken);
+        return new SuccessResponse<List<AttemptSummaryDto>>(attempts);
+    }
+
     #endregion
 
     #region Private Methods

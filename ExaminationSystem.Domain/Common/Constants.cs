@@ -15,6 +15,7 @@ public static class Constants
     public const int MinAttempts = 1;
     public const int MaxAttempts = 5;
     public const int MaxDeadlineYears = 1;
+    public const int ImmediateExamGradingThreshold = 10;
 
     // Question rules
     public const int MinQuestionBodyLength = 5;

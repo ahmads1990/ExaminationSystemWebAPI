@@ -52,4 +52,29 @@ public interface IStudentExamService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The operation result.</returns>
     Task<StudentExamAttemptResult> SubmitAttempt(int examAttemptId, int studentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the result of an exam attempt. Grades it synchronously if <= 10 questions and not graded.
+    /// </summary>
+    /// <param name="examAttemptId">The optional exam attempt identifier; if null, gets the latest.</param>
+    /// <param name="studentId">The student identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A tuple containing the operation result and the attempt result DTO if successful.</returns>
+    Task<(StudentExamAttemptResult Result, AttemptResultDto? AttemptResult)> GetAttemptResult(int? examAttemptId, int studentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Grades an exam attempt, calculating the final score and updating its status to Graded.
+    /// </summary>
+    /// <param name="attemptId">The exam attempt identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task GradeAttemptAsync(int attemptId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists all exam attempts for a student.
+    /// </summary>
+    /// <param name="studentId">The student identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of past attempts summaries.</returns>
+    Task<List<AttemptSummaryDto>> ListAttempts(int studentId, CancellationToken cancellationToken = default);
 }

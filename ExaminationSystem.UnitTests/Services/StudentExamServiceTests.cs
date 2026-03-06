@@ -294,7 +294,8 @@ public class StudentExamServiceTests
     {
         var attempt = new ExamAttempt { ID = 1, StudentId = 1, ExamAttemptStatus = ExamAttemptStatus.InProgress };
 
-        _attemptRepoMock.Setup(x => x.GetByID(1, default)).ReturnsAsync(attempt);
+        _attemptRepoMock.Setup(x => x.GetByID(1))
+            .Returns(new List<ExamAttempt> { attempt }.AsQueryable().BuildMock());
         _attemptRepoMock.Setup(x => x.SaveChanges(default)).ReturnsAsync(true);
 
         var result = await _service.SubmitAttempt(1, 1);
@@ -310,7 +311,8 @@ public class StudentExamServiceTests
     public async Task SubmitAttempt_AlreadyCompleted_ReturnsAttemptAlreadyCompleted()
     {
         var attempt = new ExamAttempt { ID = 1, StudentId = 1, ExamAttemptStatus = ExamAttemptStatus.Completed };
-        _attemptRepoMock.Setup(x => x.GetByID(1, default)).ReturnsAsync(attempt);
+        _attemptRepoMock.Setup(x => x.GetByID(1))
+            .Returns(new List<ExamAttempt> { attempt }.AsQueryable().BuildMock());
 
         var result = await _service.SubmitAttempt(1, 1);
 
@@ -323,7 +325,8 @@ public class StudentExamServiceTests
     public async Task SubmitAttempt_WrongStudent_ReturnsExamNotFound()
     {
         var attempt = new ExamAttempt { ID = 1, StudentId = 1, ExamAttemptStatus = ExamAttemptStatus.InProgress };
-        _attemptRepoMock.Setup(x => x.GetByID(1, default)).ReturnsAsync(attempt);
+        _attemptRepoMock.Setup(x => x.GetByID(1))
+            .Returns(new List<ExamAttempt> { attempt }.AsQueryable().BuildMock());
 
         var result = await _service.SubmitAttempt(1, 999);
 
@@ -381,7 +384,6 @@ public class StudentExamServiceTests
             TotalGrade = 15,
             PassingScore = 10,
             ShuffleQuestions = shuffleQuestions,
-            ShowResultsImmediately = true,
             ExamQuestions = new List<ExamQuestion>
             {
                 new() { ExamId = 10, QuestionId = 100, Question = q1, Exam = null! },

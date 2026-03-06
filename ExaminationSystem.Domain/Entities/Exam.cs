@@ -14,7 +14,6 @@ public class Exam : BaseModel
     public decimal PassingScore { get; set; }
     public int MaxAttempts { get; set; } = 1;
     public bool ShuffleQuestions { get; set; }
-    public bool ShowResultsImmediately { get; set; } = true;
 
     public int CourseID { get; set; }
     public Course Course { get; set; }

@@ -41,7 +41,9 @@ public enum ExamAttemptStatus
     NotStarted = 0,
     InProgress,
     Completed,
-    TimedOut
+    TimedOut,
+    Grading,
+    Graded
 }
 
 public enum RejectionReason

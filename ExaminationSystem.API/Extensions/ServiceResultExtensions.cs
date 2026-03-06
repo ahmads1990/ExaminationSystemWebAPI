@@ -128,6 +128,8 @@ public static class ServiceResultExtensions
             StudentExamAttemptResult.NotEnrolled => ApiErrorCode.NotEnrolledInCourse,
             StudentExamAttemptResult.HasActiveAttempt => ApiErrorCode.HasActiveAttempt,
             StudentExamAttemptResult.AttemptAlreadyCompleted => ApiErrorCode.AttemptAlreadyCompleted,
+            StudentExamAttemptResult.AttemptNotCompleted => ApiErrorCode.AttemptNotCompleted,
+            StudentExamAttemptResult.GradingInProgress => ApiErrorCode.GradingInProgress,
             _ => ApiErrorCode.InternalServerError
         };
     }

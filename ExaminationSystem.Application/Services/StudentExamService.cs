@@ -1,6 +1,7 @@
 ﻿using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.DTOs.StudentExams;
 using ExaminationSystem.Application.Interfaces;
+using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Hangfire;
@@ -147,7 +148,15 @@ public class StudentExamService : IStudentExamService
     /// <inheritdoc/>
     public async Task<StudentExamAttemptResult> SubmitAttempt(int examAttemptId, int studentId, CancellationToken cancellationToken = default)
     {
-        var attempt = await _examAttemptRepo.GetByID(examAttemptId, cancellationToken);
+        var attemptData = await _examAttemptRepo.GetByID(examAttemptId)
+            .Select(a => new
+            {
+                Attempt = a,
+                QuestionCount = a.Exam != null ? a.Exam.ExamQuestions.Count : 0
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var attempt = attemptData?.Attempt;
 
         if (attempt is null || attempt.StudentId != studentId)
             return StudentExamAttemptResult.ExamNotFound;
@@ -161,7 +170,124 @@ public class StudentExamService : IStudentExamService
         _examAttemptRepo.Update(attempt);
         await _examAttemptRepo.SaveChanges(cancellationToken);
 
+        // Enqueue grading job if it has > threshold
+        if (attemptData?.QuestionCount > Constants.ImmediateExamGradingThreshold)
+        {
+            _backgroundJobClient.Enqueue<IGradeExamAttemptJob>(
+                job => job.GradeAttemptAsync(attempt.ID, CancellationToken.None));
+        }
+
         return StudentExamAttemptResult.Success;
+    }
+
+    /// <inheritdoc/>
+    public async Task<(StudentExamAttemptResult Result, AttemptResultDto? AttemptResult)> GetAttemptResult(int? examAttemptId, int studentId, CancellationToken cancellationToken = default)
+    {
+        IQueryable<ExamAttempt> query = _examAttemptRepo.GetAll()
+            .Where(a => a.StudentId == studentId)
+            .Include(a => a.Exam)
+                .ThenInclude(e => e.ExamQuestions);
+
+        ExamAttempt? attempt;
+        if (examAttemptId.HasValue)
+        {
+            attempt = await query.FirstOrDefaultAsync(a => a.ID == examAttemptId.Value, cancellationToken);
+        }
+        else
+        {
+            attempt = await query.OrderByDescending(a => a.StartTime).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (attempt is null)
+            return (StudentExamAttemptResult.ExamNotFound, null);
+
+        if (attempt.ExamAttemptStatus == ExamAttemptStatus.InProgress || attempt.ExamAttemptStatus == ExamAttemptStatus.NotStarted)
+            return (StudentExamAttemptResult.AttemptNotCompleted, null);
+
+        bool requiresAsyncGrading = attempt.Exam?.ExamQuestions?.Count > Constants.ImmediateExamGradingThreshold;
+
+        if (requiresAsyncGrading && attempt.ExamAttemptStatus != ExamAttemptStatus.Graded)
+        {
+            return (StudentExamAttemptResult.GradingInProgress, null);
+        }
+
+        if (!requiresAsyncGrading && attempt.ExamAttemptStatus != ExamAttemptStatus.Graded)
+        {
+            // Synchronous grading
+            await GradeAttemptAsync(attempt.ID, cancellationToken);
+            // Reload attempt
+            attempt = await query.FirstOrDefaultAsync(a => a.ID == attempt.ID, cancellationToken);
+        }
+
+        if (attempt?.ExamAttemptStatus == ExamAttemptStatus.Graded)
+        {
+            var resultDto = attempt.Adapt<AttemptResultDto>();
+            return (StudentExamAttemptResult.Success, resultDto);
+        }
+
+        return (StudentExamAttemptResult.GradingInProgress, null);
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<AttemptSummaryDto>> ListAttempts(int studentId, CancellationToken cancellationToken = default)
+    {
+        var attempts = await _examAttemptRepo.GetAll()
+            .Where(a => a.StudentId == studentId)
+            .Include(a => a.Exam)
+                .ThenInclude(e => e.Course)
+            .OrderByDescending(a => a.StartTime)
+            .ToListAsync(cancellationToken);
+
+        return attempts.Adapt<List<AttemptSummaryDto>>();
+    }
+
+    /// <inheritdoc />
+    public async Task GradeAttemptAsync(int attemptId, CancellationToken cancellationToken = default)
+    {
+        // First check if the attempt exists and hasn't been graded yet
+        var attemptStatusCheck = await _examAttemptRepo.GetByID(attemptId)
+            .Select(a => new { a.ID, a.ExamAttemptStatus })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (attemptStatusCheck is null || attemptStatusCheck.ExamAttemptStatus == ExamAttemptStatus.Graded)
+            return;
+
+        // Load the full thing
+        var attempt = await _examAttemptRepo.GetByID(attemptId)
+            .Include(a => a.Answers)
+                .ThenInclude(ans => ans.Choice)
+            .Include(a => a.Answers)
+                .ThenInclude(ans => ans.Question)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (attempt is null) return;
+
+        // Set status to Grading if it's not already, and it should only happen if it was Completed or TimedOut
+        if (attempt.ExamAttemptStatus != ExamAttemptStatus.Grading)
+        {
+            attempt.ExamAttemptStatus = ExamAttemptStatus.Grading;
+            _examAttemptRepo.Update(attempt);
+            await _examAttemptRepo.SaveChanges(cancellationToken);
+        }
+
+        // Calculate score
+        double totalScore = 0;
+        if (attempt.Answers != null && attempt.Answers.Any())
+        {
+            foreach (var answer in attempt.Answers)
+            {
+                if (answer.Choice != null && answer.Choice.IsCorrect && answer.Question != null)
+                {
+                    totalScore += answer.Question.Score;
+                }
+            }
+        }
+
+        attempt.Score = totalScore;
+        attempt.ExamAttemptStatus = ExamAttemptStatus.Graded;
+
+        _examAttemptRepo.Update(attempt);
+        await _examAttemptRepo.SaveChanges(cancellationToken);
     }
 
     #endregion

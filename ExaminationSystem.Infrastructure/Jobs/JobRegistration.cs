@@ -10,5 +10,6 @@ public static class JobRegistration
     {
         services.AddScoped<SendEmailJob>();
         services.AddScoped<ICloseExamAttemptJob, CloseExamAttemptJob>();
+        services.AddScoped<IGradeExamAttemptJob, GradeExamAttemptJob>();
     }
 }
