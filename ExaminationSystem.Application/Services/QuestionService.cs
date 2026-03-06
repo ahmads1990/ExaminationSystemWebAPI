@@ -79,7 +79,7 @@ public class QuestionService : IQuestionService
 
         if (question is null)
             return QuestionOperationResult.NotFound;
-            
+
         // Lock question if it belongs to an exam with submissions
         if (question.ExamQuestions.Any(eq => eq.Exam.ExamAttempts.Any()))
             return QuestionOperationResult.Locked;
@@ -92,7 +92,7 @@ public class QuestionService : IQuestionService
         // Remove choices that are no longer in the DTO
         var incomingIds = questionDto.Choices.Select(c => c.ID).Where(id => id > 0).ToHashSet();
         var choicesToRemove = question.Choices.Where(c => !incomingIds.Contains(c.ID)).ToList();
-        
+
         foreach (var choice in choicesToRemove)
         {
             question.Choices.Remove(choice);

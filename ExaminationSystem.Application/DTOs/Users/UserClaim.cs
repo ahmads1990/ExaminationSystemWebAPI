@@ -12,5 +12,5 @@ public class UserClaim
         Type = type;
         Value = value;
     }
-}   
+}
 

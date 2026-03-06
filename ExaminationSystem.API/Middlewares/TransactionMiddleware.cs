@@ -26,9 +26,9 @@ public class TransactionMiddleware
 
         // Start transaction for write operations
         var transaction = await dbContext.Database.BeginTransactionAsync();
-        _logger.LogDebug("Transaction started for {Method} {Path}", 
+        _logger.LogDebug("Transaction started for {Method} {Path}",
             context.Request.Method, context.Request.Path);
-        
+
         try
         {
             await _next(context);
@@ -37,16 +37,16 @@ public class TransactionMiddleware
             if (context.Response.StatusCode >= 200 && context.Response.StatusCode < 300)
             {
                 await transaction.CommitAsync();
-                _logger.LogDebug("Transaction committed for {Method} {Path}", 
+                _logger.LogDebug("Transaction committed for {Method} {Path}",
                     context.Request.Method, context.Request.Path);
             }
             else
             {
                 // Debugger breakpoint for rollback scenarios
                 if (Debugger.IsAttached) Debugger.Break();
-                
+
                 await transaction.RollbackAsync();
-                _logger.LogWarning("Transaction rolled back for {Method} {Path} (Status: {StatusCode})", 
+                _logger.LogWarning("Transaction rolled back for {Method} {Path} (Status: {StatusCode})",
                     context.Request.Method, context.Request.Path, context.Response.StatusCode);
             }
         }
@@ -54,7 +54,7 @@ public class TransactionMiddleware
         {
             // Debugger breakpoint for exception rollback
             if (Debugger.IsAttached) Debugger.Break();
-            
+
             await transaction.RollbackAsync();
             _logger.LogError(ex, "Transaction rolled back due to exception");
             throw; // Re-throw to be handled by global exception handler

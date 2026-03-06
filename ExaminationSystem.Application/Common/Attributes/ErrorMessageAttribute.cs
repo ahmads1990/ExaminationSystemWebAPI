@@ -4,7 +4,7 @@ namespace ExaminationSystem.Application.Common.Attributes;
 public class ErrorMessageAttribute : Attribute
 {
     public string Message { get; }
-    
+
     public ErrorMessageAttribute(string message)
     {
         Message = message;

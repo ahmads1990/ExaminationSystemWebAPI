@@ -20,7 +20,7 @@ public class PasswordHelper : IPasswordHelper
 
     public bool VerifyPassword(string hashedPassword, string password)
     {
-        if(string.IsNullOrEmpty(hashedPassword))
+        if (string.IsNullOrEmpty(hashedPassword))
             return false;
 
         var result = _passwordHasher.VerifyHashedPassword(null, hashedPassword, password);

@@ -1,6 +1,6 @@
 ﻿namespace ExaminationSystem.API.Models.Requests.Auth;
 
-public class RegisterInstructorRequest: RegisterUserBaseRequest
+public class RegisterInstructorRequest : RegisterUserBaseRequest
 {
     // Instructor data
     public string Bio { get; set; } = string.Empty;

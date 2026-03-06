@@ -25,7 +25,7 @@ public static class ServiceResultExtensions
             _ => ApiErrorCode.InternalServerError
         };
     }
-    
+
     /// <summary>
     /// Converts UserEmailVerificationResult to ApiErrorCode
     /// </summary>
@@ -42,7 +42,7 @@ public static class ServiceResultExtensions
             _ => ApiErrorCode.InternalServerError
         };
     }
-    
+
     /// <summary>
     /// Converts CourseOperationResult to ApiErrorCode
     /// </summary>
@@ -59,7 +59,7 @@ public static class ServiceResultExtensions
             _ => ApiErrorCode.InternalServerError
         };
     }
-    
+
     /// <summary>
     /// Converts StudentCourseOperationResult to ApiErrorCode
     /// </summary>

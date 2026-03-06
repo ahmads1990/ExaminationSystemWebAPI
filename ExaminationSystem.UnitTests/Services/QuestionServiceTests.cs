@@ -143,7 +143,10 @@ public class QuestionServiceTests
 
         var existing = new Question
         {
-            ID = 1, Body = "Q", Score = 5, QuestionLevel = QuestionLevel.Easy,
+            ID = 1,
+            Body = "Q",
+            Score = 5,
+            QuestionLevel = QuestionLevel.Easy,
             Choices = new List<Choice> { new Choice { ID = 10, Body = "Old", IsCorrect = false, QuestionId = 1 } }
         };
 
@@ -171,11 +174,11 @@ public class QuestionServiceTests
         var existingQuestion = new Question { ID = 1 };
         existingQuestion.ExamQuestions = new List<ExamQuestion>
         {
-            new ExamQuestion 
-            { 
-                Exam = new Exam 
-                { 
-                    ExamAttempts = new List<ExamAttempt> { new ExamAttempt { ID = 1 } } 
+            new ExamQuestion
+            {
+                Exam = new Exam
+                {
+                    ExamAttempts = new List<ExamAttempt> { new ExamAttempt { ID = 1 } }
                 },
                 Question = existingQuestion
             }

@@ -3,7 +3,6 @@ using ExaminationSystem.API.Models.Requests.Auth;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.Interfaces;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExaminationSystem.API.Controllers;

@@ -4,10 +4,8 @@ using ExaminationSystem.API.Models.Requests.Courses;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Courses;
 using ExaminationSystem.Application.Interfaces;
-using ExaminationSystem.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq.Expressions;
 
 namespace ExaminationSystem.API.Controllers;
 

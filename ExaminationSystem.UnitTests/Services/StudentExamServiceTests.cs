@@ -354,7 +354,9 @@ public class StudentExamServiceTests
     {
         var q1 = new Question
         {
-            ID = 100, Body = "Q1", Score = 5,
+            ID = 100,
+            Body = "Q1",
+            Score = 5,
             Choices = new List<Choice>
             {
                 new() { ID = 1001, Body = "Correct", IsCorrect = true, QuestionId = 100 },
@@ -363,7 +365,9 @@ public class StudentExamServiceTests
         };
         var q2 = new Question
         {
-            ID = 200, Body = "Q2", Score = 10,
+            ID = 200,
+            Body = "Q2",
+            Score = 10,
             Choices = new List<Choice>
             {
                 new() { ID = 2001, Body = "Correct", IsCorrect = true, QuestionId = 200 },

@@ -16,7 +16,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.Diagnostics;
 
@@ -114,7 +113,7 @@ public static class InfrastructureServiceExtensions
                 ValidAudience = jwtConfig.Audience,
                 IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtConfig.Key)),
             };
-            
+
             o.Events = new JwtBearerEvents
             {
                 OnChallenge = async context =>
@@ -148,7 +147,7 @@ public static class InfrastructureServiceExtensions
                         msg = "Invalid token";
                     }
 
-                    var payload = new 
+                    var payload = new
                     {
                         success = false,
                         data = (object?)null,
@@ -156,9 +155,9 @@ public static class InfrastructureServiceExtensions
                         message = msg
                     };
 
-                    var options = new System.Text.Json.JsonSerializerOptions 
-                    { 
-                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
+                    var options = new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
                     };
                     await context.Response.WriteAsJsonAsync(payload, options);
                 },
@@ -166,16 +165,16 @@ public static class InfrastructureServiceExtensions
                 {
                     context.Response.StatusCode = 403;
                     context.Response.ContentType = "application/json";
-                    var payload = new 
+                    var payload = new
                     {
                         success = false,
                         data = (object?)null,
                         errorCode = 1008, // Forbidden
                         message = "You don't have permission to access this resource"
                     };
-                    var options = new System.Text.Json.JsonSerializerOptions 
-                    { 
-                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase 
+                    var options = new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
                     };
                     await context.Response.WriteAsJsonAsync(payload, options);
                 }
