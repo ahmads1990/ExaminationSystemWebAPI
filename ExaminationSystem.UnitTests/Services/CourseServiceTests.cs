@@ -23,6 +23,76 @@ public class CourseServiceTests
         _service = new CourseService(_courseRepoMock.Object, _loggerMock.Object);
     }
 
+    #region GetAll Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetAll_ReturnsPaginatedAndSortedResults()
+    {
+        // Arrange
+        var listDto = new ListCoursesDto
+        {
+            PageIndex = 0,
+            PageSize = 10,
+            OrderBy = nameof(Course.CreditHours),
+            SortDirection = SortingDirection.Ascending,
+            Title = "Math"
+        };
+
+        var courses = new List<Course>
+        {
+            new Course { ID = 1, Title = "Math 101", Description = "Intro", CreditHours = 3, InstructorID = 1, CreatedDate = DateTime.UtcNow },
+            new Course { ID = 2, Title = "Advanced Math", Description = "Advanced", CreditHours = 4, InstructorID = 2, CreatedDate = DateTime.UtcNow }
+        };
+
+        _courseRepoMock
+            .Setup(x => x.GetAll())
+            .Returns(courses.AsQueryable().BuildMock());
+
+        // Act
+        var (data, totalCount) = await _service.GetAll(listDto);
+
+        // Assert
+        totalCount.Should().Be(2);
+        data.Should().HaveCount(2);
+        data.First().Title.Should().Be("Math 101"); // Due to ascending sort by CreditHours (3 vs 4)
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetAll_AppliesSearchFiltersCorrectly()
+    {
+        // Arrange
+        var listDto = new ListCoursesDto
+        {
+            PageIndex = 0,
+            PageSize = 10,
+            CreditHours = 4,
+            InstructorID = 2
+        };
+
+        var courses = new List<Course>
+        {
+            new Course { ID = 1, Title = "Math 101", Description = "Intro", CreditHours = 3, InstructorID = 1 },
+            new Course { ID = 2, Title = "Physics 101", Description = "Intro", CreditHours = 4, InstructorID = 2 },
+            new Course { ID = 3, Title = "Chemistry", Description = "Intro", CreditHours = 4, InstructorID = 1 }
+        };
+
+        _courseRepoMock
+            .Setup(x => x.GetAll())
+            .Returns(courses.AsQueryable().BuildMock());
+
+        // Act
+        var (data, totalCount) = await _service.GetAll(listDto);
+
+        // Assert
+        totalCount.Should().Be(1);
+        data.Should().ContainSingle();
+        data.First().ID.Should().Be(2);
+    }
+
+    #endregion
+
     #region Add Tests
 
     [Fact]
@@ -287,6 +357,64 @@ public class CourseServiceTests
 
         // Assert
         result.Should().Be(CourseOperationResult.NotOwner);
+    }
+
+    #endregion
+
+    #region GetInstructorCoursesStats Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetInstructorCoursesStats_ReturnsAccurateCounts()
+    {
+        // Arrange
+        int instructorId = 1;
+        var courses = new List<Course>
+        {
+            new Course 
+            { 
+                ID = 1, 
+                Title = "Course A", 
+                InstructorID = instructorId,
+                StudentCourses = new List<StudentCourses> { new StudentCourses(), new StudentCourses() },
+                Exams = new List<Exam> { new Exam(), new Exam(), new Exam() }
+            },
+            new Course 
+            { 
+                ID = 2, 
+                Title = "Course B", 
+                InstructorID = instructorId,
+                StudentCourses = new List<StudentCourses>(),
+                Exams = new List<Exam> { new Exam() }
+            },
+            new Course 
+            { 
+                ID = 3, 
+                Title = "Course C", 
+                InstructorID = 99, // Different instructor
+                StudentCourses = new List<StudentCourses>(),
+                Exams = new List<Exam>()
+            }
+        };
+
+        _courseRepoMock
+            .Setup(x => x.GetAll())
+            .Returns(courses.AsQueryable().BuildMock());
+
+        // Act
+        var result = await _service.GetInstructorCoursesStats(instructorId);
+
+        // Assert
+        result.Should().HaveCount(2);
+
+        var courseAStats = result.First(c => c.CourseId == 1);
+        courseAStats.CourseName.Should().Be("Course A");
+        courseAStats.StudentCount.Should().Be(2);
+        courseAStats.ExamsCount.Should().Be(3);
+
+        var courseBStats = result.First(c => c.CourseId == 2);
+        courseBStats.StudentCount.Should().Be(0);
+        courseBStats.ExamsCount.Should().Be(1);
     }
 
     #endregion

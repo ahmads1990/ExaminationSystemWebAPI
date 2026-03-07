@@ -27,6 +27,179 @@ public class ExamServiceTests
         _service = new ExamService(_examRepoMock.Object, _examQuestionRepoMock.Object, _questionRepoMock.Object, _loggerMock.Object);
     }
 
+    #region GetAll Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetAll_ReturnsPaginatedAndFilteredResults()
+    {
+        // Arrange
+        var listDto = new ListExamsDto
+        {
+            PageIndex = 0,
+            PageSize = 10,
+            Title = "Math",
+            ExamType = ExamType.Quiz,
+            OrderBy = nameof(Exam.DeadlineDate),
+            SortDirection = SortingDirection.Descending
+        };
+
+        var exams = new List<Exam>
+        {
+            new Exam { ID = 1, Title = "Math Quiz 1", ExamType = ExamType.Quiz, DeadlineDate = DateTime.UtcNow.AddDays(1) },
+            new Exam { ID = 2, Title = "Physics Quiz", ExamType = ExamType.Quiz, DeadlineDate = DateTime.UtcNow.AddDays(2) }
+        };
+
+        _examRepoMock
+            .Setup(x => x.GetAll())
+            .Returns(exams.AsQueryable().BuildMock());
+
+        // Act
+        var (data, totalCount) = await _service.GetAll(listDto);
+
+        // Assert
+        totalCount.Should().Be(1); // Only Math
+        data.Should().HaveCount(1);
+        data.First().Title.Should().Be("Math Quiz 1");
+    }
+
+    #endregion
+
+    #region GetByID Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetByID_ExistingExam_ReturnsMappedDtoWithQuestions()
+    {
+        // Arrange
+        var exam = new Exam
+        {
+            ID = 1,
+            Title = "Test Exam",
+            ExamType = ExamType.Quiz,
+            ExamStatus = ExamStatus.Draft,
+            TotalGrade = 50,
+            ExamQuestions = new List<ExamQuestion>
+            {
+                new ExamQuestion { Exam = null!, Question = new Question { ID = 10, Body = "Q1", Score = 20 } },
+                new ExamQuestion { Exam = null!, Question = new Question { ID = 11, Body = "Q2", Score = 30 } }
+            }
+        };
+
+        _examRepoMock
+            .Setup(x => x.GetByID(1))
+            .Returns(new List<Exam> { exam }.AsQueryable().BuildMock());
+
+        // Act
+        var result = await _service.GetByID(1);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Title.Should().Be("Test Exam");
+        result.TotalGrade.Should().Be(50);
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Business)]
+    public async Task GetByID_NonExistingExam_ReturnsNull()
+    {
+        // Arrange
+        _examRepoMock
+            .Setup(x => x.GetByID(999))
+            .Returns(new List<Exam>().AsQueryable().BuildMock());
+
+        // Act
+        var result = await _service.GetByID(999);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    #endregion
+
+    #region GetExamSubmissions Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetExamSubmissions_InstructorOwnsExam_ReturnsAttempts()
+    {
+        // Arrange
+        int examId = 1, instructorId = 5;
+
+        var exam = new Exam
+        {
+            ID = examId,
+            Title = "Test Exam",
+            Course = new Course { InstructorID = instructorId, Title = "Test Course" },
+            ExamAttempts = new List<ExamAttempt>
+            {
+                new ExamAttempt
+                {
+                    ID = 1,
+                    StudentId = 100,
+                    Score = 90,
+                    ExamAttemptStatus = ExamAttemptStatus.Completed
+                }
+            }
+        };
+
+        _examRepoMock
+            .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
+            .Returns(new List<Exam> { exam }.AsQueryable().BuildMock());
+
+        // Act
+        var (result, attempts) = await _service.GetExamSubmissions(examId, instructorId);
+
+        // Assert
+        result.Should().Be(ExamOperationResult.Success);
+        attempts.Should().HaveCount(1);
+        attempts!.First().ExamTitle.Should().Be("Test Exam");
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Business)]
+    public async Task GetExamSubmissions_ExamNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        _examRepoMock
+            .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
+            .Returns(new List<Exam>().AsQueryable().BuildMock());
+
+        // Act
+        var (result, attempts) = await _service.GetExamSubmissions(999, 5);
+
+        // Assert
+        result.Should().Be(ExamOperationResult.NotFound);
+        attempts.Should().BeNull();
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Business)]
+    public async Task GetExamSubmissions_NotOwner_ReturnsNotOwner()
+    {
+        // Arrange
+        int examId = 1, instructorId = 5, wrongInstructorId = 99;
+
+        var exam = new Exam
+        {
+            ID = examId,
+            Course = new Course { InstructorID = instructorId } // Actual owner
+        };
+
+        _examRepoMock
+            .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
+            .Returns(new List<Exam> { exam }.AsQueryable().BuildMock());
+
+        // Act
+        var (result, attempts) = await _service.GetExamSubmissions(examId, wrongInstructorId);
+
+        // Assert
+        result.Should().Be(ExamOperationResult.NotOwner);
+        attempts.Should().BeNull();
+    }
+
+    #endregion
+
     #region Add Tests
 
     [Fact]
@@ -779,6 +952,55 @@ public class ExamServiceTests
         rejected.Should().HaveCount(2);
         rejected.Should().AllSatisfy(r => r.Reason.Should().Be(RejectionReason.NotAssigned));
         _examQuestionRepoMock.Verify(x => x.DeleteRange(It.IsAny<IEnumerable<ExamQuestion>>()), Times.Never);
+    }
+
+    #endregion
+
+    #region Delete Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task Delete_DraftOrArchivedExams_DeletesAndReturnsFailedIds()
+    {
+        // Arrange
+        var idsToDelete = new List<int> { 1, 2, 3 };
+
+        var exams = new List<Exam>
+        {
+            new Exam { ID = 1, ExamStatus = ExamStatus.Draft },
+            new Exam { ID = 2, ExamStatus = ExamStatus.Archived }
+        };
+
+        _examRepoMock
+            .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
+            .Returns(exams.AsQueryable().BuildMock());
+
+        // Act
+        var failedIds = await _service.Delete(idsToDelete);
+
+        // Assert
+        failedIds.Should().ContainSingle().Which.Should().Be(3);
+        _examRepoMock.Verify(x => x.DeleteRange(It.Is<List<Exam>>(e => e.Count == 2)), Times.Once);
+        _examRepoMock.Verify(x => x.SaveChanges(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Business)]
+    public async Task Delete_PublishedExams_ReturnsFailedIds()
+    {
+        // Arrange
+        var idsToDelete = new List<int> { 1 };
+
+        _examRepoMock
+            .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
+            .Returns(new List<Exam>().AsQueryable().BuildMock()); // Published exams are filtered out
+
+        // Act
+        var failedIds = await _service.Delete(idsToDelete);
+
+        // Assert
+        failedIds.Should().BeEquivalentTo(new[] { 1 });
+        _examRepoMock.Verify(x => x.DeleteRange(It.IsAny<IEnumerable<Exam>>()), Times.Once); // Called with empty list
     }
 
     #endregion

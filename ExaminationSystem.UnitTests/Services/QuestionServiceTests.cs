@@ -26,6 +26,96 @@ public class QuestionServiceTests
         _service = new QuestionService(_questionRepoMock.Object, _choiceRepoMock.Object, _loggerMock.Object);
     }
 
+    #region GetAll Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetAll_ReturnsPaginatedAndFilteredResults()
+    {
+        // Arrange
+        var listDto = new ListQuestionsDto
+        {
+            PageIndex = 0,
+            PageSize = 10,
+            Body = "Math",
+            OrderBy = nameof(Question.Score),
+            SortDirection = SortingDirection.Descending
+        };
+
+        var questions = new List<Question>
+        {
+            new Question { ID = 1, Body = "Math Q1", Score = 5 },
+            new Question { ID = 2, Body = "Math Q2", Score = 10 },
+            new Question { ID = 3, Body = "Physics Q1", Score = 5 }
+        };
+
+        _questionRepoMock
+            .Setup(x => x.GetAll())
+            .Returns(questions.AsQueryable().BuildMock());
+
+        // Act
+        var (data, totalCount) = await _service.GetAll(listDto);
+
+        // Assert
+        totalCount.Should().Be(2); // Only Math questions
+        data.Should().HaveCount(2);
+        data.First().ID.Should().Be(2); // Score 10 should be descending first
+    }
+
+    #endregion
+
+    #region GetByID Tests
+
+    [Fact]
+    [Trait("Category", TestCategories.Happy)]
+    public async Task GetByID_ExistingQuestion_ReturnsMappedDto()
+    {
+        // Arrange
+        var question = new Question
+        {
+            ID = 1,
+            Body = "Sample Question",
+            Score = 5,
+            QuestionLevel = QuestionLevel.Medium,
+            Choices = new List<Choice>
+            {
+                new Choice { ID = 10, Body = "Choice A", IsCorrect = true },
+                new Choice { ID = 11, Body = "Choice B", IsCorrect = false }
+            }
+        };
+
+        _questionRepoMock
+            .Setup(x => x.GetByID(1))
+            .Returns(new List<Question> { question }.AsQueryable().BuildMock());
+
+        // Act
+        var result = await _service.GetByID(1);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.ID.Should().Be(1);
+        result.Body.Should().Be("Sample Question");
+        result.Choices.Should().HaveCount(2);
+    }
+
+    [Fact]
+    [Trait("Category", TestCategories.Business)]
+    public async Task GetByID_NonExistingQuestion_ReturnsNull()
+    {
+        // Arrange
+        _questionRepoMock
+            .Setup(x => x.GetByID(999))
+            .Returns(new List<Question>().AsQueryable().BuildMock());
+
+        // Act
+        var result = await _service.GetByID(999);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    #endregion
+
     #region Add Tests
 
     [Fact]
