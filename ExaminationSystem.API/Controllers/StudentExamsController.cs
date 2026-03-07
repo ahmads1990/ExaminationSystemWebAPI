@@ -46,6 +46,8 @@ public class StudentExamsController : BaseController
     /// <returns>A success response with the exam access token, or an error response.</returns>
     [Authorize(Roles = Constants.StudentRoleName)]
     [HttpPost("start")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> StartExamAttempt([FromBody] StartExamAttemptRequest request, CancellationToken cancellationToken = default)
     {
         var startExamDto = request.Adapt<StartExamAttemptDto>();
@@ -65,6 +67,8 @@ public class StudentExamsController : BaseController
     /// <returns>A success response with the list of questions, or an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpGet("questions")]
+    [ProducesResponseType(typeof(SuccessResponse<List<ExamQuestionDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<List<ExamQuestionDto>>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<List<ExamQuestionDto>>> GetExamQuestions(CancellationToken cancellationToken = default)
     {
         var attemptId = GetExamAttemptId();
@@ -86,6 +90,8 @@ public class StudentExamsController : BaseController
     /// <returns>A success response if the answer was submitted, otherwise an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpPost("answer")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> SubmitAnswer([FromBody] SubmitAnswerDto answer, CancellationToken cancellationToken = default)
     {
         var attemptId = GetExamAttemptId();
@@ -107,6 +113,8 @@ public class StudentExamsController : BaseController
     /// <returns>A success response if all answers were submitted, otherwise an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpPost("answers")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> SubmitAnswers([FromBody] List<SubmitAnswerDto> answers, CancellationToken cancellationToken = default)
     {
         var attemptId = GetExamAttemptId();
@@ -127,6 +135,8 @@ public class StudentExamsController : BaseController
     /// <returns>A success response if the attempt was closed, otherwise an error response.</returns>
     [Authorize(Policy = PolicyNames.ExamAnswer)]
     [HttpPost("submit-attempt")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> SubmitAttempt(CancellationToken cancellationToken = default)
     {
         var attemptId = GetExamAttemptId();
@@ -148,6 +158,8 @@ public class StudentExamsController : BaseController
     /// <returns>A success response with the attempt result, or an error response.</returns>
     [Authorize(Roles = Constants.StudentRoleName)]
     [HttpGet("result")]
+    [ProducesResponseType(typeof(SuccessResponse<AttemptResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<AttemptResultDto>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<AttemptResultDto>> GetAttemptResult([FromQuery] int? attemptId, CancellationToken cancellationToken = default)
     {
         var (result, attemptResult) = await _studentExamService.GetAttemptResult(attemptId, CurrentUserId!.Value, cancellationToken);
@@ -165,6 +177,7 @@ public class StudentExamsController : BaseController
     /// <returns>A success response populated with AvailableExamDto entries.</returns>
     [Authorize(Roles = Constants.StudentRoleName)]
     [HttpGet("available")]
+    [ProducesResponseType(typeof(SuccessResponse<List<AvailableExamDto>>), StatusCodes.Status200OK)]
     public async Task<ApiResponse<List<AvailableExamDto>>> GetAvailableExams(CancellationToken cancellationToken = default)
     {
         var availableExams = await _studentExamService.GetAvailableExams(CurrentUserId!.Value, cancellationToken);
@@ -179,6 +192,7 @@ public class StudentExamsController : BaseController
     /// <returns>A success response with the list of previous attempts.</returns>
     [Authorize(Roles = Constants.StudentRoleName)]
     [HttpGet("history")]
+    [ProducesResponseType(typeof(SuccessResponse<List<AttemptSummaryDto>>), StatusCodes.Status200OK)]
     public async Task<ApiResponse<List<AttemptSummaryDto>>> GetExamHistory(CancellationToken cancellationToken = default)
     {
         var attempts = await _studentExamService.GetExamHistory(CurrentUserId!.Value, cancellationToken);

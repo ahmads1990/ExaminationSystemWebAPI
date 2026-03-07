@@ -61,6 +61,7 @@ public class StudentCoursesController : BaseController
     /// <response code="403">User is not a student.</response>
     [Authorize(Roles = Constants.StudentRoleName)]
     [HttpGet("me/enrollments")]
+    [ProducesResponseType(typeof(PaginatedResponse<StudentEnrollmentDto>), StatusCodes.Status200OK)]
     public async Task<PaginatedResponse<StudentEnrollmentDto>> ListMyEnrollments([FromQuery] ListStudentEnrollmentsRequest request, CancellationToken cancellationToken = default)
     {
         var listDto = request.Adapt<ListStudentEnrollmentsDto>();
@@ -94,6 +95,7 @@ public class StudentCoursesController : BaseController
     /// <response code="403">User is not an instructor.</response>
     [Authorize(Roles = Constants.InstructorRoleName)]
     [HttpGet("{studentId:int}/enrollments")]
+    [ProducesResponseType(typeof(PaginatedResponse<StudentEnrollmentDto>), StatusCodes.Status200OK)]
     public async Task<PaginatedResponse<StudentEnrollmentDto>> ListStudentEnrollments(int studentId, [FromQuery] ListStudentEnrollmentsRequest request, CancellationToken cancellationToken = default)
     {
         var listDto = request.Adapt<ListStudentEnrollmentsDto>();
@@ -123,6 +125,8 @@ public class StudentCoursesController : BaseController
     /// <response code="401">User is not authenticated.</response>
     [Authorize(Roles = Constants.StudentRoleName)]
     [HttpPost("enroll")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> EnrollInCourse(StudentEnrollInCourseRequest request, CancellationToken cancellationToken = default)
     {
         var enrollInCourseDto = request.Adapt<StudentEnrollInCourseDto>();

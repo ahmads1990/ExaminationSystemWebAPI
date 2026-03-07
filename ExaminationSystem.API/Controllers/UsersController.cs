@@ -32,6 +32,8 @@ public class UsersController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if password stands mutated.</returns>
     [HttpPut("me/change-password")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _userService.ChangePassword(CurrentUserId!.Value, request.OldPassword, request.NewPassword, cancellationToken);

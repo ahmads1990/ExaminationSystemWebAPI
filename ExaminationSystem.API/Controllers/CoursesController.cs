@@ -43,6 +43,7 @@ public class CoursesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A paginated list of courses.</returns>
     [HttpGet]
+    [ProducesResponseType(typeof(PaginatedResponse<CourseDto>), StatusCodes.Status200OK)]
     public async Task<PaginatedResponse<CourseDto>> List([FromQuery] ListCoursesRequest request, CancellationToken cancellationToken = default)
     {
         var listDto = request.Adapt<ListCoursesDto>();
@@ -62,6 +63,8 @@ public class CoursesController : BaseController
     /// or a failure response with an error code and message on failure.
     /// </returns>
     [HttpPost]
+    [ProducesResponseType(typeof(SuccessResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<int>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<int>> Add(AddCourseRequest addCourseRequest, CancellationToken cancellationToken = default)
     {
         var addCourseDto = addCourseRequest.Adapt<AddCourseDto>();
@@ -84,6 +87,8 @@ public class CoursesController : BaseController
     /// or a failure response with an error code and message on failure.
     /// </returns>
     [HttpPut]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> Update(UpdateCourseRequest updateCourseRequest, CancellationToken cancellationToken = default)
     {
         var updateCourseDto = updateCourseRequest.Adapt<UpdateCourseDto>();
@@ -105,6 +110,8 @@ public class CoursesController : BaseController
     /// or a failure response with an error code and message on failure.
     /// </returns>
     [HttpDelete("{courseId:int}")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> Delete(int courseId, CancellationToken cancellationToken = default)
     {
         var deleteCourseDto = new DeleteCourseDto

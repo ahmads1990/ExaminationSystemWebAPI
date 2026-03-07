@@ -44,6 +44,7 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A paginated response containing the list of exams.</returns>
     [HttpGet]
+    [ProducesResponseType(typeof(PaginatedResponse<ExamListDto>), StatusCodes.Status200OK)]
     public async Task<PaginatedResponse<ExamListDto>> List([FromQuery] ListExamsRequest request, CancellationToken cancellationToken = default)
     {
         var listDto = request.Adapt<ListExamsDto>();
@@ -59,6 +60,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The exam details if found, otherwise an error response.</returns>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(SuccessResponse<ExamDto?>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<ExamDto?>), StatusCodes.Status404NotFound)]
     public async Task<ApiResponse<ExamDto?>> GetDetails(int id, CancellationToken cancellationToken = default)
     {
         var exam = await _examService.GetByID(id, cancellationToken);
@@ -75,6 +78,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with the new exam ID, or an error response.</returns>
     [HttpPost]
+    [ProducesResponseType(typeof(SuccessResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<int>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<int>> Add(AddExamRequest request, CancellationToken cancellationToken = default)
     {
         var addExamDto = request.Adapt<AddExamDto>();
@@ -92,6 +97,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
     [HttpPut]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> Update(UpdateExamRequest request, CancellationToken cancellationToken = default)
     {
         var updateExamDto = request.Adapt<UpdateExamDto>();
@@ -109,6 +116,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response if all exams were deleted, otherwise an error response.</returns>
     [HttpDelete]
+    [ProducesResponseType(typeof(SuccessResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<object>), StatusCodes.Status403Forbidden)]
     public async Task<ApiResponse<object>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
     {
         var unDeletedIds = await _examService.Delete(idsToDelete, cancellationToken);
@@ -129,6 +138,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
     [HttpPatch("publish")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> Publish(PublishExamRequest publishExamRequest, CancellationToken cancellationToken = default)
     {
         var publishExamDto = publishExamRequest.Adapt<PublishExamDto>();
@@ -147,6 +158,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
     [HttpPatch("{id:int}/unpublish")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> UnPublish(int id, CancellationToken cancellationToken = default)
     {
         var result = await _examService.UnPublish(id, cancellationToken);
@@ -163,6 +176,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
     [HttpPatch("assign-questions")]
+    [ProducesResponseType(typeof(SuccessResponse<IEnumerable<RejectedEntityDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<IEnumerable<RejectedEntityDto>>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> AssignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
     {
         var dto = request.Adapt<AssignQuestionsDto>();
@@ -180,6 +195,8 @@ public class ExamsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
     [HttpPatch("unassign-questions")]
+    [ProducesResponseType(typeof(SuccessResponse<IEnumerable<RejectedEntityDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<IEnumerable<RejectedEntityDto>>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> UnassignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
     {
         var dto = request.Adapt<AssignQuestionsDto>();

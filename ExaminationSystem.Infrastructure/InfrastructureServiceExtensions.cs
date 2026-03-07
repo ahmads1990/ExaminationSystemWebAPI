@@ -17,6 +17,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
 using System.Diagnostics;
 
 namespace ExaminationSystem.Infrastructure;
@@ -36,12 +38,12 @@ public static class InfrastructureServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddInfraStructureConfiguration(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfraStructureConfiguration(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
     {
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
         services.Configure<JwtConfig>(configuration.GetSection("Jwt"));
 
-        services.AddDatabaseConfiguration(configuration);
+        services.AddDatabaseConfiguration(configuration, env);
         services.AddRedisCacheConfiguration(configuration);
 
         services.AddSecurityConfiguration(configuration);
@@ -52,7 +54,7 @@ public static class InfrastructureServiceExtensions
 
     #region Database Configuration
 
-    public static IServiceCollection AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddDatabaseConfiguration(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
     {
         var connectionString = configuration.GetConnectionString(Constants.DBConnectionStringName);
         services.AddDbContext<AppDbContext>(options =>
@@ -60,8 +62,12 @@ public static class InfrastructureServiceExtensions
             options
                 .UseSqlServer(connectionString)
                 .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking)
-                .LogTo(log => Debug.WriteLine(log), LogLevel.Information)
-                .EnableSensitiveDataLogging();
+                .LogTo(log => Debug.WriteLine(log), LogLevel.Information);
+
+            if (env.IsDevelopment())
+            {
+                options.EnableSensitiveDataLogging();
+            }
         });
         return services;
     }

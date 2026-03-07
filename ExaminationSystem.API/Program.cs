@@ -32,11 +32,12 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddSwaggerConfiguration();
+    builder.Services.AddHealthChecks();
 
     // Add Infrastructure services registrations
     builder.Services
         .AddInfrastructureServices()
-        .AddInfraStructureConfiguration(builder.Configuration);
+        .AddInfraStructureConfiguration(builder.Configuration, builder.Environment);
 
     // Add all services and Mapster configuration
     builder.Services
@@ -108,6 +109,7 @@ try
     app.UseMiddleware<TransactionMiddleware>();
 
     app.MapControllers();
+    app.MapHealthChecks("/health");
 
     app.Run();
 }

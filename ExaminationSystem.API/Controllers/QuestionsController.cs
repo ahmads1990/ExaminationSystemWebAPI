@@ -43,6 +43,7 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A paginated list of questions.</returns>
     [HttpGet]
+    [ProducesResponseType(typeof(PaginatedResponse<QuestionDto>), StatusCodes.Status200OK)]
     public async Task<PaginatedResponse<QuestionDto>> List([FromQuery] ListQuestionsRequest request, CancellationToken cancellationToken = default)
     {
         var listDto = request.Adapt<ListQuestionsDto>();
@@ -58,6 +59,8 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The details of the question if found; otherwise, an error response.</returns>
     [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(SuccessResponse<QuestionDto?>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<QuestionDto?>), StatusCodes.Status404NotFound)]
     public async Task<ApiResponse<QuestionDto?>> GetDetails(int id, CancellationToken cancellationToken = default)
     {
         var question = await _questionService.GetByID(id, cancellationToken);
@@ -74,6 +77,8 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The added question results.</returns>
     [HttpPost]
+    [ProducesResponseType(typeof(SuccessResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<object>> Add(AddQuestionRequest request, CancellationToken cancellationToken = default)
     {
         var addQuestionDto = request.Adapt<AddQuestionDto>();
@@ -92,6 +97,8 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The update results.</returns>
     [HttpPut]
+    [ProducesResponseType(typeof(SuccessResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<object>> Update(UpdateQuestionRequest request, CancellationToken cancellationToken = default)
     {
         var updateQuestionDto = request.Adapt<UpdateQuestionDto>();
@@ -110,6 +117,8 @@ public class QuestionsController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response if all questions were deleted; otherwise, a failure response with the IDs that could not be deleted.</returns>
     [HttpDelete]
+    [ProducesResponseType(typeof(SuccessResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<object>), StatusCodes.Status403Forbidden)]
     public async Task<ApiResponse<object>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default)
     {
         var unDeletedIds = await _questionService.Delete(idsToDelete, cancellationToken);

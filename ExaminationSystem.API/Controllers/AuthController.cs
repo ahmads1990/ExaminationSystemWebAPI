@@ -43,6 +43,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if registration completed, otherwise failure with error details.</returns>
     [HttpPost("register/instructor")]
+    [ProducesResponseType(typeof(SuccessResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<int>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<int>> RegisterInstructor(RegisterInstructorRequest request, CancellationToken cancellationToken = default)
     {
         var registerInstructorDto = request.Adapt<RegisterInstructorDto>();
@@ -60,6 +62,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if registration completed, otherwise failure with error details.</returns>
     [HttpPost("register/student")]
+    [ProducesResponseType(typeof(SuccessResponse<int>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<int>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<int>> RegisterStudent(RegisterStudentRequest request, CancellationToken cancellationToken = default)
     {
         var registerStudentDto = request.Adapt<RegisterStudentDto>();
@@ -77,6 +81,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>JWT token if login successful, otherwise failure with error details.</returns>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(SuccessResponse<UserTokensDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<UserTokensDto>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<UserTokensDto>> Login(UserLoginRequest request, CancellationToken cancellationToken = default)
     {
         var loginDto = request.Adapt<UserLoginDto>();
@@ -95,6 +101,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if email verified, otherwise failure with error details.</returns>
     [HttpPost("verify-email")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> VerifyEmail([FromQuery] int userId, [FromQuery] string token, CancellationToken cancellationToken = default)
     {
         var verificationResult = await _authService.VerifyEmailAsync(userId, token, cancellationToken);
@@ -111,6 +119,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if token refresh initiated, otherwise failure with error details.</returns>
     [HttpPost("resend-verification")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> ResendVerificationEmail([FromQuery] int userId, CancellationToken cancellationToken = default)
     {
         var result = await _authService.RefreshUserEmailVerificationToken(userId, cancellationToken);
@@ -126,6 +136,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A new JWT and refresh token pair if successful, otherwise failure with error details.</returns>
     [HttpPost("refresh-token")]
+    [ProducesResponseType(typeof(SuccessResponse<UserTokensDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<UserTokensDto>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<UserTokensDto>> RefreshToken(RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
         var (result, tokens) = await _authService.RefreshUserToken(request.UserId, request.RefreshToken, cancellationToken);
@@ -141,6 +153,8 @@ public class AuthController : BaseController
     /// <returns>Success response if logged out successfully.</returns>
     [HttpPost("logout")]
     [Authorize]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> Logout(CancellationToken cancellationToken = default)
     {
         var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -170,6 +184,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A generic success message mapping out to the user to check their email.</returns>
     [HttpPost("forgot-password")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _authService.ForgotPasswordAsync(request.Email, cancellationToken);
@@ -185,6 +201,8 @@ public class AuthController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success message indicating password mutation.</returns>
     [HttpPost("reset-password")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<ApiResponse<string>> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _authService.ResetPasswordAsync(request.Email, request.OTP, request.NewPassword, cancellationToken);

@@ -73,7 +73,7 @@ public class ExamService : IExamService
     {
         var exam = examDto.Adapt<Exam>();
 
-        await _examRepository.Add(exam);
+        await _examRepository.Add(exam, cancellationToken);
         await _examRepository.SaveChanges(cancellationToken);
 
         return (ExamOperationResult.Success, exam.ID);
