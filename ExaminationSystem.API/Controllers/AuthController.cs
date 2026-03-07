@@ -2,8 +2,10 @@
 using ExaminationSystem.API.Models.Requests.Auth;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Auth;
-using ExaminationSystem.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace ExaminationSystem.API.Controllers;
 
@@ -129,6 +131,35 @@ public class AuthController : BaseController
         return result == UserOperationResult.Success
             ? new SuccessResponse<UserTokensDto>(tokens!)
             : new ErrorResponse<UserTokensDto>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
+    /// Logs out the current user, blacklisting the JWT access token and revoking the refresh token.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success response if logged out successfully.</returns>
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<ApiResponse<string>> Logout(CancellationToken cancellationToken = default)
+    {
+        var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdString, out int userId))
+            return new ErrorResponse<string>(ApiErrorCode.Unauthorized);
+
+        var jti = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        if (string.IsNullOrEmpty(jti))
+            return new ErrorResponse<string>(ApiErrorCode.InvalidToken);
+
+        var expString = User.FindFirst(JwtRegisteredClaimNames.Exp)?.Value;
+        if (!long.TryParse(expString, out long expSeconds))
+            return new ErrorResponse<string>(ApiErrorCode.InvalidToken);
+
+        var expirationDate = DateTimeOffset.FromUnixTimeSeconds(expSeconds).UtcDateTime;
+
+        var result = await _authService.LogoutAsync(userId, jti, expirationDate, cancellationToken);
+        return result == UserOperationResult.Success
+            ? new SuccessResponse<string>("", "Logged out successfully")
+            : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 
     #endregion

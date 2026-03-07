@@ -64,4 +64,14 @@ public interface IAuthService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A tuple containing the operation result and the generated token.</returns>
     Task<(UserOperationResult result, string token)> CreateExamAttemptToken(CreateExamTokenDto createTokenDto, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Logs out a user by revoking their refresh token and blacklisting their access token.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="jti">The JWT token identifier to be blacklisted.</param>
+    /// <param name="expirationDate">The expiration date of the JWT token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task<UserOperationResult> LogoutAsync(int userId, string jti, DateTime expirationDate, CancellationToken cancellationToken = default);
 }

@@ -114,6 +114,7 @@ app.UseHangfireDashboard("/hangfire");
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TokenBlacklistMiddleware>();
 
 app.UseMiddleware<TransactionMiddleware>();
 

@@ -221,6 +221,32 @@ public class AuthService : IAuthService
                : (UserOperationResult.Success, jwtToken);
     }
 
+    /// <inheritdoc />
+    public async Task<UserOperationResult> LogoutAsync(int userId, string jti, DateTime expirationDate, CancellationToken cancellationToken = default)
+    {
+        // 1. Revoke the active refresh token in the database
+        var storedRefreshToken = await _refreshTokenRepo
+            .GetByCondition(rt => rt.UserId == userId && !rt.IsRevoked)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (storedRefreshToken is not null)
+        {
+            storedRefreshToken.IsRevoked = true;
+            _refreshTokenRepo.Update(storedRefreshToken);
+            await _refreshTokenRepo.SaveChanges(cancellationToken);
+        }
+
+        // 2. Blacklist the JTI in Redis cache until it expires naturally
+        var expiryTime = expirationDate - DateTime.UtcNow;
+        if (expiryTime > TimeSpan.Zero)
+        {
+            var cacheKey = $"blacklist:jti:{jti}";
+            await _cachingService.AddAsync(cacheKey, "revoked", expiryTime, cancellationToken);
+        }
+
+        return UserOperationResult.Success;
+    }
+
     #endregion
 
     #region Private Methods
