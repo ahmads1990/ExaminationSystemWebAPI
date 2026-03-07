@@ -118,6 +118,23 @@ public class CourseService : ICourseService
         return CourseOperationResult.Success;
     }
 
+    /// <inheritdoc/>
+    public async Task<List<CourseStatsDto>> GetInstructorCoursesStats(int instructorId, CancellationToken cancellationToken = default)
+    {
+        var stats = await _courseRepository.GetAll()
+            .Where(c => c.InstructorID == instructorId)
+            .Select(c => new CourseStatsDto
+            {
+                CourseId = c.ID,
+                CourseName = c.Title ?? string.Empty,
+                StudentCount = c.StudentCourses.Count,
+                ExamsCount = c.Exams.Count
+            })
+            .ToListAsync(cancellationToken);
+
+        return stats;
+    }
+
     #endregion
 
     #region Private Methods

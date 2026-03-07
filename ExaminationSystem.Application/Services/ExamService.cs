@@ -1,5 +1,6 @@
 ﻿using ExaminationSystem.Application.DTOs;
 using ExaminationSystem.Application.DTOs.Exams;
+using ExaminationSystem.Application.DTOs.StudentExams;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
@@ -259,6 +260,39 @@ public class ExamService : IExamService
     }
 
     #endregion
+
+    /// <inheritdoc/>
+    public async Task<(ExamOperationResult Result, List<AttemptSummaryDto>? Submissions)> GetExamSubmissions(int examId, int instructorId, CancellationToken cancellationToken = default)
+    {
+        var exam = await _examRepository.GetByCondition(e => e.ID == examId)
+            .Include(e => e.Course)
+            .Include(e => e.ExamAttempts)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (exam is null)
+            return (ExamOperationResult.NotFound, null);
+
+        if (exam.Course?.InstructorID != instructorId)
+            return (ExamOperationResult.NotOwner, null);
+
+        var submissions = exam.ExamAttempts
+            .Where(a => a.ExamAttemptStatus != ExamAttemptStatus.NotStarted && a.ExamAttemptStatus != ExamAttemptStatus.InProgress)
+            .Select(a =>
+            {
+                // We map this here explicitly since Mapster might need the parent Exam reference intact 
+                // which is already included in the EF entity, but manual projection is safer for collections inside includes.
+                var dto = a.Adapt<AttemptSummaryDto>();
+                dto.ExamTitle = exam.Title;
+                dto.CourseName = exam.Course?.Title ?? string.Empty;
+                dto.ExamType = exam.ExamType;
+                dto.MaxGrade = exam.TotalGrade;
+                return dto;
+            })
+            .OrderByDescending(a => a.CreateDate)
+            .ToList();
+
+        return (ExamOperationResult.Success, submissions);
+    }
 
     #region Private Methods
 

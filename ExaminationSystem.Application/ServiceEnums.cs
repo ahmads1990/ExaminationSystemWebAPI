@@ -71,6 +71,7 @@ public enum ExamOperationResult
     NoQuestions,
     HasSubmissions,
     ScoresMismatch,
+    NotOwner
 }
 
 public enum QuestionOperationResult

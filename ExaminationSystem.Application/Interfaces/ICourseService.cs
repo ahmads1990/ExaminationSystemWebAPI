@@ -38,4 +38,12 @@ public interface ICourseService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The operation result.</returns>
     Task<CourseOperationResult> Delete(DeleteCourseDto courseDto, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets course statistics for an instructor dashboard.
+    /// </summary>
+    /// <param name="instructorId">The instructor identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of course statistics.</returns>
+    Task<List<CourseStatsDto>> GetInstructorCoursesStats(int instructorId, CancellationToken cancellationToken = default);
 }

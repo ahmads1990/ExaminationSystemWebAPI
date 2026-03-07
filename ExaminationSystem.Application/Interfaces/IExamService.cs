@@ -1,5 +1,6 @@
 ﻿using ExaminationSystem.Application.DTOs;
 using ExaminationSystem.Application.DTOs.Exams;
+using ExaminationSystem.Application.DTOs.StudentExams;
 
 namespace ExaminationSystem.Application.Interfaces;
 
@@ -98,5 +99,14 @@ public interface IExamService
     /// An empty rejected list means all questions were unassigned successfully.
     /// </returns>
     Task<(ExamOperationResult Result, IEnumerable<RejectedEntityDto> Rejected)> UnassignQuestions(AssignQuestionsDto dto, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves all student submissions for a specific exam.
+    /// </summary>
+    /// <param name="examId">The exam identifier.</param>
+    /// <param name="instructorId">The instructor identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A tuple of the exam operation result and the list of attempt summaries.</returns>
+    Task<(ExamOperationResult Result, List<AttemptSummaryDto>? Submissions)> GetExamSubmissions(int examId, int instructorId, CancellationToken cancellationToken = default);
 }
 
