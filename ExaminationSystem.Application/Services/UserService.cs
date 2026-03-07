@@ -80,6 +80,14 @@ public class UserService : IUserService
     }
 
     /// <inheritdoc />
+    public async Task<UserBasicInfoDto?> GetUserBasicInfoByEmail(string email, CancellationToken cancellationToken = default)
+    {
+        return await _userRepository.GetByCondition(u => u.Email == email)
+                                              .ProjectToType<UserBasicInfoDto>()
+                                              .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task<UserEmailVerificationResult> ConfirmUserEmail(int userId, CancellationToken cancellationToken = default)
     {
         var userData = await _userRepository.GetByCondition(u => u.ID == userId)
@@ -101,6 +109,54 @@ public class UserService : IUserService
         _userRepository.SaveInclude(user, nameof(AppUser.IsEmailConfirmed));
         await _userRepository.SaveChanges(cancellationToken);
         return UserEmailVerificationResult.Success;
+    }
+
+    /// <inheritdoc />
+    public async Task<UserOperationResult> UpdatePassword(int userId, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var userExists = await _userRepository.CheckExistsByID(userId, cancellationToken);
+        if (!userExists)
+            return UserOperationResult.UserNotFound;
+
+        var hashedPassword = _passwordHelper.HashPassword(newPassword);
+
+        var user = new AppUser
+        {
+            ID = userId,
+            Password = hashedPassword
+        };
+
+        _userRepository.SaveInclude(user, nameof(AppUser.Password));
+        await _userRepository.SaveChanges(cancellationToken);
+
+        return UserOperationResult.Success;
+    }
+
+    /// <inheritdoc />
+    public async Task<UserOperationResult> ChangePassword(int userId, string oldPassword, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var userInfo = await _userRepository.GetByCondition(u => u.ID == userId)
+                                            .Select(u => new { u.ID, u.Password })
+                                            .FirstOrDefaultAsync(cancellationToken);
+
+        if (userInfo == null)
+            return UserOperationResult.UserNotFound;
+
+        if (!_passwordHelper.VerifyPassword(userInfo.Password ?? "", oldPassword))
+            return UserOperationResult.InvalidCredentials;
+
+        var hashedPassword = _passwordHelper.HashPassword(newPassword);
+
+        var user = new AppUser
+        {
+            ID = userId,
+            Password = hashedPassword
+        };
+
+        _userRepository.SaveInclude(user, nameof(AppUser.Password));
+        await _userRepository.SaveChanges(cancellationToken);
+
+        return UserOperationResult.Success;
     }
 
     #endregion

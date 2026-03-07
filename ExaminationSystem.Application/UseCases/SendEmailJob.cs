@@ -1,11 +1,12 @@
 ﻿using ExaminationSystem.Application.InfraInterfaces;
+using ExaminationSystem.Application.Interfaces;
 
 namespace ExaminationSystem.Application.UseCases
 {
     /// <summary>
     /// Represents a background job responsible for sending emails using the configured <see cref="IEmailService"/>.
     /// </summary>
-    public class SendEmailJob
+    public class SendEmailJob : ISendEmailJob
     {
         private readonly IEmailService _emailService;
 

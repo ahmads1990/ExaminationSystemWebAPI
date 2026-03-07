@@ -36,7 +36,8 @@ public enum UserEmailVerificationResult
 
 public enum EmailTemplate
 {
-    Welcome
+    Welcome,
+    PasswordReset
 }
 
 public enum CourseOperationResult

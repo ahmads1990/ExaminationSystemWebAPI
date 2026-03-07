@@ -33,10 +33,37 @@ public interface IUserService
     Task<UserBasicInfoDto?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves basic information for a user by their email address.
+    /// </summary>
+    /// <param name="email">The user email.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The user basic information if found, otherwise null.</returns>
+    Task<UserBasicInfoDto?> GetUserBasicInfoByEmail(string email, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Confirms a user's email address.
     /// </summary>
     /// <param name="userId">The user identifier.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The email verification result.</returns>
     Task<UserEmailVerificationResult> ConfirmUserEmail(int userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Updates a user's password directly (used during password reset).
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="newPassword">The new password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    Task<UserOperationResult> UpdatePassword(int userId, string newPassword, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Changes a user's password, verifying the old password first.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="oldPassword">The old password.</param>
+    /// <param name="newPassword">The new password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    Task<UserOperationResult> ChangePassword(int userId, string oldPassword, string newPassword, CancellationToken cancellationToken = default);
 }

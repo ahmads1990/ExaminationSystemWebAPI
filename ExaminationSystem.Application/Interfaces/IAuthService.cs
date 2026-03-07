@@ -74,4 +74,22 @@ public interface IAuthService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task<UserOperationResult> LogoutAsync(int userId, string jti, DateTime expirationDate, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Initiates a password reset process for the specified email by generating an OTP.
+    /// </summary>
+    /// <param name="email">The user email.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    Task<UserOperationResult> ForgotPasswordAsync(string email, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Completes the password reset process after verifying the OTP.
+    /// </summary>
+    /// <param name="email">The user email.</param>
+    /// <param name="otp">The OTP provided by the user.</param>
+    /// <param name="newPassword">The new password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    Task<UserOperationResult> ResetPasswordAsync(string email, string otp, string newPassword, CancellationToken cancellationToken = default);
 }

@@ -163,5 +163,35 @@ public class AuthController : BaseController
             : new ErrorResponse<string>(result.ToApiErrorCode());
     }
 
+    /// <summary>
+    /// Initiates a password reset process by emailing an OTP to the user.
+    /// </summary>
+    /// <param name="request">The forgot password request detailing the user's email.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A generic success message mapping out to the user to check their email.</returns>
+    [HttpPost("forgot-password")]
+    public async Task<ApiResponse<string>> ForgotPassword(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await _authService.ForgotPasswordAsync(request.Email, cancellationToken);
+        return result == UserOperationResult.Success
+            ? new SuccessResponse<string>("", "If that email exists in our system, you will receive a password reset OTP shortly.")
+            : new ErrorResponse<string>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
+    /// Completes the password reset process by verifying the OTP.
+    /// </summary>
+    /// <param name="request">The reset password payload including email, OTP, and new password.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success message indicating password mutation.</returns>
+    [HttpPost("reset-password")]
+    public async Task<ApiResponse<string>> ResetPassword(ResetPasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var result = await _authService.ResetPasswordAsync(request.Email, request.OTP, request.NewPassword, cancellationToken);
+        return result == UserOperationResult.Success
+            ? new SuccessResponse<string>("", "Your password has been reset successfully.")
+            : new ErrorResponse<string>(result.ToApiErrorCode());
+    }
+
     #endregion
 }

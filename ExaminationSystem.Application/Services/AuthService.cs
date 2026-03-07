@@ -19,6 +19,7 @@ public class AuthService : IAuthService
     #region Constants
 
     private const string CacheEmailConfirmationKey = "user:email_confirmation:";
+    private const string CachePasswordResetKey = "user:password_reset:";
 
     #endregion
 
@@ -247,6 +248,39 @@ public class AuthService : IAuthService
         return UserOperationResult.Success;
     }
 
+    /// <inheritdoc />
+    public async Task<UserOperationResult> ForgotPasswordAsync(string email, CancellationToken cancellationToken = default)
+    {
+        var userInfo = await _userService.GetUserBasicInfoByEmail(email, cancellationToken);
+        if (userInfo == null)
+            return UserOperationResult.Success; // Avoid email enumeration by returning success
+
+        var otp = _tokenHelper.GenerateOTP();
+        await _cachingService.AddAsync(CachePasswordResetKey + email, otp, TimeSpan.FromMinutes(15), cancellationToken);
+
+        EnqueuePasswordResetEmailJob(userInfo.Name, email, otp);
+
+        return UserOperationResult.Success;
+    }
+
+    /// <inheritdoc />
+    public async Task<UserOperationResult> ResetPasswordAsync(string email, string otp, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var cachedOtp = await _cachingService.GetAsync(CachePasswordResetKey + email, cancellationToken);
+        if (string.IsNullOrEmpty(cachedOtp) || cachedOtp != otp)
+            return UserOperationResult.InvalidCredentials; // Incorrect or expired OTP
+
+        var userInfo = await _userService.GetUserBasicInfoByEmail(email, cancellationToken);
+        if (userInfo == null)
+            return UserOperationResult.UserNotFound; // Should not happen but safety check
+
+        var result = await _userService.UpdatePassword(userInfo.ID, newPassword, cancellationToken);
+        if (result == UserOperationResult.Success)
+            await _cachingService.RemoveAsync(CachePasswordResetKey + email, cancellationToken);
+
+        return result;
+    }
+
     #endregion
 
     #region Private Methods
@@ -285,6 +319,26 @@ public class AuthService : IAuthService
 
         _backgroundJobClient.Enqueue<SendEmailJob>(job =>
             job.Execute(toName, toEmail, "Welcome new user", EmailTemplate.Welcome, emailParameters, default)
+        );
+    }
+
+    /// <summary>
+    /// Enqueues a background job to send a password reset email to the specified recipient.
+    /// </summary>
+    /// <param name="toName">The display name of the recipient.</param>
+    /// <param name="toEmail">The email address of the recipient.</param>
+    /// <param name="otpCode">The password reset OTP.</param>
+    private void EnqueuePasswordResetEmailJob(string toName, string toEmail, string otpCode)
+    {
+        var emailParameters = new Dictionary<string, string>
+        {
+            { "Name", toName },
+            { "OTP", otpCode },
+            { "Year", DateTime.Now.Year.ToString() }
+        };
+
+        _backgroundJobClient.Enqueue<SendEmailJob>(job =>
+            job.Execute(toName, toEmail, "Password Reset Request", EmailTemplate.PasswordReset, emailParameters, default)
         );
     }
 
