@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ExaminationSystem.API.Controllers;
 
 /// <summary>
-/// Controller for managing student exam attempts.
+/// Controller for managing student exam attempts and tracking dashboard metrics.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -157,16 +157,31 @@ public class StudentExamsController : BaseController
     }
 
     /// <summary>
-    /// Lists all previous exam attempts for the student.
+    /// Lists all published and active exams available for the student across enrolled courses.
+    /// Excludes exams that have exhausted MaxAttempts.
+    /// Requires standard user JWT.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response populated with AvailableExamDto entries.</returns>
+    [Authorize]
+    [HttpGet("available")]
+    public async Task<ApiResponse<List<AvailableExamDto>>> GetAvailableExams(CancellationToken cancellationToken = default)
+    {
+        var availableExams = await _studentExamService.GetAvailableExams(CurrentUserId!.Value, cancellationToken);
+        return new SuccessResponse<List<AvailableExamDto>>(availableExams);
+    }
+
+    /// <summary>
+    /// Lists all historical exam attempts executed by the student (finished, timed out, grading, graded).
     /// Requires the standard user JWT (not exam-scoped).
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with the list of previous attempts.</returns>
     [Authorize]
-    [HttpGet("attempts")]
-    public async Task<ApiResponse<List<AttemptSummaryDto>>> ListAttempts(CancellationToken cancellationToken = default)
+    [HttpGet("history")]
+    public async Task<ApiResponse<List<AttemptSummaryDto>>> GetExamHistory(CancellationToken cancellationToken = default)
     {
-        var attempts = await _studentExamService.ListAttempts(CurrentUserId!.Value, cancellationToken);
+        var attempts = await _studentExamService.GetExamHistory(CurrentUserId!.Value, cancellationToken);
         return new SuccessResponse<List<AttemptSummaryDto>>(attempts);
     }
 

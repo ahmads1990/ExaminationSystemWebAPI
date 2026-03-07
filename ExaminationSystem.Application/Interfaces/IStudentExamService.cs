@@ -71,10 +71,19 @@ public interface IStudentExamService
     Task GradeAttemptAsync(int attemptId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Lists all exam attempts for a student.
+    /// Listed available (published and within deadline) exams for a student to attempt.
+    /// Filters out exams the student has already run out of attempts for.
+    /// </summary>
+    /// <param name="studentId">The student identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A list of available exams details.</returns>
+    Task<List<AvailableExamDto>> GetAvailableExams(int studentId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Lists all exam attempts historical evaluations for a student (Completed, Timedout, Grading, Graded).
     /// </summary>
     /// <param name="studentId">The student identifier.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A list of past attempts summaries.</returns>
-    Task<List<AttemptSummaryDto>> ListAttempts(int studentId, CancellationToken cancellationToken = default);
+    Task<List<AttemptSummaryDto>> GetExamHistory(int studentId, CancellationToken cancellationToken = default);
 }

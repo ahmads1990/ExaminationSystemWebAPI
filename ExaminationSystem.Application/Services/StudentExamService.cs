@@ -229,10 +229,51 @@ public class StudentExamService : IStudentExamService
     }
 
     /// <inheritdoc/>
-    public async Task<List<AttemptSummaryDto>> ListAttempts(int studentId, CancellationToken cancellationToken = default)
+    public async Task<List<AvailableExamDto>> GetAvailableExams(int studentId, CancellationToken cancellationToken = default)
+    {
+        var enrolledCourseIds = await _studentCoursesRepo.GetAll()
+            .Where(sc => sc.StudentID == studentId)
+            .Select(sc => sc.CourseID)
+            .ToListAsync(cancellationToken);
+
+        if (!enrolledCourseIds.Any())
+            return new List<AvailableExamDto>();
+
+        var exams = await _examRepo.GetAll()
+            .Include(e => e.Course)
+            .Include(e => e.ExamAttempts.Where(a => a.StudentId == studentId))
+            .Where(e => enrolledCourseIds.Contains(e.CourseID) &&
+                        e.ExamStatus == ExamStatus.Published &&
+                        e.DeadlineDate > DateTime.UtcNow)
+            .ToListAsync(cancellationToken);
+
+        // Filter out exams where student has exhausted attempts or has an active attempt
+        var availableExams = exams.Where(e =>
+        {
+            var attemptsTaken = e.ExamAttempts.Count;
+            var hasActiveAttempt = e.ExamAttempts.Any(a => a.ExamAttemptStatus == ExamAttemptStatus.InProgress);
+
+            return attemptsTaken < e.MaxAttempts && !hasActiveAttempt;
+        });
+
+        // Map and populate AttemptsTaken manually
+        var result = availableExams.Select(e =>
+        {
+            var dto = e.Adapt<AvailableExamDto>();
+            dto.AttemptsTaken = e.ExamAttempts.Count;
+            return dto;
+        }).ToList();
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<AttemptSummaryDto>> GetExamHistory(int studentId, CancellationToken cancellationToken = default)
     {
         var attempts = await _examAttemptRepo.GetAll()
-            .Where(a => a.StudentId == studentId)
+            .Where(a => a.StudentId == studentId &&
+                        a.ExamAttemptStatus != ExamAttemptStatus.InProgress &&
+                        a.ExamAttemptStatus != ExamAttemptStatus.NotStarted)
             .Include(a => a.Exam)
                 .ThenInclude(e => e.Course)
             .OrderByDescending(a => a.StartTime)

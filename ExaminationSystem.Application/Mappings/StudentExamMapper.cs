@@ -28,5 +28,10 @@ public class StudentExamMapper : IRegister
             .Map(dest => dest.CompletionTime, src => src.EndTime > src.StartTime
                 ? $"{(src.EndTime - src.StartTime).TotalMinutes:F1} minutes"
                 : "0 minutes");
+
+        config.NewConfig<Exam, AvailableExamDto>()
+            .Map(dest => dest.ExamId, src => src.ID)
+            .Map(dest => dest.CourseName, src => src.Course != null ? src.Course.Title : string.Empty)
+            .Ignore(dest => dest.AttemptsTaken);
     }
 }
