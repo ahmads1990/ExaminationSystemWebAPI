@@ -5,6 +5,7 @@ using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Hangfire;
 using MockQueryable;
 using Moq;
@@ -21,6 +22,7 @@ public class StudentExamServiceTests
     private readonly Mock<IRepository<StudentExamsAnswers>> _answersRepoMock;
     private readonly Mock<IAuthService> _authServiceMock;
     private readonly Mock<IBackgroundJobClient> _backgroundJobClientMock;
+    private readonly Mock<ILogger<StudentExamService>> _loggerMock;
     private readonly StudentExamService _service;
 
     public StudentExamServiceTests()
@@ -32,11 +34,12 @@ public class StudentExamServiceTests
         _answersRepoMock = new Mock<IRepository<StudentExamsAnswers>>();
         _authServiceMock = new Mock<IAuthService>();
         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
+        _loggerMock = new Mock<ILogger<StudentExamService>>();
         _service = new StudentExamService(
             _examRepoMock.Object, _studentRepoMock.Object,
             _attemptRepoMock.Object, _studentCoursesRepoMock.Object,
             _answersRepoMock.Object, _authServiceMock.Object,
-            _backgroundJobClientMock.Object);
+            _backgroundJobClientMock.Object, _loggerMock.Object);
     }
 
     #region StartExamAttempt Tests

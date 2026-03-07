@@ -11,6 +11,7 @@ using ExaminationSystem.Domain.Interfaces;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace ExaminationSystem.Application.Services;
 
@@ -33,6 +34,7 @@ public class AuthService : IAuthService
     private readonly ICachingService _cachingService;
     private readonly IPasswordHelper _passwordHelper;
     private readonly IRepository<RefreshToken> _refreshTokenRepo;
+    private readonly ILogger<AuthService> _logger;
 
     private readonly string BackendBaseUrl;
     private readonly int RefreshTokenLifeInDays;
@@ -43,7 +45,8 @@ public class AuthService : IAuthService
 
     public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService,
         ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient, ICachingService cachingService,
-        IRepository<RefreshToken> refreshTokenRepo, IPasswordHelper passwordHelper, IConfiguration configuration)
+        IRepository<RefreshToken> refreshTokenRepo, IPasswordHelper passwordHelper, IConfiguration configuration,
+        ILogger<AuthService> logger)
     {
         _userService = userService;
         _instructorService = instructorService;
@@ -53,6 +56,7 @@ public class AuthService : IAuthService
         _cachingService = cachingService;
         _refreshTokenRepo = refreshTokenRepo;
         _passwordHelper = passwordHelper;
+        _logger = logger;
 
         BackendBaseUrl = configuration.GetSection("BackendBaseUrl").Value
             ?? throw new InvalidOperationException("Missing required configuration: 'BackendBaseUrl'.");
@@ -94,6 +98,8 @@ public class AuthService : IAuthService
         // Add job to send welcome email
         EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp);
 
+        _logger.LogInformation("User {UserId} registered as {Role}", userId, UserRole.Instructor.ToString());
+
         // Return success
         return (UserOperationResult.Success, userId);
     }
@@ -125,6 +131,8 @@ public class AuthService : IAuthService
         // Add job to send welcome email
         EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp);
 
+        _logger.LogInformation("User {UserId} registered as {Role}", userId, UserRole.Student.ToString());
+
         // Return success
         return (UserOperationResult.Success, userId);
     }
@@ -134,13 +142,18 @@ public class AuthService : IAuthService
     {
         var (result, userId) = await _userService.VerifyUserPassword(userLoginDto, cancellationToken);
         if (result != UserOperationResult.Success)
+        {
+            _logger.LogWarning("Login failed for email {Email}: {Reason}", userLoginDto.Email, result);
             return (result, null);
+        }
 
         var jwtToken = await GenerateUserJWT(userId!.Value, cancellationToken: cancellationToken);
         if (string.IsNullOrEmpty(jwtToken))
             return (UserOperationResult.TokenGenerationFailed, null);
 
         var newRefreshToken = await GenerateRefreshToken(userId!.Value, cancellationToken: cancellationToken);
+
+        _logger.LogInformation("User {UserId} logged in successfully", userId.Value);
         return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
     }
 
@@ -202,6 +215,8 @@ public class AuthService : IAuthService
             return (UserOperationResult.TokenGenerationFailed, null);
 
         var newRefreshToken = await GenerateRefreshToken(userId, storedRefreshToken.ID, cancellationToken);
+        
+        _logger.LogInformation("Refresh token rotated for user {UserId}", userId);
         return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
     }
 

@@ -3,6 +3,7 @@ using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using MockQueryable;
 using Moq;
 using System.Linq.Expressions;
@@ -12,12 +13,14 @@ namespace ExaminationSystem.UnitTests.Services;
 public class CourseServiceTests
 {
     private readonly Mock<IRepository<Course>> _courseRepoMock;
+    private readonly Mock<ILogger<CourseService>> _loggerMock;
     private readonly CourseService _service;
 
     public CourseServiceTests()
     {
         _courseRepoMock = new Mock<IRepository<Course>>();
-        _service = new CourseService(_courseRepoMock.Object);
+        _loggerMock = new Mock<ILogger<CourseService>>();
+        _service = new CourseService(_courseRepoMock.Object, _loggerMock.Object);
     }
 
     #region Add Tests

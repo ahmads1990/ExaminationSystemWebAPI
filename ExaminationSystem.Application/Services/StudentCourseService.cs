@@ -4,6 +4,7 @@ using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ExaminationSystem.Application.Services;
@@ -12,17 +13,19 @@ public class StudentCourseService : IStudentCourseService
 {
     #region Fields
 
-    private IRepository<Course> _courseRepository;
-    private IRepository<StudentCourses> _studentCoursesRepository;
+    private readonly IRepository<Course> _courseRepository;
+    private readonly IRepository<StudentCourses> _studentCoursesRepository;
+    private readonly ILogger<StudentCourseService> _logger;
 
     #endregion
 
     #region Constructors
 
-    public StudentCourseService(IRepository<Course> courseRepository, IRepository<StudentCourses> studentCoursesRepository)
+    public StudentCourseService(IRepository<Course> courseRepository, IRepository<StudentCourses> studentCoursesRepository, ILogger<StudentCourseService> logger)
     {
         _courseRepository = courseRepository;
         _studentCoursesRepository = studentCoursesRepository;
+        _logger = logger;
     }
 
     #endregion
@@ -68,6 +71,7 @@ public class StudentCourseService : IStudentCourseService
         var course = await _courseRepository.CheckExistsByID(dto.CourseId, cancellationToken);
         if (!course)
         {
+            _logger.LogWarning("Failed to enroll Student {StudentId} in Course {CourseId}: {Reason}", dto.StudentId, dto.CourseId, StudentCourseOperationResult.CourseNotFound);
             return StudentCourseOperationResult.CourseNotFound;
         }
 
@@ -78,10 +82,12 @@ public class StudentCourseService : IStudentCourseService
 
         if (studentEnrollments.Contains(dto.CourseId))
         {
+            _logger.LogWarning("Failed to enroll Student {StudentId} in Course {CourseId}: {Reason}", dto.StudentId, dto.CourseId, StudentCourseOperationResult.AlreadyEnrolled);
             return StudentCourseOperationResult.AlreadyEnrolled;
         }
         else if (studentEnrollments.Count >= Constants.MaxAllowedEnrolledCoursesPerStudent)
         {
+            _logger.LogWarning("Failed to enroll Student {StudentId} in Course {CourseId}: {Reason}", dto.StudentId, dto.CourseId, StudentCourseOperationResult.MaxEnrollmentsExceeded);
             return StudentCourseOperationResult.MaxEnrollmentsExceeded;
         }
 
@@ -94,6 +100,8 @@ public class StudentCourseService : IStudentCourseService
 
         await _studentCoursesRepository.Add(enrollment, cancellationToken);
         await _studentCoursesRepository.SaveChanges(cancellationToken);
+
+        _logger.LogInformation("Student {StudentId} enrolled successfully in Course {CourseId}", dto.StudentId, dto.CourseId);
 
         return StudentCourseOperationResult.Success;
     }

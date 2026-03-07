@@ -1,9 +1,34 @@
 {
   "BackendBaseUrl": "",
-  "Logging": {
-    "LogLevel": {
+  "Serilog": {
+    "Using": ["Serilog.Sinks.Console", "Serilog.Sinks.Seq"],
+    "MinimumLevel": {
       "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+      "Override": {
+        "Microsoft.AspNetCore": "Warning",
+        "Microsoft.EntityFrameworkCore": "Warning",
+        "Microsoft.EntityFrameworkCore.Database.Command": "Information",
+        "Hangfire": "Warning",
+        "System.Net.Http": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} | {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "Seq",
+        "Args": {
+          "serverUrl": "http://localhost:5341"
+        }
+      }
+    ],
+    "Enrich": ["FromLogContext", "WithMachineName", "WithThreadId", "WithClientIp"],
+    "Properties": {
+      "Application": "ExaminationSystemWebAPI"
     }
   },
   "ConnectionStrings": {
@@ -19,7 +44,8 @@
     "Key": "This is a sample secret key - please don't use in production environment.'",
     "Issuer": "https://localhost.com/",
     "Audience": "https://localhost.com/",
-    "DurationInHours": 1
+    "DurationInHours": 1,
+    "RefreshTokenLifeInDays": 7
   },
   "OTPSecretKey": "This is a sample secret key - please don't use in production environment.'",
   "SMTPConfig": {

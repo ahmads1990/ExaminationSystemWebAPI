@@ -3,6 +3,7 @@ using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace ExaminationSystem.UnitTests.Services;
@@ -10,12 +11,14 @@ namespace ExaminationSystem.UnitTests.Services;
 public class InstructorServiceTests
 {
     private readonly Mock<IRepository<Instructor>> _repositoryMock;
+    private readonly Mock<ILogger<InstructorService>> _loggerMock;
     private readonly InstructorService _service;
 
     public InstructorServiceTests()
     {
         _repositoryMock = new Mock<IRepository<Instructor>>();
-        _service = new InstructorService(_repositoryMock.Object);
+        _loggerMock = new Mock<ILogger<InstructorService>>();
+        _service = new InstructorService(_repositoryMock.Object, _loggerMock.Object);
     }
 
     #region AddAsync Tests

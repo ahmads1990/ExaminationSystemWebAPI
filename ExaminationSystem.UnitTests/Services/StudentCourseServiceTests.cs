@@ -3,6 +3,7 @@ using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using MockQueryable;
 using Moq;
 
@@ -12,13 +13,15 @@ public class StudentCourseServiceTests
 {
     private readonly Mock<IRepository<Course>> _courseRepoMock;
     private readonly Mock<IRepository<StudentCourses>> _studentCoursesRepoMock;
+    private readonly Mock<ILogger<StudentCourseService>> _loggerMock;
     private readonly StudentCourseService _service;
 
     public StudentCourseServiceTests()
     {
         _courseRepoMock = new Mock<IRepository<Course>>();
         _studentCoursesRepoMock = new Mock<IRepository<StudentCourses>>();
-        _service = new StudentCourseService(_courseRepoMock.Object, _studentCoursesRepoMock.Object);
+        _loggerMock = new Mock<ILogger<StudentCourseService>>();
+        _service = new StudentCourseService(_courseRepoMock.Object, _studentCoursesRepoMock.Object, _loggerMock.Object);
     }
 
     #region EnrollInCourse Tests

@@ -1,5 +1,6 @@
 ﻿using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace ExaminationSystem.Application.UseCases
 {
@@ -9,14 +10,17 @@ namespace ExaminationSystem.Application.UseCases
     public class SendEmailJob : ISendEmailJob
     {
         private readonly IEmailService _emailService;
+        private readonly ILogger<SendEmailJob> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SendEmailJob"/> class.
         /// </summary>
         /// <param name="emailService">The email service used to send emails.</param>
-        public SendEmailJob(IEmailService emailService)
+        /// <param name="logger">The logger.</param>
+        public SendEmailJob(IEmailService emailService, ILogger<SendEmailJob> logger)
         {
             _emailService = emailService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -31,7 +35,9 @@ namespace ExaminationSystem.Application.UseCases
         public async Task Execute(string toName, string toEmail, string subject, EmailTemplate template,
             Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("Executing SendEmailJob for {ToEmail} with subject {Subject}", toEmail, subject);
             await _emailService.SendEmailAsync(toName, toEmail, subject, template, parameters, cancellationToken);
+            _logger.LogInformation("SendEmailJob finished successfully for {ToEmail}", toEmail);
         }
     }
 }

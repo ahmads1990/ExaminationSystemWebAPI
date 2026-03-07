@@ -8,6 +8,7 @@ using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
@@ -27,6 +28,7 @@ public class AuthServiceTests
     private readonly Mock<IRepository<RefreshToken>> _refreshTokenRepo;
     private readonly Mock<IPasswordHelper> _passwordHelper;
     private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<ILogger<AuthService>> _loggerMock;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
@@ -40,6 +42,7 @@ public class AuthServiceTests
         _refreshTokenRepo = new Mock<IRepository<RefreshToken>>();
         _passwordHelper = new Mock<IPasswordHelper>();
         _configurationMock = new Mock<IConfiguration>();
+        _loggerMock = new Mock<ILogger<AuthService>>();
 
         // Setup configuration mock
         var configSectionMock = new Mock<IConfigurationSection>();
@@ -59,7 +62,8 @@ public class AuthServiceTests
             _cachingServiceMock.Object,
             _refreshTokenRepo.Object,
             _passwordHelper.Object,
-            _configurationMock.Object
+            _configurationMock.Object,
+            _loggerMock.Object
         );
     }
 

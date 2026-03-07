@@ -3,6 +3,7 @@ using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ExaminationSystem.Application.Services;
@@ -14,15 +15,17 @@ public class QuestionService : IQuestionService
 
     private readonly IRepository<Question> _questionRepository;
     private readonly IRepository<Choice> _choiceRepository;
+    private readonly ILogger<QuestionService> _logger;
 
     #endregion
 
     #region Constructors
 
-    public QuestionService(IRepository<Question> questionRepository, IRepository<Choice> choiceRepository)
+    public QuestionService(IRepository<Question> questionRepository, IRepository<Choice> choiceRepository, ILogger<QuestionService> logger)
     {
         _questionRepository = questionRepository;
         _choiceRepository = choiceRepository;
+        _logger = logger;
     }
 
     #endregion
@@ -72,6 +75,8 @@ public class QuestionService : IQuestionService
         await _questionRepository.Add(question, cancellationToken);
         await SaveChanges(cancellationToken);
 
+        _logger.LogInformation("Question {QuestionId} added successfully", question.ID);
+
         return QuestionOperationResult.Success;
     }
 
@@ -90,7 +95,10 @@ public class QuestionService : IQuestionService
 
         // Lock question if it belongs to an exam with submissions
         if (question.ExamQuestions.Any(eq => eq.Exam.ExamAttempts.Any()))
+        {
+            _logger.LogWarning("Failed to update Question {QuestionId}: {Reason}", questionDto.ID, QuestionOperationResult.Locked);
             return QuestionOperationResult.Locked;
+        }
 
         // Map scalar properties onto the tracked entity
         question.Body = questionDto.Body;
@@ -150,6 +158,9 @@ public class QuestionService : IQuestionService
         await SaveChanges(cancellationToken);
 
         var deletedIds = questions.Select(q => q.ID).ToList();
+        
+        _logger.LogInformation("Questions {QuestionIds} deleted successfully", deletedIds);
+
         return idsToDelete.Except(deletedIds);
     }
 

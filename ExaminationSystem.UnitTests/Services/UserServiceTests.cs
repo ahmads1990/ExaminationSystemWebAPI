@@ -5,6 +5,7 @@ using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Linq.Expressions;
 
@@ -14,13 +15,15 @@ public class UserServiceTests
 {
     private readonly Mock<IRepository<AppUser>> _userRepositoryMock;
     private readonly Mock<IPasswordHelper> _passwordHelperMock;
+    private readonly Mock<ILogger<UserService>> _loggerMock;
     private readonly IUserService _userService;
 
     public UserServiceTests()
     {
         _userRepositoryMock = new Mock<IRepository<AppUser>>();
         _passwordHelperMock = new Mock<IPasswordHelper>();
-        _userService = new UserService(_userRepositoryMock.Object, _passwordHelperMock.Object);
+        _loggerMock = new Mock<ILogger<UserService>>();
+        _userService = new UserService(_userRepositoryMock.Object, _passwordHelperMock.Object, _loggerMock.Object);
     }
 
     #region AddAsync Tests

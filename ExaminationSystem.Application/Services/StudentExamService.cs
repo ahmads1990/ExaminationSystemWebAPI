@@ -6,6 +6,7 @@ using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ExaminationSystem.Application.Services;
 
@@ -23,6 +24,7 @@ public class StudentExamService : IStudentExamService
     private readonly IRepository<StudentExamsAnswers> _answersRepo;
     private readonly IAuthService _authService;
     private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly ILogger<StudentExamService> _logger;
 
     #endregion
 
@@ -35,7 +37,8 @@ public class StudentExamService : IStudentExamService
         IRepository<StudentCourses> studentCoursesRepo,
         IRepository<StudentExamsAnswers> answersRepo,
         IAuthService authService,
-        IBackgroundJobClient backgroundJobClient)
+        IBackgroundJobClient backgroundJobClient,
+        ILogger<StudentExamService> logger)
     {
         _examRepo = examRepo;
         _studentRepo = studentRepo;
@@ -44,6 +47,7 @@ public class StudentExamService : IStudentExamService
         _answersRepo = answersRepo;
         _authService = authService;
         _backgroundJobClient = backgroundJobClient;
+        _logger = logger;
     }
 
     #endregion
@@ -62,6 +66,8 @@ public class StudentExamService : IStudentExamService
         var (tokenResult, accessToken) = await _authService.CreateExamAttemptToken(examTokenInfoDto, cancellationToken);
         if (tokenResult != UserOperationResult.Success)
             return (StudentExamAttemptResult.UnknownError, string.Empty);
+
+        _logger.LogInformation("Student {StudentId} started attempt {AttemptId} for exam {ExamId}", startExamDto.StudentId, examTokenInfoDto.ExamAttemptId, startExamDto.ExamId);
 
         return (StudentExamAttemptResult.Success, accessToken);
     }
@@ -169,6 +175,8 @@ public class StudentExamService : IStudentExamService
 
         _examAttemptRepo.Update(attempt);
         await _examAttemptRepo.SaveChanges(cancellationToken);
+
+        _logger.LogInformation("Student {StudentId} submitted attempt {AttemptId}", studentId, attempt.ID);
 
         // Enqueue grading job if it has > threshold
         if (attemptData?.QuestionCount > Constants.ImmediateExamGradingThreshold)
@@ -347,11 +355,18 @@ public class StudentExamService : IStudentExamService
         var attempt = await _examAttemptRepo.GetByID(examAttemptId, cancellationToken);
 
         if (attempt is null || attempt.StudentId != studentId)
+        {
+            _logger.LogWarning("Student {StudentId} blocked from exam attempt {AttemptId}: {Reason}", studentId, examAttemptId, StudentExamAttemptResult.ExamNotFound.ToString());
             return StudentExamAttemptResult.ExamNotFound;
+        }
 
-        return attempt.ExamAttemptStatus != ExamAttemptStatus.InProgress
-            ? StudentExamAttemptResult.AttemptAlreadyCompleted
-            : StudentExamAttemptResult.Success;
+        if (attempt.ExamAttemptStatus != ExamAttemptStatus.InProgress)
+        {
+            _logger.LogWarning("Student {StudentId} blocked from exam attempt {AttemptId}: {Reason}", studentId, examAttemptId, StudentExamAttemptResult.AttemptAlreadyCompleted.ToString());
+            return StudentExamAttemptResult.AttemptAlreadyCompleted;
+        }
+
+        return StudentExamAttemptResult.Success;
     }
 
     /// <summary>

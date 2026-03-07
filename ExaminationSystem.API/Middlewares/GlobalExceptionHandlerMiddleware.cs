@@ -100,7 +100,7 @@ public class GlobalExceptionHandlerMiddleware
 
     private async Task HandleGenericException(HttpContext context, Exception ex)
     {
-        _logger.LogError(ex, "Unhandled exception occurred");
+        _logger.LogError(ex, "Unhandled exception on {Method} {Path}", context.Request.Method, context.Request.Path);
 
         // Hide details in production, show in development
         var message = _env.IsDevelopment()

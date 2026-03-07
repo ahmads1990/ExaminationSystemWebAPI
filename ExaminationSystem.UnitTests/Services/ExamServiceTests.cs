@@ -3,6 +3,7 @@ using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using MockQueryable;
 using Moq;
 using System.Linq.Expressions;
@@ -14,6 +15,7 @@ public class ExamServiceTests
     private readonly Mock<IRepository<Exam>> _examRepoMock;
     private readonly Mock<IRepository<ExamQuestion>> _examQuestionRepoMock;
     private readonly Mock<IRepository<Question>> _questionRepoMock;
+    private readonly Mock<ILogger<ExamService>> _loggerMock;
     private readonly ExamService _service;
 
     public ExamServiceTests()
@@ -21,7 +23,8 @@ public class ExamServiceTests
         _examRepoMock = new Mock<IRepository<Exam>>();
         _examQuestionRepoMock = new Mock<IRepository<ExamQuestion>>();
         _questionRepoMock = new Mock<IRepository<Question>>();
-        _service = new ExamService(_examRepoMock.Object, _examQuestionRepoMock.Object, _questionRepoMock.Object);
+        _loggerMock = new Mock<ILogger<ExamService>>();
+        _service = new ExamService(_examRepoMock.Object, _examQuestionRepoMock.Object, _questionRepoMock.Object, _loggerMock.Object);
     }
 
     #region Add Tests

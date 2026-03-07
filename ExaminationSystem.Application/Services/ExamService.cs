@@ -5,6 +5,7 @@ using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ExaminationSystem.Application.Services;
@@ -16,16 +17,18 @@ public class ExamService : IExamService
     private readonly IRepository<Exam> _examRepository;
     private readonly IRepository<ExamQuestion> _examQuestionRepository;
     private readonly IRepository<Question> _questionRepository;
+    private readonly ILogger<ExamService> _logger;
 
     #endregion
 
     #region Constructors
 
-    public ExamService(IRepository<Exam> examRepository, IRepository<ExamQuestion> examQuestionRepository, IRepository<Question> questionRepository)
+    public ExamService(IRepository<Exam> examRepository, IRepository<ExamQuestion> examQuestionRepository, IRepository<Question> questionRepository, ILogger<ExamService> logger)
     {
         _examRepository = examRepository;
         _examQuestionRepository = examQuestionRepository;
         _questionRepository = questionRepository;
+        _logger = logger;
     }
 
     #endregion
@@ -128,15 +131,30 @@ public class ExamService : IExamService
                                         .FirstOrDefaultAsync(cancellationToken);
 
         if (exam is null)
+        {
+            _logger.LogWarning("Cannot publish exam {ExamId}: {Reason}", dto.ID, ExamOperationResult.NotFound);
             return ExamOperationResult.NotFound;
+        }
         if (exam.ExamStatus == ExamStatus.Archived)
+        {
+            _logger.LogWarning("Cannot publish exam {ExamId}: {Reason}", dto.ID, ExamOperationResult.ExamArchived);
             return ExamOperationResult.ExamArchived;
+        }
         if (exam.ExamStatus == ExamStatus.Published)
+        {
+            _logger.LogWarning("Cannot publish exam {ExamId}: {Reason}", dto.ID, ExamOperationResult.AlreadyPublished);
             return ExamOperationResult.AlreadyPublished;
+        }
         if (!exam.HasQuestions)
+        {
+            _logger.LogWarning("Cannot publish exam {ExamId}: {Reason}", dto.ID, ExamOperationResult.NoQuestions);
             return ExamOperationResult.NoQuestions;
+        }
         if (exam.QuestionsScoreSum != exam.TotalGrade)
+        {
+            _logger.LogWarning("Cannot publish exam {ExamId}: {Reason}", dto.ID, ExamOperationResult.ScoresMismatch);
             return ExamOperationResult.ScoresMismatch;
+        }
 
         var examToUpdate = new Exam
         {
@@ -146,6 +164,9 @@ public class ExamService : IExamService
         };
         _examRepository.SaveInclude(examToUpdate, nameof(Exam.ExamStatus), nameof(Exam.PublishDate));
         await _examRepository.SaveChanges(cancellationToken);
+        
+        _logger.LogInformation("Exam {ExamId} published", exam.ID);
+
         return ExamOperationResult.Success;
     }
 
@@ -219,6 +240,8 @@ public class ExamService : IExamService
         {
             await _examQuestionRepository.AddRange(toAssign, cancellationToken);
             await _examQuestionRepository.SaveChanges(cancellationToken);
+            
+            _logger.LogInformation("Questions {QuestionIds} assigned to exam {ExamId}", toAssign.Select(q => q.QuestionId), dto.ExamId);
         }
 
         return (ExamOperationResult.Success, rejected);

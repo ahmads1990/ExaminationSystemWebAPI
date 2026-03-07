@@ -5,6 +5,7 @@ using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ExaminationSystem.Application.Services;
 
@@ -14,15 +15,17 @@ public class UserService : IUserService
 
     private readonly IRepository<AppUser> _userRepository;
     private readonly IPasswordHelper _passwordHelper;
+    private readonly ILogger<UserService> _logger;
 
     #endregion
 
     #region Constructors
 
-    public UserService(IRepository<AppUser> userRepository, IPasswordHelper passwordHelper)
+    public UserService(IRepository<AppUser> userRepository, IPasswordHelper passwordHelper, ILogger<UserService> logger)
     {
         _userRepository = userRepository;
         _passwordHelper = passwordHelper;
+        _logger = logger;
     }
 
     #endregion
@@ -44,7 +47,10 @@ public class UserService : IUserService
         // Check email is unique
         var isEmailUnique = await IsUserEmailUnique(userDto.Email, cancellationToken);
         if (!isEmailUnique)
+        {
+            _logger.LogWarning("Failed to add user with email {Email}: {Reason}", userDto.Email, UserOperationResult.EmailDuplicated);
             return (UserOperationResult.EmailDuplicated, 0);
+        }
 
         var user = userDto.Adapt<AppUser>();
 
@@ -54,6 +60,8 @@ public class UserService : IUserService
 
         await _userRepository.Add(user, cancellationToken);
         await _userRepository.SaveChanges(cancellationToken);
+
+        _logger.LogInformation("Core user {UserId} created successfully with email {Email}", user.ID, user.Email);
 
         return (UserOperationResult.Success, user.ID);
     }
@@ -108,6 +116,8 @@ public class UserService : IUserService
 
         _userRepository.SaveInclude(user, nameof(AppUser.IsEmailConfirmed));
         await _userRepository.SaveChanges(cancellationToken);
+        
+        _logger.LogInformation("User {UserId} confirmed their email address successfully", userId);
         return UserEmailVerificationResult.Success;
     }
 
@@ -128,6 +138,8 @@ public class UserService : IUserService
 
         _userRepository.SaveInclude(user, nameof(AppUser.Password));
         await _userRepository.SaveChanges(cancellationToken);
+
+        _logger.LogInformation("User {UserId} had their password forcefully updated", userId);
 
         return UserOperationResult.Success;
     }
@@ -155,6 +167,8 @@ public class UserService : IUserService
 
         _userRepository.SaveInclude(user, nameof(AppUser.Password));
         await _userRepository.SaveChanges(cancellationToken);
+
+        _logger.LogInformation("User {UserId} changed their password via standard flow", userId);
 
         return UserOperationResult.Success;
     }

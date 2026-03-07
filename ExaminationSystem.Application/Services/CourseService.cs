@@ -4,6 +4,7 @@ using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
 
 namespace ExaminationSystem.Application.Services;
@@ -13,14 +14,16 @@ public class CourseService : ICourseService
     #region Fields
 
     private readonly IRepository<Course> _courseRepository;
+    private readonly ILogger<CourseService> _logger;
 
     #endregion
 
     #region Constructors
 
-    public CourseService(IRepository<Course> courseRepository)
+    public CourseService(IRepository<Course> courseRepository, ILogger<CourseService> logger)
     {
         _courseRepository = courseRepository;
+        _logger = logger;
     }
 
     #endregion
@@ -78,6 +81,8 @@ public class CourseService : ICourseService
         await _courseRepository.Add(course, cancellationToken);
         await _courseRepository.SaveChanges(cancellationToken);
 
+        _logger.LogInformation("Course {CourseId} added by instructor {InstructorId}", course.ID, courseDto.InstructorID);
+
         return (CourseOperationResult.Success, course.ID);
     }
 
@@ -114,6 +119,8 @@ public class CourseService : ICourseService
         var stub = new Course() { ID = course.ID, Instructor = default };
         _courseRepository.SoftDelete(stub);
         await _courseRepository.SaveChanges(cancellationToken);
+
+        _logger.LogInformation("Course {CourseId} deleted by user {UserId}", courseDto.CourseId, courseDto.ActorId);
 
         return CourseOperationResult.Success;
     }

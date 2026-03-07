@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using SmtpClient = MailKit.Net.Smtp.SmtpClient;
 
 namespace ExaminationSystem.Infrastructure.Services.Email
@@ -24,6 +25,7 @@ namespace ExaminationSystem.Infrastructure.Services.Email
 
         private readonly SMTPConfig _smtpConfig;
         private readonly string _templateRoot;
+        private readonly ILogger<EmailService> _logger;
 
         #endregion
 
@@ -34,10 +36,12 @@ namespace ExaminationSystem.Infrastructure.Services.Email
         /// </summary>
         /// <param name="sMTPConfig">The SMTP configuration settings.</param>
         /// <param name="env">The web hosting environment for locating template files.</param>
-        public EmailService(IOptions<SMTPConfig> sMTPConfig, IWebHostEnvironment env)
+        /// <param name="logger">Logger instance.</param>
+        public EmailService(IOptions<SMTPConfig> sMTPConfig, IWebHostEnvironment env, ILogger<EmailService> logger)
         {
             _smtpConfig = sMTPConfig.Value;
             _templateRoot = Path.Combine(env.ContentRootPath, TemplatesFolder, EmailTemplatesFolder);
+            _logger = logger;
         }
 
         #endregion
@@ -64,9 +68,11 @@ namespace ExaminationSystem.Infrastructure.Services.Email
                     }
 
                     await client.SendAsync(message, cancellationToken);
+                    _logger.LogInformation("Email sent successfully to {ToEmail} regarding {Subject}", toEmail, subject);
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Failed to send email to {ToEmail}", toEmail);
                     throw new InvalidOperationException("Failed to send email.", ex);
                 }
                 finally

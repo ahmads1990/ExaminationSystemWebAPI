@@ -1,4 +1,5 @@
 using ExaminationSystem.Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace ExaminationSystem.Application.UseCases;
 
@@ -9,15 +10,19 @@ namespace ExaminationSystem.Application.UseCases;
 public class GradeExamAttemptJob : IGradeExamAttemptJob
 {
     private readonly IStudentExamService _studentExamService;
+    private readonly ILogger<GradeExamAttemptJob> _logger;
 
-    public GradeExamAttemptJob(IStudentExamService studentExamService)
+    public GradeExamAttemptJob(IStudentExamService studentExamService, ILogger<GradeExamAttemptJob> logger)
     {
         _studentExamService = studentExamService;
+        _logger = logger;
     }
 
     /// <inheritdoc />
     public async Task GradeAttemptAsync(int attemptId, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Grade attempt job started for AttemptId: {AttemptId}", attemptId);
         await _studentExamService.GradeAttemptAsync(attemptId, cancellationToken);
+        _logger.LogInformation("Grade attempt job finished successfully for AttemptId: {AttemptId}", attemptId);
     }
 }
