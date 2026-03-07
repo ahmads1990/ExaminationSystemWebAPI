@@ -43,7 +43,6 @@ public class CoursesController : BaseController
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A paginated list of courses.</returns>
     [HttpGet]
-    [Authorize]
     public async Task<PaginatedResponse<CourseDto>> List([FromQuery] ListCoursesRequest request, CancellationToken cancellationToken = default)
     {
         var listDto = request.Adapt<ListCoursesDto>();
@@ -105,7 +104,7 @@ public class CoursesController : BaseController
     /// A <see cref="BaseResponse{T}"/> containing an empty success payload when the deletion succeeds,
     /// or a failure response with an error code and message on failure.
     /// </returns>
-    [HttpDelete]
+    [HttpDelete("{courseId:int}")]
     public async Task<ApiResponse<string>> Delete(int courseId, CancellationToken cancellationToken = default)
     {
         var deleteCourseDto = new DeleteCourseDto

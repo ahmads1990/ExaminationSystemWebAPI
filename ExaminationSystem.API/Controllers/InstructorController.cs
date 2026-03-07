@@ -13,8 +13,6 @@ namespace ExaminationSystem.API.Controllers;
 /// <summary>
 /// Controller for instructor-specific operations such as viewing dashboards and submissions.
 /// </summary>
-[ApiController]
-[Route("api/[controller]")]
 [Authorize(Roles = Constants.InstructorRoleName)]
 public class InstructorController : BaseController
 {

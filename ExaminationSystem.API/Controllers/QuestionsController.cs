@@ -3,13 +3,16 @@ using ExaminationSystem.API.Models.Requests.Questions;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Questions;
 using ExaminationSystem.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ExaminationSystem.API.Common;
 
 namespace ExaminationSystem.API.Controllers;
 
 /// <summary>
 /// Controller for managing Questions.
 /// </summary>
+[Authorize(Roles = Constants.InstructorRoleName)]
 public class QuestionsController : BaseController
 {
     #region Fields
@@ -54,7 +57,7 @@ public class QuestionsController : BaseController
     /// <param name="id">The ID of the question.</param>
     /// <param name="cancellationToken">Optional cancellation token for user to cancel the request</param>
     /// <returns>The details of the question if found; otherwise, an error response.</returns>
-    [HttpGet]
+    [HttpGet("{id:int}")]
     public async Task<ApiResponse<QuestionDto?>> GetDetails(int id, CancellationToken cancellationToken = default)
     {
         var question = await _questionService.GetByID(id, cancellationToken);

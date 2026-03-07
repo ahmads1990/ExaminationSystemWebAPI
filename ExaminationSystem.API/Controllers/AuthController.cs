@@ -42,7 +42,7 @@ public class AuthController : BaseController
     /// <param name="request">The instructor registration details.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if registration completed, otherwise failure with error details.</returns>
-    [HttpPost]
+    [HttpPost("register/instructor")]
     public async Task<ApiResponse<int>> RegisterInstructor(RegisterInstructorRequest request, CancellationToken cancellationToken = default)
     {
         var registerInstructorDto = request.Adapt<RegisterInstructorDto>();
@@ -59,7 +59,7 @@ public class AuthController : BaseController
     /// <param name="request">The student registration details.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if registration completed, otherwise failure with error details.</returns>
-    [HttpPost]
+    [HttpPost("register/student")]
     public async Task<ApiResponse<int>> RegisterStudent(RegisterStudentRequest request, CancellationToken cancellationToken = default)
     {
         var registerStudentDto = request.Adapt<RegisterStudentDto>();
@@ -76,7 +76,7 @@ public class AuthController : BaseController
     /// <param name="request">The login credentials.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>JWT token if login successful, otherwise failure with error details.</returns>
-    [HttpPost]
+    [HttpPost("login")]
     public async Task<ApiResponse<UserTokensDto>> Login(UserLoginRequest request, CancellationToken cancellationToken = default)
     {
         var loginDto = request.Adapt<UserLoginDto>();
@@ -94,7 +94,7 @@ public class AuthController : BaseController
     /// <param name="token">The email confirmation token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if email verified, otherwise failure with error details.</returns>
-    [HttpPost]
+    [HttpPost("verify-email")]
     public async Task<ApiResponse<string>> VerifyEmail([FromQuery] int userId, [FromQuery] string token, CancellationToken cancellationToken = default)
     {
         var verificationResult = await _authService.VerifyEmailAsync(userId, token, cancellationToken);
@@ -110,7 +110,7 @@ public class AuthController : BaseController
     /// <param name="userId">The user's unique identifier.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if token refresh initiated, otherwise failure with error details.</returns>
-    [HttpPost]
+    [HttpPost("resend-verification")]
     public async Task<ApiResponse<string>> ResendVerificationEmail([FromQuery] int userId, CancellationToken cancellationToken = default)
     {
         var result = await _authService.RefreshUserEmailVerificationToken(userId, cancellationToken);
@@ -125,7 +125,7 @@ public class AuthController : BaseController
     /// <param name="request">The refresh token request containing user ID and refresh token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A new JWT and refresh token pair if successful, otherwise failure with error details.</returns>
-    [HttpPost]
+    [HttpPost("refresh-token")]
     public async Task<ApiResponse<UserTokensDto>> RefreshToken(RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
         var (result, tokens) = await _authService.RefreshUserToken(request.UserId, request.RefreshToken, cancellationToken);

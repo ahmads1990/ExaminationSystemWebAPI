@@ -16,8 +16,6 @@ namespace ExaminationSystem.API.Controllers;
 /// - Students can view and manage their own enrollments.
 /// - Instructors can view enrollments for any student.
 /// </remarks>
-[ApiController]
-[Route("api/[controller]")]
 public class StudentCoursesController : BaseController
 {
     #region Fields

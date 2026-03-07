@@ -4,13 +4,16 @@ using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs;
 using ExaminationSystem.Application.DTOs.Exams;
 using ExaminationSystem.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ExaminationSystem.API.Common;
 
 namespace ExaminationSystem.API.Controllers;
 
 /// <summary>
 /// Controller for managing exams, including CRUD operations, publishing, and question assignment.
 /// </summary>
+[Authorize(Roles = Constants.InstructorRoleName)]
 public class ExamsController : BaseController
 {
     #region Fields
@@ -55,7 +58,7 @@ public class ExamsController : BaseController
     /// <param name="id">The exam identifier.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The exam details if found, otherwise an error response.</returns>
-    [HttpGet]
+    [HttpGet("{id:int}")]
     public async Task<ApiResponse<ExamDto?>> GetDetails(int id, CancellationToken cancellationToken = default)
     {
         var exam = await _examService.GetByID(id, cancellationToken);
@@ -125,7 +128,7 @@ public class ExamsController : BaseController
     /// <param name="publishExamRequest">The publish request containing the exam ID and optional publish date.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
-    [HttpPatch]
+    [HttpPatch("publish")]
     public async Task<ApiResponse<string>> Publish(PublishExamRequest publishExamRequest, CancellationToken cancellationToken = default)
     {
         var publishExamDto = publishExamRequest.Adapt<PublishExamDto>();
@@ -143,7 +146,7 @@ public class ExamsController : BaseController
     /// <param name="id">The ID of the exam to unpublish.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success or error response based on the operation result.</returns>
-    [HttpPatch]
+    [HttpPatch("{id:int}/unpublish")]
     public async Task<ApiResponse<string>> UnPublish(int id, CancellationToken cancellationToken = default)
     {
         var result = await _examService.UnPublish(id, cancellationToken);
@@ -159,7 +162,7 @@ public class ExamsController : BaseController
     /// <param name="request">The exam ID and question IDs to assign.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
-    [HttpPatch]
+    [HttpPatch("assign-questions")]
     public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> AssignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
     {
         var dto = request.Adapt<AssignQuestionsDto>();
@@ -176,7 +179,7 @@ public class ExamsController : BaseController
     /// <param name="request">The exam ID and question IDs to unassign.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with rejected items, or an error for exam-level failures.</returns>
-    [HttpPatch]
+    [HttpPatch("unassign-questions")]
     public async Task<ApiResponse<IEnumerable<RejectedEntityDto>>> UnassignQuestions(AssignQuestionsRequest request, CancellationToken cancellationToken = default)
     {
         var dto = request.Adapt<AssignQuestionsDto>();

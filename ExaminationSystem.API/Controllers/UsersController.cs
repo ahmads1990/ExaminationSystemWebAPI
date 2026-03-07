@@ -11,8 +11,6 @@ namespace ExaminationSystem.API.Controllers;
 /// <summary>
 /// Controller for user profile management.
 /// </summary>
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
 public class UsersController : BaseController
 {
@@ -33,7 +31,7 @@ public class UsersController : BaseController
     /// <param name="request">The change password request containing the old and new passwords.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Success response if password stands mutated.</returns>
-    [HttpPut("me/password")]
+    [HttpPut("me/change-password")]
     public async Task<ApiResponse<string>> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken = default)
     {
         var result = await _userService.ChangePassword(CurrentUserId!.Value, request.OldPassword, request.NewPassword, cancellationToken);

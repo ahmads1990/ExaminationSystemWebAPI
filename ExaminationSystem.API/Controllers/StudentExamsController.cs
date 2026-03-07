@@ -1,4 +1,5 @@
 ﻿using ExaminationSystem.API.Authorization;
+using ExaminationSystem.API.Common;
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.StudentExams;
 using ExaminationSystem.API.Models.Responses;
@@ -13,8 +14,6 @@ namespace ExaminationSystem.API.Controllers;
 /// <summary>
 /// Controller for managing student exam attempts and tracking dashboard metrics.
 /// </summary>
-[ApiController]
-[Route("api/[controller]")]
 public class StudentExamsController : BaseController
 {
     #region Fields
@@ -45,6 +44,7 @@ public class StudentExamsController : BaseController
     /// <param name="request">The start exam attempt request.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with the exam access token, or an error response.</returns>
+    [Authorize(Roles = Constants.StudentRoleName)]
     [HttpPost("start")]
     public async Task<ApiResponse<string>> StartExamAttempt([FromBody] StartExamAttemptRequest request, CancellationToken cancellationToken = default)
     {
@@ -146,7 +146,7 @@ public class StudentExamsController : BaseController
     /// <param name="attemptId">The optional exam attempt identifier; if null, gets the latest.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with the attempt result, or an error response.</returns>
-    [Authorize]
+    [Authorize(Roles = Constants.StudentRoleName)]
     [HttpGet("result")]
     public async Task<ApiResponse<AttemptResultDto>> GetAttemptResult([FromQuery] int? attemptId, CancellationToken cancellationToken = default)
     {
@@ -163,7 +163,7 @@ public class StudentExamsController : BaseController
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response populated with AvailableExamDto entries.</returns>
-    [Authorize]
+    [Authorize(Roles = Constants.StudentRoleName)]
     [HttpGet("available")]
     public async Task<ApiResponse<List<AvailableExamDto>>> GetAvailableExams(CancellationToken cancellationToken = default)
     {
@@ -177,7 +177,7 @@ public class StudentExamsController : BaseController
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A success response with the list of previous attempts.</returns>
-    [Authorize]
+    [Authorize(Roles = Constants.StudentRoleName)]
     [HttpGet("history")]
     public async Task<ApiResponse<List<AttemptSummaryDto>>> GetExamHistory(CancellationToken cancellationToken = default)
     {
