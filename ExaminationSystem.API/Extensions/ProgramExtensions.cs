@@ -55,7 +55,7 @@ public static class ProgramExtensions
     {
         services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Examination System API", Version = "v1" });
 
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
@@ -64,7 +64,7 @@ public static class ProgramExtensions
                 Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "Enter JWT token like: Bearer {your token}"
+                Description = "Enter JWT token strictly."
             });
 
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -81,6 +81,17 @@ public static class ProgramExtensions
                     Array.Empty<string>()
                 }
             });
+
+            // Set the comments path for the Swagger JSON and UI.
+            var apiXmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var apiXmlPath = Path.Combine(AppContext.BaseDirectory, apiXmlFile);
+            if (File.Exists(apiXmlPath))
+                c.IncludeXmlComments(apiXmlPath);
+
+            var appXmlFile = "ExaminationSystem.Application.xml";
+            var appXmlPath = Path.Combine(AppContext.BaseDirectory, appXmlFile);
+            if (File.Exists(appXmlPath))
+                c.IncludeXmlComments(appXmlPath);
         });
 
         return services;
