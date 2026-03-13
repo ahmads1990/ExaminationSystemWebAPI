@@ -111,6 +111,8 @@ try
     app.MapControllers();
     app.MapHealthChecks("/health");
 
+    await app.ApplyDatabaseMigrationsAndSeedAsync();
+
     app.Run();
 }
 catch (Exception ex)

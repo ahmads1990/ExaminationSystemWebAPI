@@ -1,8 +1,10 @@
 ﻿using ExaminationSystem.API.Common.Configs;
 using ExaminationSystem.API.Models.Responses;
+using ExaminationSystem.Infrastructure.Data.Seeding;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 namespace ExaminationSystem.API.Extensions;
@@ -95,5 +97,24 @@ public static class ProgramExtensions
         });
 
         return services;
+    }
+
+    public static async Task ApplyDatabaseMigrationsAndSeedAsync(this WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        
+        try
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ExaminationSystem.Infrastructure.Data.AppDbContext>();
+            await dbContext.Database.MigrateAsync();
+            
+            await AppDbSeeder.SeedAsync(scope.ServiceProvider);
+        }
+        catch (Exception ex)
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+            throw;
+        }
     }
 }
