@@ -1,4 +1,4 @@
-# 🎓 Examination System Web API
+# 🎓 ExamSys — Examination System Web API
 
 <div align="center">
 
@@ -6,11 +6,12 @@
 ![C#](https://img.shields.io/badge/C%23-12-239120?style=for-the-badge&logo=c-sharp&logoColor=white)
 ![SQL Server](https://img.shields.io/badge/SQL%20Server-CC2927?style=for-the-badge&logo=microsoft-sql-server&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=json-web-tokens&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-143%20Passing-brightgreen?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-**A modern, scalable examination management system built with Clean Architecture principles**
+**A production-ready, multi-tenant examination management API built on Clean Architecture**
 
-[Features](#-features) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [API Documentation](#-api-documentation) • [Tech Stack](#-tech-stack)
+[Features](#-features) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [API](#-api-documentation) • [Contributing](#-contributing)
 
 </div>
 
@@ -18,318 +19,456 @@
 
 ## 📖 Overview
 
-The **Examination System Web API** is a comprehensive backend solution for managing academic examinations, courses, and student assessments. Built with **.NET 8** and following **Clean Architecture** principles, it provides a robust, scalable, and maintainable platform for educational institutions.
+**ExamSys** is a comprehensive backend API for managing academic examinations across multiple institutions. Built with **.NET 8** and **Clean Architecture**, it supports the full exam lifecycle — from course enrollment and exam creation, through timed exam-taking with a scoped JWT, to automatic grading via background jobs.
 
 ### 🎯 Key Highlights
 
-- 🏗️ **Clean Architecture** - Clear separation of concerns across four distinct layers
-- 🔐 **Secure Authentication** - JWT-based authentication with email verification
-- 📧 **Email Integration** - Professional email templates for user communications
-- ⚡ **High Performance** - Redis caching and optimized database queries
-- 🔄 **Background Jobs** - Hangfire for asynchronous task processing
-- ✅ **Robust Validation** - FluentValidation for comprehensive input validation
-- 📚 **API Documentation** - Interactive Swagger/OpenAPI documentation
-- 🧪 **Testable** - Unit tests with clear separation of concerns
+- 🏗️ **Clean Architecture** — Four-layer separation with strict dependency rules
+- 🏢 **Multi-Tenancy** — Data isolation per institution via EF Core global query filters + tenant-aware Redis keys
+- 🔐 **Dual-Token Auth** — JWT + Refresh Token with token blacklisting via Redis on logout
+- ⏱️ **Timed Exams** — Exam-scoped JWT + Hangfire auto-close job when time expires
+- ⚡ **Performance** — Redis caching, Brotli/Gzip response compression, paginated queries
+- 🛡️ **Rate Limiting** — Sliding window limiter (100 req/min)
+- 📊 **Observability** — Structured logging with Serilog → Seq
 
 ---
 
-## ✨ Features
+## ✨ Features [🔼](#table-of-contents)
+
+### 🏢 Multi-Tenancy
+- **Tenant Isolation** — Every entity scoped to a tenant; EF Core global query filters applied automatically
+- **Tenant Lookup API** — Public endpoint for frontend registration/login dropdowns
+- **Tenant-aware Cache** — Redis keys namespaced per tenant (`:tenant:{id}` postfix)
 
 ### 👤 User Management
-- **Role-Based Access** - Separate registration flows for Students and Instructors
-- **Email Verification** - Secure token-based email confirmation
-- **JWT Authentication** - Stateless, scalable authentication
-- **Password Security** - Industry-standard password hashing
+- Role-based registration for Students and Instructors
+- OTP-based email verification via Hangfire + MailKit
+- Forgot password / reset password / change password
+- Rotating refresh tokens with hash storage and revocation
 
-### 📚 Course Management
-- **Course Creation** - Instructors can create and manage courses
-- **Student Enrollment** - Students can enroll in available courses
-- **Course Organization** - Structured academic content management
+### 📚 Course & Exam Management
+- Full Course CRUD (Instructor-only create/update/delete)
+- Student enrollment in courses
+- Flexible exam configuration: duration, max attempts, shuffle, pass marks, exam types
+- Question bank with Easy/Medium/Hard difficulty and multiple choices
+- Exam lifecycle: Draft → Published → Archived
 
-### 📝 Examination System
-- **Question Bank** - Reusable questions with difficulty levels (Easy, Medium, Hard)
-- **Flexible Exam Creation** - Instructors build exams from question bank
-- **Multiple Choice Questions** - Support for multiple answer choices
-- **Exam Configuration**
-  - Time limits and duration control
-  - Pass marks and grading criteria
-  - Publish/Draft states
-  - Deadline management
-- **Automatic Grading** - Instant results based on correct answers
-- **Exam Types** - Support for different examination formats
+### 🎓 Exam Taking (Student Flow)
+- Start exam → issues an exam-scoped JWT (time-limited, attempt-specific claims)
+- Submit answers — single or batch
+- Hangfire auto-closes the attempt when time expires (TimedOut status)
+- Instant grading for small exams; async Hangfire job for large exams (> threshold)
 
-### 🎓 Student Features
-- **Course Enrollment** - Browse and enroll in courses
-- **Take Exams** - Timed examination interface
-- **View Results** - Access grades and performance metrics
-
-### 👨‍🏫 Instructor Features
-- **Course Management** - Create and manage courses
-- **Question Creation** - Build comprehensive question banks
-- **Exam Design** - Create exams with custom configurations
-- **Student Monitoring** - Track student performance
+### 📊 Dashboards
+- **Student**: available exams, exam history, attempt results
+- **Instructor**: course listings, exam submissions
 
 ---
 
-## 🏗️ Architecture
-
-This project implements **Clean Architecture** with clear dependency rules:
+## 🏗️ Architecture [🔼](#table-of-contents)
 
 ```
-┌─────────────────────────────────────────┐
-│         ExaminationSystem.API           │  ← Presentation Layer
-│     (Controllers, Models, Validators)   │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│      ExaminationSystem.Application      │  ← Business Logic Layer
-│   (Services, DTOs, Interfaces, Mappers) │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│    ExaminationSystem.Infrastructure     │  ← Data Access Layer
-│  (DbContext, Repositories, Services)    │
-└────────────────┬────────────────────────┘
-                 │
-┌────────────────▼────────────────────────┐
-│       ExaminationSystem.Domain          │  ← Core Domain Layer
-│         (Entities, Interfaces)          │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│          ExaminationSystem.API              │  ← Presentation Layer
+│    Controllers · Models · Validators        │
+│    Middlewares · Extensions                 │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│       ExaminationSystem.Application         │  ← Business Logic Layer
+│    Services · DTOs · Interfaces             │
+│    UseCases (Jobs) · Email Templates        │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│      ExaminationSystem.Infrastructure       │  ← Data Access Layer
+│   DbContext · Repositories · Migrations     │
+│   JWT/Redis/Email/Hangfire implementations  │
+└─────────────────┬───────────────────────────┘
+                  │
+┌─────────────────▼───────────────────────────┐
+│         ExaminationSystem.Domain            │  ← Core Domain Layer
+│      Entities · Enums · Interfaces          │
+│          (zero external dependencies)       │
+└─────────────────────────────────────────────┘
 ```
-
-### Layer Responsibilities
 
 | Layer | Purpose | Dependencies |
 |-------|---------|--------------|
-| **Domain** | Core business entities and interfaces | None (pure C#) |
-| **Application** | Business logic, services, DTOs | Domain |
-| **Infrastructure** | Data access, external services | Application, Domain |
-| **API** | HTTP endpoints, request/response models | Application, Infrastructure |
+| **Domain** | Core entities, enums, domain interfaces | None |
+| **Application** | Business rules, services, DTOs, job use cases | Domain |
+| **Infrastructure** | EF Core, Redis, JWT, email, Hangfire | Application + Domain |
+| **API** | HTTP controllers, validators, request models | Application |
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack [🔼](#table-of-contents)
 
-### Core Framework
-- **.NET 8.0** - Latest LTS version with modern C# features
-- **ASP.NET Core Web API** - RESTful API framework
-- **Entity Framework Core 8.0** - ORM for database operations
-
-### Database & Caching
-- **SQL Server** - Primary relational database
-- **Redis** - Distributed caching for performance
-- **Code-First Migrations** - Version-controlled database schema
-
-### Security & Authentication
-- **JWT Bearer Tokens** - Stateless authentication
-- **Custom Authentication** - Flexible user management
-- **Password Hashing** - Secure password storage
-- **Email Verification** - Token-based email confirmation
-
-### Background Processing
-- **Hangfire** - Background job processing
-- **Hangfire Dashboard** - Job monitoring UI at `/hangfire`
-
-### Validation & Mapping
-- **FluentValidation** - Declarative validation rules
-- **Mapster** - High-performance object mapping
-
-### Communication
-- **MailKit** - Email sending with HTML templates
-- **SMTP Integration** - Configurable email service
-
-### Documentation & Tools
-- **Swagger/OpenAPI** - Interactive API documentation
-- **XML Documentation** - Code-level documentation
-
-### 🛠️ API & Infrastructure Enhancements
-- **Global Error Handling**: Middleware-based exception management for consistent error responses.
-- **Automatic Transactions**: Middleware for automatic EF Core transactions on all write operations.
-- **Response Compression**: Brotli and Gzip compression for optimized network usage.
-- **Standardized Response Model**: Programmatic `ApiErrorCode` system with attribute-based messages.
-- **FluentValidation Integration**: Automated request validation with localized error messages.
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| .NET / ASP.NET Core | 8.0 | Web API framework |
+| Entity Framework Core | 8.0 | ORM + code-first migrations |
+| SQL Server | — | Primary database + Hangfire storage |
+| Redis | — | Caching — OTPs, JTI blacklist, tenant-scoped keys |
+| Hangfire | — | Background jobs (email, auto-close exam, grading) |
+| FluentValidation | — | Declarative request validation |
+| Mapster | — | High-performance object mapping |
+| MailKit | — | Email with HTML templates |
+| Serilog + Seq | — | Structured logging and aggregation |
+| Asp.Versioning | — | API versioning (`/api/v1/`) |
+| Swagger / OpenAPI | — | Interactive API docs with JWT auth |
 
 ---
 
-## 🎓 Lessons Learned & Best Practices
+## 🗄️ Database [🔼](#table-of-contents)
 
-Throughout the development of these enhancements, several key architectural and technical lessons were implemented:
+```mermaid
+erDiagram
+    Tenant {
+        int ID PK
+        string Name
+        bool IsActive
+        datetime CreatedDate
+    }
+    AppUser {
+        int ID PK
+        int TenantId FK
+        string Name
+        string Email
+        string Role
+        bool IsEmailConfirmed
+    }
+    Instructor {
+        int ID PK
+        int TenantId FK
+        string Bio
+        string Specialization
+    }
+    Student {
+        int ID PK
+        int TenantId FK
+        string Level
+        string Group
+    }
+    RefreshToken {
+        int ID PK
+        int TenantId FK
+        int UserId FK
+        string TokenHash
+        bool IsRevoked
+        datetime ExpirationDate
+    }
+    Course {
+        int ID PK
+        int TenantId FK
+        int InstructorID FK
+        string Title
+        int CreditHours
+    }
+    Exam {
+        int ID PK
+        int TenantId FK
+        int CourseID FK
+        string Title
+        string ExamStatus
+        int MaxDurationInMinutes
+        int MaxAttempts
+    }
+    Question {
+        int ID PK
+        int TenantId FK
+        string Body
+        int Score
+        string QuestionLevel
+    }
+    Choice {
+        int ID PK
+        int TenantId FK
+        int QuestionId FK
+        string Body
+        bool IsCorrect
+    }
+    ExamQuestion {
+        int ID PK
+        int ExamId FK
+        int QuestionId FK
+    }
+    StudentCourses {
+        int ID PK
+        int StudentID FK
+        int CourseID FK
+        datetime EnrollmentDate
+    }
+    ExamAttempt {
+        int ID PK
+        int TenantId FK
+        int StudentId FK
+        int ExamId FK
+        string ExamAttemptStatus
+        double Score
+    }
+    StudentExamsAnswers {
+        int ID PK
+        int ExamAttemptID FK
+        int StudentID FK
+        int QuestionID FK
+        int ChoiceID FK
+    }
 
-1.  **Middleware Ordering is Critical**: We learned that the order of middleware in `Program.cs` significantly impacts behavior. For instance, `UseResponseCompression` must come before error handling to ensure error responses are also compressed.
-2.  **Clean Separation of Attributes**: Moving `ErrorMessageAttribute` to the **Application Layer** ensures that service-level enums can remain decoupled from the presentation layer (API) while still providing rich metadata for error reporting.
-3.  **Pattern Matching vs. Static Properties**: Discovered that C# pattern matching (`is` with `or`) requires compile-time constants. Using `static readonly` properties like `HttpMethods.Get` requires traditional equality checks or helper methods.
-4.  **Automatic Transaction Management**: Implementing transaction logic at the middleware level reduces boilerplate in services and ensures that business logic stays focused on the domain rather than infrastructure concerns.
-5.  **Performance-First Error Handling**: Leveraging cached reflection for attribute lookups in the `EnumExtensions` ensures that retrieving error messages has minimal performance impact on the request pipeline.
+    Tenant ||--o{ AppUser : "1:N"
+    AppUser ||--|| Instructor : "1:1"
+    AppUser ||--|| Student : "1:1"
+    AppUser ||--o{ RefreshToken : "1:N"
+    Instructor ||--o{ Course : "1:N"
+    Course ||--o{ Exam : "1:N"
+    Course ||--o{ StudentCourses : "1:N"
+    Student ||--o{ StudentCourses : "1:N"
+    Exam ||--o{ ExamQuestion : "1:N"
+    Question ||--o{ ExamQuestion : "1:N"
+    Question ||--o{ Choice : "1:N"
+    Exam ||--o{ ExamAttempt : "1:N"
+    Student ||--o{ ExamAttempt : "1:N"
+    ExamAttempt ||--o{ StudentExamsAnswers : "1:N"
+    Question ||--o{ StudentExamsAnswers : "1:N"
+    Choice ||--o{ StudentExamsAnswers : "1:N"
+```
+
+All entities (except `Tenant`) inherit from `BaseModel`: `ID`, `TenantId (FK → Tenant)`, `Deleted`, `CreatedBy`, `CreatedDate`, `UpdatedBy`, `UpdatedDate`.
+
+| Entity | Description |
+|--------|-------------|
+| **Tenant** | Institution — standalone, no BaseModel |
+| **AppUser** | Base user with role and auth data |
+| **Instructor** | 1:1 with AppUser — instructor profile |
+| **Student** | 1:1 with AppUser — student profile |
+| **RefreshToken** | Hashed refresh tokens per user |
+| **Course** | Academic course owned by an Instructor |
+| **Exam** | Full exam config (duration, attempts, grading) |
+| **Question** | Reusable question with difficulty level |
+| **Choice** | Answer options per question |
+| **ExamQuestion** | Join: Exam ↔ Question (N:M) |
+| **StudentCourses** | Join: Student ↔ Course (N:M) |
+| **ExamAttempt** | Student exam session with status and score |
+| **StudentExamsAnswers** | Per-question answers within an attempt |
+
+### Exam Attempt Lifecycle
+
+```
+NotStarted → InProgress → Completed ──┐
+                         TimedOut  ──→── Grading → Graded
+```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started [🔼](#table-of-contents)
 
 ### Prerequisites
 
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [SQL Server](https://www.microsoft.com/sql-server) (LocalDB, Express, or full version)
-- [Redis](https://redis.io/download) (optional for development)
-- IDE: [Visual Studio 2022](https://visualstudio.microsoft.com/) or [VS Code](https://code.visualstudio.com/)
+| Tool | Version |
+|------|---------|
+| .NET SDK | 8.0+ |
+| SQL Server | Any (LocalDB works for dev) |
+| Redis | Any (optional for dev) |
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone**
    ```bash
-   git clone https://github.com/yourusername/ExaminationSystemWebAPI.git
+   git clone https://github.com/ahmads1990/ExaminationSystemWebAPI.git
    cd ExaminationSystemWebAPI
    ```
 
-2. **Configure application settings**
-   ```bash
-   cd ExaminationSystem.API
-   cp appsettings.json.example appsettings.json
-   ```
+2. **Configure** — fill in `appsettings.json` (see [Configuration](#-configuration))
 
-3. **Update `appsettings.json`** with your configuration:
-   - Database connection string
-   - JWT settings (Key, Issuer, Audience)
-   - SMTP email configuration
-   - Redis connection (if using)
-
-4. **Apply database migrations**
+3. **Apply migrations**
    ```bash
    dotnet ef database update --project ExaminationSystem.Infrastructure --startup-project ExaminationSystem.API
    ```
 
-5. **Run the application**
+4. **Run**
    ```bash
    dotnet run --project ExaminationSystem.API
    ```
 
-6. **Access Swagger UI**
-   - Navigate to: `https://localhost:5001/swagger`
-   - Or: `http://localhost:5000/swagger`
+5. Open **Swagger UI** at `https://localhost:PORT/swagger`  
+   Open **Hangfire Dashboard** at `https://localhost:PORT/hangfire`
 
 ---
 
-## 📚 API Documentation
+## 📚 API Documentation [🔼](#table-of-contents)
 
-### Authentication Endpoints
+> 💡 Full interactive docs at `/swagger` when running locally.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/Auth/RegisterInstructor` | Register a new instructor |
-| POST | `/api/Auth/RegisterStudent` | Register a new student |
-| POST | `/api/Auth/Login` | Authenticate and receive JWT token |
-| POST | `/api/Auth/VerifyEmail` | Verify email with token |
-| POST | `/api/Auth/ResendVerificationEmail` | Resend verification email |
+```mermaid
+mindmap
+  root((API v1))
+    Tenants
+      GET /Tenants
+    Auth
+      POST /RegisterInstructor
+      POST /RegisterStudent
+      POST /Login
+      POST /VerifyEmail
+      POST /ResendVerificationEmail
+      POST /ForgotPassword
+      POST /ResetPassword
+      POST /refresh-token
+      POST /logout
+    Users
+      PUT /me/password
+    Courses
+      GET /Courses
+      GET /Courses/id
+      POST /Courses
+      PUT /Courses/id
+      DELETE /Courses/id
+    Exams
+      GET /Exams
+      GET /Exams/GetDetails
+      POST /Exams
+      PUT /Exams/id
+      DELETE /Exams/id
+      POST /Exams/id/Publish
+      POST /Exams/id/Unpublish
+      POST /Exams/id/AssignQuestions
+      POST /Exams/id/UnassignQuestions
+    Questions
+      GET /Questions
+      GET /Questions/GetDetails
+      POST /Questions
+      PUT /Questions/id
+      DELETE /Questions/id
+    StudentCourses
+      GET /me/enrollments
+      GET /id/enrollments
+      POST /enroll
+    StudentExams
+      GET /available
+      GET /history
+      POST /start
+      GET /questions
+      POST /answer
+      POST /answers
+      POST /submit
+      GET /result
+    Instructor
+      GET /courses
+      GET /exams/id/submissions
+```
 
-### Course Endpoints
+**Auth Legend:** 🔓 Public · 🔐 JWT (any) · 👨‍🏫 Instructor · 🎓 Student · 🎫 ExamScope JWT
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/Courses` | Get all courses (paginated) |
-| GET | `/api/Courses/{id}` | Get course by ID |
-| POST | `/api/Courses` | Create new course (Instructor) |
-| PUT | `/api/Courses/{id}` | Update course (Instructor) |
-| DELETE | `/api/Courses/{id}` | Delete course (Instructor) |
+### Tenants
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/v1/Tenants` | 🔓 | List active tenants (for registration dropdown) |
 
-### Exam Endpoints
+### Auth
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `POST` | `/api/v1/Auth/RegisterInstructor` | 🔓 | Register instructor |
+| `POST` | `/api/v1/Auth/RegisterStudent` | 🔓 | Register student |
+| `POST` | `/api/v1/Auth/Login` | 🔓 | Login → `{ jwtToken, refreshToken }` |
+| `POST` | `/api/v1/Auth/VerifyEmail` | 🔓 | Confirm email with OTP |
+| `POST` | `/api/v1/Auth/ResendVerificationEmail` | 🔓 | Resend OTP |
+| `POST` | `/api/v1/Auth/ForgotPassword` | 🔓 | Send password reset OTP |
+| `POST` | `/api/v1/Auth/ResetPassword` | 🔓 | Reset password with OTP |
+| `POST` | `/api/v1/Auth/refresh-token` | 🔓 | Rotate refresh token |
+| `POST` | `/api/v1/Auth/logout` | 🔐 | Revoke tokens, blacklist JTI in Redis |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/Exams` | Get all exams |
-| GET | `/api/Exams/{id}` | Get exam by ID |
-| POST | `/api/Exams` | Create new exam (Instructor) |
-| PUT | `/api/Exams/{id}` | Update exam (Instructor) |
-| DELETE | `/api/Exams/{id}` | Delete exam (Instructor) |
+### Users
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `PUT` | `/api/v1/Users/me/password` | 🔐 | Change own password |
 
-### Question Endpoints
+### Courses
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/v1/Courses` | 🔐 | List courses (paginated) |
+| `GET` | `/api/v1/Courses/{id}` | 🔐 | Get course |
+| `POST` | `/api/v1/Courses` | 👨‍🏫 | Create course |
+| `PUT` | `/api/v1/Courses/{id}` | 👨‍🏫 | Update course |
+| `DELETE` | `/api/v1/Courses/{id}` | 👨‍🏫 | Delete course |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/Questions` | Get all questions (paginated) |
-| GET | `/api/Questions/{id}` | Get question by ID |
-| POST | `/api/Questions` | Create new question (Instructor) |
-| PUT | `/api/Questions/{id}` | Update question (Instructor) |
-| DELETE | `/api/Questions/{id}` | Delete question (Instructor) |
+### Exams
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/v1/Exams` | 🔐 | List exams (paginated, filtered) |
+| `GET` | `/api/v1/Exams/GetDetails` | 🔐 | Get exam with questions |
+| `POST` | `/api/v1/Exams` | 👨‍🏫 | Create exam |
+| `PUT` | `/api/v1/Exams/{id}` | 👨‍🏫 | Update exam |
+| `DELETE` | `/api/v1/Exams/{id}` | 👨‍🏫 | Delete exam |
+| `POST` | `/api/v1/Exams/{id}/Publish` | 👨‍🏫 | Publish exam |
+| `POST` | `/api/v1/Exams/{id}/Unpublish` | 👨‍🏫 | Unpublish exam |
+| `POST` | `/api/v1/Exams/{id}/AssignQuestions` | 👨‍🏫 | Assign questions |
+| `POST` | `/api/v1/Exams/{id}/UnassignQuestions` | 👨‍🏫 | Remove questions |
 
-### Student Course Endpoints
+### Questions
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/v1/Questions` | 🔐 | List questions (paginated) |
+| `GET` | `/api/v1/Questions/GetDetails` | 🔐 | Get question with choices |
+| `POST` | `/api/v1/Questions` | 👨‍🏫 | Create question |
+| `PUT` | `/api/v1/Questions/{id}` | 👨‍🏫 | Update question |
+| `DELETE` | `/api/v1/Questions/{id}` | 👨‍🏫 | Delete question |
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/StudentCourses` | Get student enrollments |
-| POST | `/api/StudentCourses/Enroll` | Enroll in course (Student) |
-| DELETE | `/api/StudentCourses/{id}` | Unenroll from course (Student) |
+### Student Courses
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/v1/StudentCourses/me/enrollments` | 🎓 | My enrollments |
+| `GET` | `/api/v1/StudentCourses/{id}/enrollments` | 👨‍🏫 | Student enrollments |
+| `POST` | `/api/v1/StudentCourses/enroll` | 🎓 | Enroll in course |
 
-> 💡 **Tip:** For complete API documentation with request/response schemas, visit the Swagger UI when the application is running.
+### Student Exams
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/v1/StudentExams/available` | 🎓 | List available exams |
+| `GET` | `/api/v1/StudentExams/history` | 🎓 | Attempt history |
+| `POST` | `/api/v1/StudentExams/start` | 🎓 | Start exam → exam-scoped JWT |
+| `GET` | `/api/v1/StudentExams/questions` | 🎫 | Get exam questions |
+| `POST` | `/api/v1/StudentExams/answer` | 🎫 | Submit single answer |
+| `POST` | `/api/v1/StudentExams/answers` | 🎫 | Submit all answers (batch) |
+| `POST` | `/api/v1/StudentExams/submit` | 🎫 | Submit attempt |
+| `GET` | `/api/v1/StudentExams/result` | 🎓 | Get attempt result |
+
+### Instructor
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| `GET` | `/api/v1/Instructor/courses` | 👨‍🏫 | My courses |
+| `GET` | `/api/v1/Instructor/exams/{examId}/submissions` | 👨‍🏫 | Exam submissions |
 
 ---
 
-## 🔐 Authentication
+## 🔐 Authentication Flow [🔼](#table-of-contents)
 
-This API uses **JWT Bearer Token** authentication.
-
-### How to Authenticate
-
-1. **Register** a new account (Student or Instructor)
-2. **Verify** your email using the token sent to your inbox
-3. **Login** with your credentials to receive a JWT token
-4. **Include** the token in subsequent requests:
-   ```
-   Authorization: Bearer <your-jwt-token>
-   ```
-
-### Swagger Authentication
-
-1. Click the **Authorize** button in Swagger UI
-2. Enter: `Bearer <your-token>`
-3. Click **Authorize**
-4. All requests will now include the token
+```
+1. GET  /api/v1/Tenants           → pick your institution (tenantId)
+2. POST /api/v1/Auth/Register     → register with tenantId
+3. POST /api/v1/Auth/VerifyEmail  → confirm with OTP from inbox
+4. POST /api/v1/Auth/Login        → receive { jwtToken, refreshToken }
+5.      Authorization: Bearer <jwtToken>  on all protected requests
+6. POST /api/v1/StudentExams/start→ receive exam-scoped JWT (timed)
+7.      Use exam JWT for /questions /answer /submit
+8. POST /api/v1/Auth/refresh-token→ rotate JWT when it expires
+9. POST /api/v1/Auth/logout       → JTI blacklisted in Redis
+```
 
 ---
 
-## 🗄️ Database Schema
+## ⚙️ Configuration [🔼](#table-of-contents)
 
-### Core Entities
-
-- **AppUser** - Base user entity with authentication data
-- **Student** - Student-specific information
-- **Instructor** - Instructor-specific information
-- **Course** - Academic courses
-- **Exam** - Examinations with configuration
-- **Question** - Question bank with difficulty levels
-- **Choice** - Answer options for questions
-- **ExamQuestion** - Many-to-many relationship (Exam ↔ Question)
-- **StudentCourses** - Many-to-many relationship (Student ↔ Course)
-- **StudentExamsAnswers** - Student exam submissions and answers
-
----
-
-## ⚙️ Configuration
-
-### Required Settings
-
-#### Database
 ```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "Server=.;Database=ExaminationSystemDB;Trusted_Connection=True;TrustServerCertificate=True"
-  }
-}
-```
-
-#### JWT
-```json
-{
+  },
   "Jwt": {
-    "Key": "your-secret-key-min-32-characters",
+    "Key": "your-secret-key-minimum-32-characters-long",
     "Issuer": "ExaminationSystemAPI",
     "Audience": "ExaminationSystemClients",
-    "DurationInHours": 24
-  }
-}
-```
-
-#### SMTP (Email)
-```json
-{
+    "DurationInHours": 24,
+    "RefreshTokenLifeInDays": 7
+  },
   "SMTPConfig": {
     "Host": "smtp.gmail.com",
     "Port": 587,
@@ -337,107 +476,81 @@ This API uses **JWT Bearer Token** authentication.
     "Password": "your-app-password",
     "FromEmail": "noreply@examsystem.com",
     "FromName": "Examination System"
-  }
-}
-```
-
-#### Redis (Optional)
-```json
-{
+  },
   "RedisConfig": {
     "Host": "localhost",
     "Port": 6379,
-    "User": "",
-    "Password": "",
-    "Ssl": false,
-    "AbortOnConnectFail": false,
     "InstanceName": "ExamSystem_"
-  }
+  },
+  "BackendBaseUrl": "https://localhost:PORT",
+  "Seq": { "ServerUrl": "http://localhost:5341" }
 }
 ```
 
 ---
 
-## 🧪 Testing
-
-Run unit tests:
-```bash
-dotnet test ExaminationSystem.UnitTests
-```
-
----
-
-## 📦 Project Structure
+## 📁 Project Structure [🔼](#table-of-contents)
 
 ```
 ExaminationSystemWebAPI/
-├── ExaminationSystem.API/              # Presentation Layer
-│   ├── Controllers/                    # API Controllers
-│   ├── Models/                         # Request/Response DTOs
-│   ├── Validators/                     # FluentValidation validators
-│   ├── Extensions/                     # Extension methods
-│   └── Program.cs                      # Application entry point
+├── ExaminationSystem.API/
+│   ├── Controllers/           # 9 controllers
+│   ├── Models/Requests/       # Typed request models
+│   ├── Validators/            # FluentValidation
+│   ├── Middlewares/           # Token blacklist, transactions, errors
+│   └── Program.cs
 │
-├── ExaminationSystem.Application/      # Business Logic Layer
-│   ├── Services/                       # Service implementations
-│   ├── Interfaces/                     # Service interfaces
-│   ├── DTOs/                          # Data Transfer Objects
-│   ├── Mappings/                      # Mapster configurations
-│   └── EmailTemplates/                # Email HTML templates
+├── ExaminationSystem.Application/
+│   ├── Services/              # 11 service implementations
+│   ├── Interfaces/            # Service + job contracts
+│   ├── InfraInterfaces/       # ICachingService, IEmailService…
+│   ├── DTOs/                  # Per-feature DTOs
+│   ├── UseCases/              # Hangfire job classes
+│   └── EmailTemplates/        # HTML templates
 │
-├── ExaminationSystem.Infrastructure/   # Data Access Layer
-│   ├── Data/                          # DbContext & Configurations
-│   │   ├── AppDbContext.cs
-│   │   ├── Config/                    # Entity configurations
-│   │   ├── Migrations/                # EF Core migrations
-│   │   └── Repositories/              # Repository implementations
-│   ├── Services/                      # Infrastructure services
-│   │   ├── Auth/                      # Token & Password helpers
-│   │   └── Email/                     # Email service
-│   └── Jobs/                          # Hangfire background jobs
+├── ExaminationSystem.Infrastructure/
+│   ├── Data/
+│   │   ├── AppDbContext.cs    # EF context + global query filters
+│   │   ├── Repositories/      # Generic repository
+│   │   └── Seeding/           # Dev seed data (2 tenants)
+│   └── Services/
+│       ├── Auth/              # JWT + password helpers
+│       ├── Cache/             # Tenant-aware Redis service
+│       └── Email/             # MailKit service
 │
-├── ExaminationSystem.Domain/           # Core Domain Layer
-│   ├── Entities/                      # Domain entities
-│   ├── Interfaces/                    # Domain interfaces
-│   └── Common/                        # Shared domain logic
+├── ExaminationSystem.Domain/
+│   ├── Entities/              # 13 entities + BaseModel
+│   ├── Interfaces/            # IRepository<T>
+│   └── Common/                # Enums, constants
 │
-├── ExaminationSystem.UnitTests/        # Unit Tests
-│
-└── agent/                              # AI Assistant Resources
-    └── PROJECT_OVERVIEW.md            # Detailed project analysis
+├── ExaminationSystem.UnitTests/   # 143 unit tests
+└── agent/                         # Dev resources & docs
 ```
 
 ---
 
-## 🤝 Contributing
+## 🧪 Testing [🔼](#table-of-contents)
 
-Contributions are welcome! Please follow these steps:
+```bash
+dotnet test
+```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+**143 tests** across `AuthService`, `UserService`, `InstructorService`, `StudentService`, `CourseService`, `ExamService`, `QuestionService`, and `StudentExamService`.
 
 ---
 
-## 📄 License
+## 🤝 Contributing [🔼](#table-of-contents)
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Fork the repo and create a feature branch: `git checkout -b feature/your-feature`
+2. Commit: `git commit -m "feat: your description"`
+3. Push and open a Pull Request
 
----
+Open an [Issue](https://github.com/ahmads1990/ExaminationSystemWebAPI/issues) to discuss significant changes first.
 
 ## 👨‍💻 Author
 
-**Ahmad**
-
----
-
-## 🙏 Acknowledgments
-
-- Built with [.NET 8](https://dotnet.microsoft.com/)
-- Clean Architecture pattern by [Robert C. Martin](https://blog.cleancoder.com/)
-- Inspired by modern educational technology needs
+**Ahmad**  
+[![GitHub](https://img.shields.io/badge/GitHub-100000?style=flat&logo=github&logoColor=white)](https://github.com/ahmads1990)
 
 ---
 
