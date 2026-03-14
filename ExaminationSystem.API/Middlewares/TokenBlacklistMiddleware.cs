@@ -1,3 +1,4 @@
+using ExaminationSystem.Application.Common;
 using ExaminationSystem.Application.InfraInterfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,7 +30,13 @@ public class TokenBlacklistMiddleware
                 var cachingService = context.RequestServices.GetRequiredService<ICachingService>();
                 var cacheKey = $"blacklist:jti:{jti}";
 
-                var isBlacklisted = await cachingService.GetAsync(cacheKey);
+                // Extract tenantId from claims for tenant-aware cache key lookup
+                int? tenantId = null;
+                var tenantClaim = context.User.FindFirst(CustomClaimTypes.TenantId)?.Value;
+                if (int.TryParse(tenantClaim, out var parsedTenantId))
+                    tenantId = parsedTenantId;
+
+                var isBlacklisted = await cachingService.GetAsync(cacheKey, tenantId);
 
                 if (!string.IsNullOrEmpty(isBlacklisted))
                 {

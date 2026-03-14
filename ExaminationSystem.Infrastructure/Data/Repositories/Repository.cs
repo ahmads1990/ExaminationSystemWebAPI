@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Domain.Entities;
+using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -9,7 +9,7 @@ public class Repository<Entity> : IRepository<Entity> where Entity : BaseModel
 {
     AppDbContext _context;
     DbSet<Entity> _dbset;
-    private static readonly string[] ImmutableFieldNames = { nameof(BaseModel.ID), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy), nameof(BaseModel.UpdatedBy), nameof(BaseModel.UpdatedDate) };
+    private static readonly string[] ImmutableFieldNames = { nameof(BaseModel.ID), nameof(BaseModel.TenantId), nameof(BaseModel.CreatedDate), nameof(BaseModel.CreatedBy), nameof(BaseModel.UpdatedBy), nameof(BaseModel.UpdatedDate) };
 
     public Repository(AppDbContext dbContext)
     {

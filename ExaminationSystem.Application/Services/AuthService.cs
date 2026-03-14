@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.Common;
+using ExaminationSystem.Application.Common;
 using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.DTOs.Instructor;
 using ExaminationSystem.Application.DTOs.Student;
@@ -34,6 +34,7 @@ public class AuthService : IAuthService
     private readonly ICachingService _cachingService;
     private readonly IPasswordHelper _passwordHelper;
     private readonly IRepository<RefreshToken> _refreshTokenRepo;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<AuthService> _logger;
 
     private readonly string BackendBaseUrl;
@@ -45,8 +46,8 @@ public class AuthService : IAuthService
 
     public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService,
         ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient, ICachingService cachingService,
-        IRepository<RefreshToken> refreshTokenRepo, IPasswordHelper passwordHelper, IConfiguration configuration,
-        ILogger<AuthService> logger)
+        IRepository<RefreshToken> refreshTokenRepo, IPasswordHelper passwordHelper, ICurrentUserService currentUserService,
+        IConfiguration configuration, ILogger<AuthService> logger)
     {
         _userService = userService;
         _instructorService = instructorService;
@@ -56,6 +57,7 @@ public class AuthService : IAuthService
         _cachingService = cachingService;
         _refreshTokenRepo = refreshTokenRepo;
         _passwordHelper = passwordHelper;
+        _currentUserService = currentUserService;
         _logger = logger;
 
         BackendBaseUrl = configuration.GetSection("BackendBaseUrl").Value
@@ -96,7 +98,7 @@ public class AuthService : IAuthService
         var userOtp = await CreateEmailConfirmationToken(userId);
 
         // Add job to send welcome email
-        EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp);
+        EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp, addUserDto.TenantId);
 
         _logger.LogInformation("User {UserId} registered as {Role}", userId, UserRole.Instructor.ToString());
 
@@ -129,7 +131,7 @@ public class AuthService : IAuthService
         var userOtp = await CreateEmailConfirmationToken(userId);
 
         // Add job to send welcome email
-        EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp);
+        EnqueueSendWelcomeEmailJob(userId, addUserDto.Name, addUserDto.Email, userOtp, addUserDto.TenantId);
 
         _logger.LogInformation("User {UserId} registered as {Role}", userId, UserRole.Student.ToString());
 
@@ -160,7 +162,7 @@ public class AuthService : IAuthService
     /// <inheritdoc />
     public async Task<UserEmailVerificationResult> VerifyEmailAsync(int userId, string token, CancellationToken cancellationToken = default)
     {
-        var userOtp = await _cachingService.GetAsync(CacheEmailConfirmationKey + userId, cancellationToken);
+        var userOtp = await _cachingService.GetAsync(CacheEmailConfirmationKey + userId, _currentUserService.TenantId, cancellationToken);
 
         if (string.IsNullOrEmpty(userOtp))
             return UserEmailVerificationResult.TokenExpired;
@@ -172,7 +174,7 @@ public class AuthService : IAuthService
         if (result != UserEmailVerificationResult.Success)
             return result;
 
-        await _cachingService.RemoveAsync(CacheEmailConfirmationKey + userId, cancellationToken);
+        await _cachingService.RemoveAsync(CacheEmailConfirmationKey + userId, _currentUserService.TenantId, cancellationToken);
 
         return UserEmailVerificationResult.Success;
     }
@@ -181,7 +183,7 @@ public class AuthService : IAuthService
     public async Task<UserEmailVerificationResult> RefreshUserEmailVerificationToken(int userId, CancellationToken cancellationToken = default)
     {
         // Simply remove the existing token from cache to allow regeneration
-        await _cachingService.RemoveAsync(CacheEmailConfirmationKey + userId, cancellationToken);
+        await _cachingService.RemoveAsync(CacheEmailConfirmationKey + userId, _currentUserService.TenantId, cancellationToken);
 
         var userData = await _userService.GetUserBasicInfoById(userId, cancellationToken);
         if (userData == null)
@@ -189,7 +191,7 @@ public class AuthService : IAuthService
 
         var newToken = await CreateEmailConfirmationToken(userId, cancellationToken);
 
-        EnqueueSendWelcomeEmailJob(userId, userData.Name, userData.Email, newToken);
+        EnqueueSendWelcomeEmailJob(userId, userData.Name, userData.Email, newToken, userData.TenantId);
         return UserEmailVerificationResult.EmailJobSent;
     }
 
@@ -257,7 +259,7 @@ public class AuthService : IAuthService
         if (expiryTime > TimeSpan.Zero)
         {
             var cacheKey = $"blacklist:jti:{jti}";
-            await _cachingService.AddAsync(cacheKey, "revoked", expiryTime, cancellationToken);
+            await _cachingService.AddAsync(cacheKey, "revoked", expiryTime, _currentUserService.TenantId, cancellationToken);
         }
 
         return UserOperationResult.Success;
@@ -271,9 +273,9 @@ public class AuthService : IAuthService
             return UserOperationResult.Success; // Avoid email enumeration by returning success
 
         var otp = _tokenHelper.GenerateOTP();
-        await _cachingService.AddAsync(CachePasswordResetKey + email, otp, TimeSpan.FromMinutes(15), cancellationToken);
+        await _cachingService.AddAsync(CachePasswordResetKey + email, otp, TimeSpan.FromMinutes(15), _currentUserService.TenantId, cancellationToken);
 
-        EnqueuePasswordResetEmailJob(userInfo.Name, email, otp);
+        EnqueuePasswordResetEmailJob(userInfo.Name, email, otp, userInfo.TenantId);
 
         return UserOperationResult.Success;
     }
@@ -281,7 +283,7 @@ public class AuthService : IAuthService
     /// <inheritdoc />
     public async Task<UserOperationResult> ResetPasswordAsync(string email, string otp, string newPassword, CancellationToken cancellationToken = default)
     {
-        var cachedOtp = await _cachingService.GetAsync(CachePasswordResetKey + email, cancellationToken);
+        var cachedOtp = await _cachingService.GetAsync(CachePasswordResetKey + email, _currentUserService.TenantId, cancellationToken);
         if (string.IsNullOrEmpty(cachedOtp) || cachedOtp != otp)
             return UserOperationResult.InvalidCredentials; // Incorrect or expired OTP
 
@@ -291,7 +293,7 @@ public class AuthService : IAuthService
 
         var result = await _userService.UpdatePassword(userInfo.ID, newPassword, cancellationToken);
         if (result == UserOperationResult.Success)
-            await _cachingService.RemoveAsync(CachePasswordResetKey + email, cancellationToken);
+            await _cachingService.RemoveAsync(CachePasswordResetKey + email, _currentUserService.TenantId, cancellationToken);
 
         return result;
     }
@@ -310,7 +312,7 @@ public class AuthService : IAuthService
     private async Task<string> CreateEmailConfirmationToken(int userId, CancellationToken cancellationToken = default)
     {
         var otp = _tokenHelper.GenerateOTP();
-        await _cachingService.AddAsync(CacheEmailConfirmationKey + userId, otp, TimeSpan.FromMinutes(5), cancellationToken);
+        await _cachingService.AddAsync(CacheEmailConfirmationKey + userId, otp, TimeSpan.FromMinutes(5), _currentUserService.TenantId, cancellationToken);
         return otp;
     }
 
@@ -321,7 +323,8 @@ public class AuthService : IAuthService
     /// <param name="toName">The display name of the recipient to whom the welcome email will be addressed. Cannot be null or empty.</param>
     /// <param name="toEmail">The email address of the recipient who will receive the welcome email. Cannot be null or empty.</param>
     /// <param name="otpCode">The verification code.</param>
-    private void EnqueueSendWelcomeEmailJob(int userId, string toName, string toEmail, string otpCode)
+    /// <param name="tenantId">Optional tenant ID for job identification.</param>
+    private void EnqueueSendWelcomeEmailJob(int userId, string toName, string toEmail, string otpCode, int tenantId = 0)
     {
         var baseUrl = $"{BackendBaseUrl.TrimEnd('/')}/VerifyEmail/token={otpCode}&userId={userId}";
         var emailParameters = new Dictionary<string, string>
@@ -332,8 +335,9 @@ public class AuthService : IAuthService
             { "Year", DateTime.Now.Year.ToString()},
         };
 
+        int? jobTenantId = tenantId > 0 ? tenantId : null;
         _backgroundJobClient.Enqueue<SendEmailJob>(job =>
-            job.Execute(toName, toEmail, "Welcome new user", EmailTemplate.Welcome, emailParameters, default)
+            job.Execute(toName, toEmail, "Welcome new user", EmailTemplate.Welcome, emailParameters, jobTenantId, default)
         );
     }
 
@@ -343,7 +347,8 @@ public class AuthService : IAuthService
     /// <param name="toName">The display name of the recipient.</param>
     /// <param name="toEmail">The email address of the recipient.</param>
     /// <param name="otpCode">The password reset OTP.</param>
-    private void EnqueuePasswordResetEmailJob(string toName, string toEmail, string otpCode)
+    /// <param name="tenantId">Optional tenant ID for job identification.</param>
+    private void EnqueuePasswordResetEmailJob(string toName, string toEmail, string otpCode, int tenantId = 0)
     {
         var emailParameters = new Dictionary<string, string>
         {
@@ -352,8 +357,9 @@ public class AuthService : IAuthService
             { "Year", DateTime.Now.Year.ToString() }
         };
 
+        int? jobTenantId = tenantId > 0 ? tenantId : null;
         _backgroundJobClient.Enqueue<SendEmailJob>(job =>
-            job.Execute(toName, toEmail, "Password Reset Request", EmailTemplate.PasswordReset, emailParameters, default)
+            job.Execute(toName, toEmail, "Password Reset Request", EmailTemplate.PasswordReset, emailParameters, jobTenantId, default)
         );
     }
 
@@ -390,7 +396,7 @@ public class AuthService : IAuthService
         var userClaims = new List<UserClaim> { new(CustomClaimTypes.Username, userInfo!.Username) };
 
         return _tokenHelper.GenerateJWT(
-            new UserTokenBaseClaims(userInfo!.ID, userInfo.Role, userInfo.Name, userInfo.Email),
+            new UserTokenBaseClaims(userInfo!.ID, userInfo.TenantId, userInfo.Role, userInfo.Name, userInfo.Email),
             userClaims.Concat(extraClaims ?? Enumerable.Empty<UserClaim>()).ToList(),
             expiresInMinutes
         );

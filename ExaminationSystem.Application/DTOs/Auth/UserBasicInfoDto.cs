@@ -1,8 +1,9 @@
-﻿namespace ExaminationSystem.Application.DTOs.Auth;
+namespace ExaminationSystem.Application.DTOs.Auth;
 
 public class UserBasicInfoDto
 {
     public int ID { get; set; }
+    public int TenantId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

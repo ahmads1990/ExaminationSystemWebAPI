@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.Interfaces;
+using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Application.Services;
 using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,6 +20,7 @@ public static class ServiceExtensions
         services.AddScoped<ICourseService, CourseService>();
         services.AddScoped<IStudentCourseService, StudentCourseService>();
         services.AddScoped<IStudentExamService, StudentExamService>();
+        services.AddScoped<ITenantService, TenantService>();
 
         return services;
     }

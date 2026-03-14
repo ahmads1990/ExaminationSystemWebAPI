@@ -1,7 +1,8 @@
-﻿namespace ExaminationSystem.Application.DTOs.Auth;
+namespace ExaminationSystem.Application.DTOs.Auth;
 
 public class RegisterStudentDto
 {
+    public int TenantId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

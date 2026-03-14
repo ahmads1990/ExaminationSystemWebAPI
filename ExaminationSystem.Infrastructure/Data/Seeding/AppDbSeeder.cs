@@ -17,13 +17,25 @@ public static class AppDbSeeder
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
 
         // Pre-check if DB is already seeded
-        if (await context.AppUsers.AnyAsync())
+        if (await context.AppUsers.IgnoreQueryFilters().AnyAsync())
         {
             logger.LogInformation("Database already contains data. Seeding skipped.");
             return;
         }
 
         logger.LogInformation("Attempting to seed database with Bogus...");
+
+        // 0. Seed Tenants
+        var tenants = new List<Tenant>
+        {
+            new Tenant { Name = "Default University", IsActive = true },
+            new Tenant { Name = "Tech Academy", IsActive = true }
+        };
+        await context.Tenants.AddRangeAsync(tenants);
+        await context.SaveChangesAsync();
+
+        var defaultTenantId = tenants[0].ID;
+        var secondTenantId = tenants[1].ID;
 
         // 1. Ensure Fixed Accounts Exist Always
         var fixedPassword = passwordHelper.HashPassword("Password123!");
@@ -35,7 +47,8 @@ public static class AppDbSeeder
             Email = "admin@exam.com",
             Password = fixedPassword,
             Role = UserRole.Instructor,
-            IsEmailConfirmed = true
+            IsEmailConfirmed = true,
+            TenantId = defaultTenantId
         };
 
         var fixedStudentUser = new AppUser
@@ -45,14 +58,15 @@ public static class AppDbSeeder
             Email = "student@exam.com",
             Password = fixedPassword,
             Role = UserRole.Student,
-            IsEmailConfirmed = true
+            IsEmailConfirmed = true,
+            TenantId = defaultTenantId
         };
 
         await context.AppUsers.AddRangeAsync(adminUser, fixedStudentUser);
         await context.SaveChangesAsync(); // Get IDs
 
-        var adminInstructor = new Instructor { AppUser = adminUser };
-        var fixedStudent = new Student { AppUser = fixedStudentUser };
+        var adminInstructor = new Instructor { AppUser = adminUser, TenantId = defaultTenantId };
+        var fixedStudent = new Student { AppUser = fixedStudentUser, TenantId = defaultTenantId };
 
         await context.Instructors.AddAsync(adminInstructor);
         await context.Students.AddAsync(fixedStudent);
@@ -66,19 +80,25 @@ public static class AppDbSeeder
             .RuleFor(u => u.Password, f => fixedPassword)
             .RuleFor(u => u.IsEmailConfirmed, f => true);
 
-        var randomInstructorsUsers = userFaker.Clone().RuleFor(u => u.Role, f => UserRole.Instructor).Generate(3);
+        var randomInstructorsUsers = userFaker.Clone()
+            .RuleFor(u => u.Role, f => UserRole.Instructor)
+            .RuleFor(u => u.TenantId, f => f.PickRandom(defaultTenantId, secondTenantId))
+            .Generate(3);
         await context.AppUsers.AddRangeAsync(randomInstructorsUsers);
         await context.SaveChangesAsync();
 
-        var randomInstructors = randomInstructorsUsers.Select(u => new Instructor { AppUser = u }).ToList();
+        var randomInstructors = randomInstructorsUsers.Select(u => new Instructor { AppUser = u, TenantId = u.TenantId }).ToList();
         await context.Instructors.AddRangeAsync(randomInstructors);
 
         // 3. Generate Random Extra Students (~10)
-        var randomStudentUsers = userFaker.Clone().RuleFor(u => u.Role, f => UserRole.Student).Generate(10);
+        var randomStudentUsers = userFaker.Clone()
+            .RuleFor(u => u.Role, f => UserRole.Student)
+            .RuleFor(u => u.TenantId, f => f.PickRandom(defaultTenantId, secondTenantId))
+            .Generate(10);
         await context.AppUsers.AddRangeAsync(randomStudentUsers);
         await context.SaveChangesAsync();
 
-        var randomStudents = randomStudentUsers.Select(u => new Student { AppUser = u }).ToList();
+        var randomStudents = randomStudentUsers.Select(u => new Student { AppUser = u, TenantId = u.TenantId }).ToList();
         await context.Students.AddRangeAsync(randomStudents);
         await context.SaveChangesAsync();
 
@@ -91,18 +111,25 @@ public static class AppDbSeeder
             .RuleFor(c => c.Title, f => f.Company.CatchPhrase())
             .RuleFor(c => c.Description, f => f.Lorem.Paragraph())
             .RuleFor(c => c.CreditHours, f => f.Random.Int(1, 4))
-            .RuleFor(c => c.InstructorID, (f, c) => f.PickRandom(allInstructors).ID);
+            .RuleFor(c => c.InstructorID, (f, c) => f.PickRandom(allInstructors).ID)
+            .RuleFor(c => c.TenantId, (f, c) =>
+            {
+                var instructor = allInstructors.First(i => i.ID == c.InstructorID);
+                return instructor.TenantId;
+            });
 
         var courses = courseFaker.Generate(5);
         await context.Courses.AddRangeAsync(courses);
         await context.SaveChangesAsync();
 
-        // 5. Enroll Students into Courses
+        // 5. Enroll Students into Courses (only same-tenant students into same-tenant courses)
         var studentCourses = new List<StudentCourses>();
         foreach (var student in allStudents)
         {
-            // Pick 2-3 random courses per student
-            var selectedCourses = new Faker().PickRandom(courses, new Faker().Random.Int(2, 3)).ToList();
+            var sameTenantCourses = courses.Where(c => c.TenantId == student.TenantId).ToList();
+            if (!sameTenantCourses.Any()) continue;
+
+            var selectedCourses = new Faker().PickRandom(sameTenantCourses, Math.Min(new Faker().Random.Int(2, 3), sameTenantCourses.Count)).ToList();
             foreach (var course in selectedCourses)
             {
                 studentCourses.Add(new StudentCourses
@@ -110,7 +137,8 @@ public static class AppDbSeeder
                     StudentID = student.ID,
                     CourseID = course.ID,
                     EnrollmentDate = DateTime.UtcNow,
-                    Finished = false
+                    Finished = false,
+                    TenantId = student.TenantId
                 });
             }
         }
@@ -140,7 +168,8 @@ public static class AppDbSeeder
                     ShuffleQuestions = true,
                     ExamStatus = ExamStatus.Published, // Make it ready
                     PublishDate = DateTime.UtcNow.AddDays(-1),
-                    DeadlineDate = DateTime.UtcNow.AddMonths(1)
+                    DeadlineDate = DateTime.UtcNow.AddMonths(1),
+                    TenantId = course.TenantId
                 };
                 exams.Add(exam);
             }
@@ -160,7 +189,8 @@ public static class AppDbSeeder
                 {
                     Body = new Faker().Lorem.Sentence() + "?",
                     Score = pointsPerQuestion,
-                    QuestionLevel = new Faker().PickRandom<QuestionLevel>()
+                    QuestionLevel = new Faker().PickRandom<QuestionLevel>(),
+                    TenantId = exam.TenantId
                 };
                 
                 await context.Questions.AddAsync(question);
@@ -174,7 +204,8 @@ public static class AppDbSeeder
                     {
                         QuestionId = question.ID,
                         Body = new Faker().Lorem.Word(),
-                        IsCorrect = c == correctIndex
+                        IsCorrect = c == correctIndex,
+                        TenantId = exam.TenantId
                     };
                     choices.Add(choice);
                 }
@@ -184,7 +215,8 @@ public static class AppDbSeeder
                     ExamId = exam.ID,
                     Exam = exam,
                     QuestionId = question.ID,
-                    Question = question
+                    Question = question,
+                    TenantId = exam.TenantId
                 });
             }
         }
@@ -212,7 +244,8 @@ public static class AppDbSeeder
                 ExamId = exam.ID,
                 StudentId = student.ID,
                 StartTime = DateTime.UtcNow.AddDays(-new Faker().Random.Int(1, 10)),
-                ExamAttemptStatus = ExamAttemptStatus.Graded
+                ExamAttemptStatus = ExamAttemptStatus.Graded,
+                TenantId = student.TenantId
             };
             
             // Assign end time based on random duration
@@ -240,7 +273,8 @@ public static class AppDbSeeder
                     // We will set ExamAttemptID after saving attempts
                     ExamAttempt = attempt,
                     QuestionID = examQ.QuestionId,
-                    ChoiceID = pickedChoice.ID
+                    ChoiceID = pickedChoice.ID,
+                    TenantId = student.TenantId
                 });
             }
 
@@ -255,3 +289,4 @@ public static class AppDbSeeder
         logger.LogInformation("Database seeding completed successfully.");
     }
 }
+

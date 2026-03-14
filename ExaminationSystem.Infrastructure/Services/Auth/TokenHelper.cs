@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.Application.DTOs.Users;
+using ExaminationSystem.Application.Common;
+using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Infrastructure.Configs;
 using Microsoft.Extensions.Configuration;
@@ -50,6 +51,7 @@ public class TokenHelper : ITokenHelper
         var jwtClaims = new UserClaim[]
         {
             new UserClaim(ClaimTypes.NameIdentifier, baseUserClaims.Uid.ToString()),
+            new UserClaim(CustomClaimTypes.TenantId, baseUserClaims.TenantId.ToString()),
             new UserClaim(ClaimTypes.Role, baseUserClaims.Role.ToString()),
             new UserClaim(ClaimTypes.Name, baseUserClaims.Name ?? string.Empty),
             new UserClaim(ClaimTypes.Email, baseUserClaims.Email ?? string.Empty),

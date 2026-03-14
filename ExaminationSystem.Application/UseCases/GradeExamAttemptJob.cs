@@ -19,10 +19,10 @@ public class GradeExamAttemptJob : IGradeExamAttemptJob
     }
 
     /// <inheritdoc />
-    public async Task GradeAttemptAsync(int attemptId, CancellationToken cancellationToken = default)
+    public async Task GradeAttemptAsync(int attemptId, int? tenantId = null, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Grade attempt job started for AttemptId: {AttemptId}", attemptId);
+        _logger.LogInformation("Grade attempt job started for AttemptId: {AttemptId} (TenantId: {TenantId})", attemptId, tenantId?.ToString() ?? "N/A");
         await _studentExamService.GradeAttemptAsync(attemptId, cancellationToken);
-        _logger.LogInformation("Grade attempt job finished successfully for AttemptId: {AttemptId}", attemptId);
+        _logger.LogInformation("Grade attempt job finished successfully for AttemptId: {AttemptId} (TenantId: {TenantId})", attemptId, tenantId?.ToString() ?? "N/A");
     }
 }

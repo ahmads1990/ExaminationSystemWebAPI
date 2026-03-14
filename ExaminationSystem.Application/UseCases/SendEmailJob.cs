@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.InfraInterfaces;
+using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -31,13 +31,14 @@ namespace ExaminationSystem.Application.UseCases
         /// <param name="subject">The subject line of the email.</param>
         /// <param name="template">The email template to be used for the message body.</param>
         /// <param name="parameters">The dictionary of placeholder values to inject into the template.</param>
+        /// <param name="tenantId">Optional tenant ID for job identification and debugging.</param>
         /// <param name="cancellationToken">A token to observe for cancellation requests.</param>
         public async Task Execute(string toName, string toEmail, string subject, EmailTemplate template,
-            Dictionary<string, string> parameters, CancellationToken cancellationToken = default)
+            Dictionary<string, string> parameters, int? tenantId = null, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("Executing SendEmailJob for {ToEmail} with subject {Subject}", toEmail, subject);
+            _logger.LogInformation("Executing SendEmailJob for {ToEmail} with subject {Subject} (TenantId: {TenantId})", toEmail, subject, tenantId?.ToString() ?? "N/A");
             await _emailService.SendEmailAsync(toName, toEmail, subject, template, parameters, cancellationToken);
-            _logger.LogInformation("SendEmailJob finished successfully for {ToEmail}", toEmail);
+            _logger.LogInformation("SendEmailJob finished successfully for {ToEmail} (TenantId: {TenantId})", toEmail, tenantId?.ToString() ?? "N/A");
         }
     }
 }

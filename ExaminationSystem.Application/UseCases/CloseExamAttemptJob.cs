@@ -28,9 +28,9 @@ public class CloseExamAttemptJob : ICloseExamAttemptJob
     }
 
     /// <inheritdoc/>
-    public async Task ExecuteAsync(int examAttemptId, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(int examAttemptId, int? tenantId = null, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Auto-close job started for attempt {AttemptId}", examAttemptId);
+        _logger.LogInformation("Auto-close job started for attempt {AttemptId} (TenantId: {TenantId})", examAttemptId, tenantId?.ToString() ?? "N/A");
 
         var attemptData = await _examAttemptRepo.GetByID(examAttemptId)
             .Select(a => new
@@ -61,7 +61,7 @@ public class CloseExamAttemptJob : ICloseExamAttemptJob
         if (attemptData?.QuestionCount > Constants.ImmediateExamGradingThreshold)
         {
             _backgroundJobClient.Enqueue<IGradeExamAttemptJob>(
-                job => job.GradeAttemptAsync(attempt.ID, CancellationToken.None));
+                job => job.GradeAttemptAsync(attempt.ID, tenantId, CancellationToken.None));
         }
     }
 }

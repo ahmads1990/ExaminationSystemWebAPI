@@ -46,6 +46,10 @@ try
         .AddApplicationServices()
         .AddMapsterConfiguration();
 
+    // Register DbContext abstraction for TenantService
+    builder.Services.AddScoped<Microsoft.EntityFrameworkCore.DbContext>(sp =>
+        sp.GetRequiredService<ExaminationSystem.Infrastructure.Data.AppDbContext>());
+
     // Add FluentValidation
     builder.Services
         .AddFluentValidation();

@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.Application.Interfaces;
+using ExaminationSystem.Application.Common;
+using ExaminationSystem.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
@@ -30,6 +31,16 @@ public class CurrentUserService : ICurrentUserService
         {
             var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return int.TryParse(userIdClaim, out var userId) ? userId : null;
+        }
+    }
+
+    /// <inheritdoc />
+    public int? TenantId
+    {
+        get
+        {
+            var tenantIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(CustomClaimTypes.TenantId)?.Value;
+            return int.TryParse(tenantIdClaim, out var tenantId) ? tenantId : null;
         }
     }
 

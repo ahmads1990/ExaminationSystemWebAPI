@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.DTOs.Auth;
+using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.DTOs.Instructor;
 using ExaminationSystem.Application.DTOs.Student;
 using ExaminationSystem.Application.DTOs.Users;
@@ -27,6 +27,7 @@ public class AuthServiceTests
     private readonly Mock<ICachingService> _cachingServiceMock;
     private readonly Mock<IRepository<RefreshToken>> _refreshTokenRepo;
     private readonly Mock<IPasswordHelper> _passwordHelper;
+    private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Mock<ILogger<AuthService>> _loggerMock;
     private readonly AuthService _authService;
@@ -41,6 +42,7 @@ public class AuthServiceTests
         _cachingServiceMock = new Mock<ICachingService>();
         _refreshTokenRepo = new Mock<IRepository<RefreshToken>>();
         _passwordHelper = new Mock<IPasswordHelper>();
+        _currentUserServiceMock = new Mock<ICurrentUserService>();
         _configurationMock = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<AuthService>>();
 
@@ -62,6 +64,7 @@ public class AuthServiceTests
             _cachingServiceMock.Object,
             _refreshTokenRepo.Object,
             _passwordHelper.Object,
+            _currentUserServiceMock.Object,
             _configurationMock.Object,
             _loggerMock.Object
         );
@@ -95,6 +98,7 @@ public class AuthServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<TimeSpan>(),
+            It.IsAny<int?>(),
             cancellationToken))
             .Returns(Task.CompletedTask);
 
@@ -109,6 +113,7 @@ public class AuthServiceTests
             "user:email_confirmation:42",
             "123456",
             TimeSpan.FromMinutes(5),
+            It.IsAny<int?>(),
             cancellationToken), Times.Once);
         _backgroundJobClientMock.Verify(x => x.Create(
             It.IsAny<Job>(),
@@ -207,6 +212,7 @@ public class AuthServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<TimeSpan>(),
+            It.IsAny<int?>(),
             cancellationToken))
             .Returns(Task.CompletedTask);
 
@@ -221,6 +227,7 @@ public class AuthServiceTests
             "user:email_confirmation:42",
             "123456",
             TimeSpan.FromMinutes(5),
+            It.IsAny<int?>(),
             cancellationToken), Times.Once);
         _backgroundJobClientMock.Verify(x => x.Create(
             It.IsAny<Job>(),
@@ -419,13 +426,13 @@ public class AuthServiceTests
         var token = "123456";
         var cancellationToken = new CancellationToken();
 
-        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken))
             .ReturnsAsync("123456");
 
         _userServiceMock.Setup(x => x.ConfirmUserEmail(userId, cancellationToken))
             .ReturnsAsync(UserEmailVerificationResult.Success);
 
-        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken))
+        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken))
             .Returns(Task.CompletedTask);
 
         // Act
@@ -433,7 +440,7 @@ public class AuthServiceTests
 
         // Assert
         result.Should().Be(UserEmailVerificationResult.Success);
-        _cachingServiceMock.Verify(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken), Times.Once);
+        _cachingServiceMock.Verify(x => x.RemoveAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken), Times.Once);
     }
 
     [Fact]
@@ -445,7 +452,7 @@ public class AuthServiceTests
         var token = "123456";
         var cancellationToken = new CancellationToken();
 
-        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken))
             .ReturnsAsync((string?)null);
 
         // Act
@@ -465,7 +472,7 @@ public class AuthServiceTests
         var token = "wrong-token";
         var cancellationToken = new CancellationToken();
 
-        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken))
             .ReturnsAsync("123456");
 
         // Act
@@ -485,7 +492,7 @@ public class AuthServiceTests
         var token = "123456";
         var cancellationToken = new CancellationToken();
 
-        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", cancellationToken))
+        _cachingServiceMock.Setup(x => x.GetAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken))
             .ReturnsAsync("123456");
 
         _userServiceMock.Setup(x => x.ConfirmUserEmail(userId, cancellationToken))
@@ -496,7 +503,7 @@ public class AuthServiceTests
 
         // Assert
         result.Should().Be(UserEmailVerificationResult.UserNotFound);
-        _cachingServiceMock.Verify(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _cachingServiceMock.Verify(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -518,7 +525,7 @@ public class AuthServiceTests
             Email = "test@domain.com"
         };
 
-        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken))
+        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken))
             .Returns(Task.CompletedTask);
 
         _userServiceMock.Setup(x => x.GetUserBasicInfoById(userId, cancellationToken))
@@ -530,6 +537,7 @@ public class AuthServiceTests
             It.IsAny<string>(),
             It.IsAny<string>(),
             It.IsAny<TimeSpan>(),
+            It.IsAny<int?>(),
             cancellationToken))
             .Returns(Task.CompletedTask);
 
@@ -538,12 +546,13 @@ public class AuthServiceTests
 
         // Assert
         result.Should().Be(UserEmailVerificationResult.EmailJobSent);
-        _cachingServiceMock.Verify(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken), Times.Once);
+        _cachingServiceMock.Verify(x => x.RemoveAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken), Times.Once);
         _tokenHelperMock.Verify(x => x.GenerateOTP(6), Times.Once);
         _cachingServiceMock.Verify(x => x.AddAsync(
             "user:email_confirmation:42",
             "654321",
             TimeSpan.FromMinutes(5),
+            It.IsAny<int?>(),
             cancellationToken), Times.Once);
         _backgroundJobClientMock.Verify(x => x.Create(
             It.IsAny<Job>(),
@@ -558,7 +567,7 @@ public class AuthServiceTests
         var userId = 42;
         var cancellationToken = new CancellationToken();
 
-        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", cancellationToken))
+        _cachingServiceMock.Setup(x => x.RemoveAsync("user:email_confirmation:42", It.IsAny<int?>(), cancellationToken))
             .Returns(Task.CompletedTask);
 
         _userServiceMock.Setup(x => x.GetUserBasicInfoById(userId, cancellationToken))

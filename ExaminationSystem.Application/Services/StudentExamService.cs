@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.DTOs.Auth;
+using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.DTOs.StudentExams;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Common;
@@ -24,6 +24,7 @@ public class StudentExamService : IStudentExamService
     private readonly IRepository<StudentExamsAnswers> _answersRepo;
     private readonly IAuthService _authService;
     private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<StudentExamService> _logger;
 
     #endregion
@@ -38,6 +39,7 @@ public class StudentExamService : IStudentExamService
         IRepository<StudentExamsAnswers> answersRepo,
         IAuthService authService,
         IBackgroundJobClient backgroundJobClient,
+        ICurrentUserService currentUserService,
         ILogger<StudentExamService> logger)
     {
         _examRepo = examRepo;
@@ -47,6 +49,7 @@ public class StudentExamService : IStudentExamService
         _answersRepo = answersRepo;
         _authService = authService;
         _backgroundJobClient = backgroundJobClient;
+        _currentUserService = currentUserService;
         _logger = logger;
     }
 
@@ -61,7 +64,7 @@ public class StudentExamService : IStudentExamService
         if (createResult != StudentExamAttemptResult.Success || examTokenInfoDto is null)
             return (createResult, string.Empty);
 
-        EnqueueAutoCloseJob(examTokenInfoDto);
+        EnqueueAutoCloseJob(examTokenInfoDto, _currentUserService.TenantId);
 
         var (tokenResult, accessToken) = await _authService.CreateExamAttemptToken(examTokenInfoDto, cancellationToken);
         if (tokenResult != UserOperationResult.Success)
@@ -182,7 +185,7 @@ public class StudentExamService : IStudentExamService
         if (attemptData?.QuestionCount > Constants.ImmediateExamGradingThreshold)
         {
             _backgroundJobClient.Enqueue<IGradeExamAttemptJob>(
-                job => job.GradeAttemptAsync(attempt.ID, CancellationToken.None));
+                job => job.GradeAttemptAsync(attempt.ID, _currentUserService.TenantId, CancellationToken.None));
         }
 
         return StudentExamAttemptResult.Success;
@@ -373,11 +376,12 @@ public class StudentExamService : IStudentExamService
     /// Schedules a Hangfire background job to automatically close the exam attempt.
     /// </summary>
     /// <param name="examTokenInfoDto">The DTO containing attempt information.</param>
-    private void EnqueueAutoCloseJob(CreateExamTokenDto examTokenInfoDto)
+    /// <param name="tenantId">Optional tenant ID for job identification.</param>
+    private void EnqueueAutoCloseJob(CreateExamTokenDto examTokenInfoDto, int? tenantId = null)
     {
         // Enqueue auto-close job after exam duration expires → sets status to TimedOut
         _backgroundJobClient.Schedule<ICloseExamAttemptJob>(
-            job => job.ExecuteAsync(examTokenInfoDto.ExamAttemptId, CancellationToken.None),
+            job => job.ExecuteAsync(examTokenInfoDto.ExamAttemptId, tenantId, CancellationToken.None),
             TimeSpan.FromMinutes(examTokenInfoDto.MaxDurationInMinutes));
     }
 

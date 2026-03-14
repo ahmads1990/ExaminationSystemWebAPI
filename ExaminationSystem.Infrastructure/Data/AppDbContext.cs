@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.Interfaces;
+using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Infrastructure.Data.Config;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<ExamAttempt> ExamAttempts { get; set; }
     public DbSet<ExamQuestion> ExamQuestions { get; set; }
+    public DbSet<Tenant> Tenants { get; set; }
 
     #endregion
 
@@ -36,6 +37,7 @@ public class AppDbContext : DbContext
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         int? currentUserId = _currentUserService.UserId;
+        int? currentTenantId = _currentUserService.TenantId;
 
         foreach (var entry in ChangeTracker.Entries<BaseModel>())
         {
@@ -43,6 +45,10 @@ public class AppDbContext : DbContext
             {
                 entry.Entity.CreatedBy = currentUserId;
                 entry.Entity.CreatedDate = DateTime.UtcNow;
+
+                // Auto-set TenantId only if not already explicitly set
+                if (entry.Entity.TenantId == 0 && currentTenantId.HasValue)
+                    entry.Entity.TenantId = currentTenantId.Value;
             }
             else if (entry.State == EntityState.Modified)
             {
@@ -58,11 +64,31 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Apply global tenant query filter to all BaseModel entities
+        var currentTenantId = _currentUserService.TenantId;
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(BaseModel).IsAssignableFrom(entityType.ClrType))
+            {
+                var method = typeof(AppDbContext)
+                    .GetMethod(nameof(ApplyTenantQueryFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
+                    .MakeGenericMethod(entityType.ClrType);
+
+                method.Invoke(null, new object[] { modelBuilder, currentTenantId });
+            }
+        }
+
         modelBuilder.ConfigureQuestionChoices();
         modelBuilder.ConfigureStudentCourses();
         modelBuilder.ConfigureStudentExamsAnswers();
         modelBuilder.ConfigureAppUserStudent();
         modelBuilder.ConfigureAppUserInstructor();
         modelBuilder.ConfigureExamAttempt();
+    }
+
+    private static void ApplyTenantQueryFilter<T>(ModelBuilder modelBuilder, int? tenantId) where T : BaseModel
+    {
+        modelBuilder.Entity<T>().HasQueryFilter(e => !tenantId.HasValue || e.TenantId == tenantId.Value);
     }
 }

@@ -11,5 +11,8 @@ public interface ICloseExamAttemptJob
     /// Marks the attempt as <see cref="ExamAttemptStatus.TimedOut"/> and sets <c>EndTime</c>.
     /// Idempotent — does nothing if the attempt is already closed.
     /// </summary>
-    Task ExecuteAsync(int examAttemptId, CancellationToken cancellationToken = default);
+    /// <param name="examAttemptId">The exam attempt ID.</param>
+    /// <param name="tenantId">Optional tenant ID for job identification and debugging.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task ExecuteAsync(int examAttemptId, int? tenantId = null, CancellationToken cancellationToken = default);
 }

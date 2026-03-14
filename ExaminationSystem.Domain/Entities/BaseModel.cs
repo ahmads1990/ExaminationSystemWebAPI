@@ -1,8 +1,9 @@
-﻿namespace ExaminationSystem.Domain.Entities;
+namespace ExaminationSystem.Domain.Entities;
 
 public class BaseModel
 {
     public int ID { get; set; }
+    public int TenantId { get; set; }
     public bool Deleted { get; set; }
     public int? CreatedBy { get; set; }
     public DateTime CreatedDate { get; set; }
