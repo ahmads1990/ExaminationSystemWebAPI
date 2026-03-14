@@ -31,6 +31,7 @@ try
         });
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddHttpContextAccessor();
+    builder.Services.AddApiVersioningConfiguration();
     builder.Services.AddSwaggerConfiguration();
     builder.Services.AddHealthChecks();
 

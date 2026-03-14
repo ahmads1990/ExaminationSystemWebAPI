@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ExaminationSystem.API.Controllers;
 
@@ -6,7 +7,8 @@ namespace ExaminationSystem.API.Controllers;
 /// Provides a base class for all API controllers, offering common properties and utility methods.
 /// </summary>
 [ApiController]
-[Route("api/[controller]")]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public class BaseController : ControllerBase
 {
