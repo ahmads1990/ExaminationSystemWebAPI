@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace ExaminationSystem.API.Controllers;
 
@@ -9,6 +10,7 @@ namespace ExaminationSystem.API.Controllers;
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
+[EnableRateLimiting("sliding")]
 [Produces("application/json")]
 public class BaseController : ControllerBase
 {

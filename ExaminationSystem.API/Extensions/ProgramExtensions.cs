@@ -6,6 +6,7 @@ using ExaminationSystem.Infrastructure.Data.Seeding;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -40,6 +41,25 @@ public static class ProgramExtensions
         {
             options.GroupNameFormat = "'v'VVV";
             options.SubstituteApiVersionInUrl = true;
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddRateLimitingConfiguration(this IServiceCollection services)
+    {
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            
+            options.AddSlidingWindowLimiter("sliding", limiterOptions =>
+            {
+                limiterOptions.PermitLimit = 100;
+                limiterOptions.Window = TimeSpan.FromMinutes(1);
+                limiterOptions.SegmentsPerWindow = 6;
+                limiterOptions.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+                limiterOptions.QueueLimit = 0;
+            });
         });
 
         return services;

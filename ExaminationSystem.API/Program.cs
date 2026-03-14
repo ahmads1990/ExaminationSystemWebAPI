@@ -32,6 +32,7 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddApiVersioningConfiguration();
+    builder.Services.AddRateLimitingConfiguration();
     builder.Services.AddSwaggerConfiguration();
     builder.Services.AddHealthChecks();
 
@@ -79,6 +80,7 @@ try
 
     // Configure the HTTP request pipeline.
     app.UseResponseCompression();
+    app.UseRateLimiter();
 
     app.UseSerilogRequestLogging(options =>
     {
