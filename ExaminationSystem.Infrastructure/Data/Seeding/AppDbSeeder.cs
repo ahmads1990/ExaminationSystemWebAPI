@@ -72,6 +72,7 @@ public static class AppDbSeeder
 
         var randomInstructors = randomInstructorsUsers.Select(u => new Instructor { AppUser = u }).ToList();
         await context.Instructors.AddRangeAsync(randomInstructors);
+        await context.SaveChangesAsync();
 
         // 3. Generate Random Extra Students (~10)
         var randomStudentUsers = userFaker.Clone().RuleFor(u => u.Role, f => UserRole.Student).Generate(10);
@@ -153,7 +154,7 @@ public static class AppDbSeeder
         {
             var examQuestionCount = new Faker().Random.Int(5, 10);
             var pointsPerQuestion = exam.TotalGrade / examQuestionCount;
-            
+
             for (int q = 0; q < examQuestionCount; q++)
             {
                 var question = new Question
@@ -162,7 +163,7 @@ public static class AppDbSeeder
                     Score = pointsPerQuestion,
                     QuestionLevel = new Faker().PickRandom<QuestionLevel>()
                 };
-                
+
                 await context.Questions.AddAsync(question);
                 await context.SaveChangesAsync(); // Need ID for choices
 
@@ -195,18 +196,18 @@ public static class AppDbSeeder
         // 7. Simulate Past Exam Attempts (~15-20)
         var pastAttempts = new List<ExamAttempt>();
         var studentExamAnswers = new List<StudentExamsAnswers>();
-        
+
         var attemptCount = new Faker().Random.Int(15, 25);
         for (int i = 0; i < attemptCount; i++)
         {
             var student = new Faker().PickRandom(allStudents);
             var studentEnrolledCourseIds = studentCourses.Where(sc => sc.StudentID == student.ID).Select(sc => sc.CourseID);
             var validExamsForStudent = exams.Where(e => studentEnrolledCourseIds.Contains(e.CourseID)).ToList();
-            
+
             if (!validExamsForStudent.Any()) continue;
 
             var exam = new Faker().PickRandom(validExamsForStudent);
-            
+
             var attempt = new ExamAttempt
             {
                 ExamId = exam.ID,
@@ -214,10 +215,10 @@ public static class AppDbSeeder
                 StartTime = DateTime.UtcNow.AddDays(-new Faker().Random.Int(1, 10)),
                 ExamAttemptStatus = ExamAttemptStatus.Graded
             };
-            
+
             // Assign end time based on random duration
             attempt.EndTime = attempt.StartTime.AddMinutes(new Faker().Random.Int(10, exam.MaxDurationInMinutes));
-            
+
             // Calculate a score
             var attemptQuestions = examQuestions.Where(eq => eq.ExamId == exam.ID).ToList();
             int totalScoreAchieved = 0;
@@ -240,7 +241,8 @@ public static class AppDbSeeder
                     // We will set ExamAttemptID after saving attempts
                     ExamAttempt = attempt,
                     QuestionID = examQ.QuestionId,
-                    ChoiceID = pickedChoice.ID
+                    ChoiceID = pickedChoice.ID,
+                    StudentID = student.ID
                 });
             }
 
