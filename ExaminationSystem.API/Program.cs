@@ -7,7 +7,6 @@ using ExaminationSystem.Infrastructure;
 using FluentValidation.AspNetCore;
 using Hangfire;
 using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.OpenApi.Models;
 using Serilog;
 using System.IO.Compression;
 using System.Text.Json.Serialization;
