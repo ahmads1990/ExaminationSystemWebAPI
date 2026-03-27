@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.InfraInterfaces;
+using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Interfaces;
 using ExaminationSystem.Infrastructure.Configs;
@@ -7,18 +7,21 @@ using ExaminationSystem.Infrastructure.Data.Repositories;
 using ExaminationSystem.Infrastructure.Jobs;
 using ExaminationSystem.Infrastructure.Services;
 using ExaminationSystem.Infrastructure.Services.Auth;
+using ExaminationSystem.Infrastructure.Services.Cache;
 using ExaminationSystem.Infrastructure.Services.Email;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Serilog;
 using System.Diagnostics;
 
 namespace ExaminationSystem.Infrastructure;
@@ -33,7 +36,6 @@ public static class InfrastructureServiceExtensions
         services.AddScoped<IEmailService, EmailService>();
 
         services.AddSingleton<ITokenHelper, TokenHelper>();
-        services.AddSingleton<ICachingService, CachingService>();
 
         return services;
     }
@@ -43,8 +45,12 @@ public static class InfrastructureServiceExtensions
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
         services.Configure<JwtConfig>(configuration.GetSection("Jwt"));
 
+        var systemOptions = configuration
+            .GetSection(nameof(SystemServiceOptions))
+            .Get<SystemServiceOptions>() ?? new SystemServiceOptions();
+
         services.AddDatabaseConfiguration(configuration, env);
-        services.AddRedisCacheConfiguration(configuration);
+        services.AddCacheConfiguration(configuration, systemOptions);
 
         services.AddSecurityConfiguration(configuration);
         services.AddHangfireConfiguration(configuration);
@@ -72,21 +78,33 @@ public static class InfrastructureServiceExtensions
         return services;
     }
 
-    public static IServiceCollection AddRedisCacheConfiguration(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddCacheConfiguration(this IServiceCollection services, IConfiguration configuration, SystemServiceOptions systemOptions)
     {
-        var settings = configuration.GetSection(nameof(RedisConfig)).Get<RedisConfig>();
-        services.AddStackExchangeRedisCache(options =>
+        if (systemOptions.UseMemoryCache)
         {
-            options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions
+            // In-process memory cache — no Redis required
+            services.AddMemoryCache();
+            services.AddSingleton<ICachingService, MemoryCachingService>();
+        }
+        else
+        {
+            // Distributed Redis cache
+            var settings = configuration.GetSection(nameof(RedisConfig)).Get<RedisConfig>();
+            services.AddStackExchangeRedisCache(options =>
             {
-                EndPoints = { { settings!.Host, settings.Port } },
-                User = settings.User,
-                Password = settings.Password,
-                Ssl = settings.Ssl,
-                AbortOnConnectFail = settings.AbortOnConnectFail
-            };
-            options.InstanceName = settings.InstanceName;
-        });
+                options.ConfigurationOptions = new StackExchange.Redis.ConfigurationOptions
+                {
+                    EndPoints = { { settings!.Host, settings.Port } },
+                    User = settings.User,
+                    Password = settings.Password,
+                    Ssl = settings.Ssl,
+                    AbortOnConnectFail = settings.AbortOnConnectFail
+                };
+                options.InstanceName = settings.InstanceName;
+            });
+            services.AddSingleton<ICachingService, CachingService>();
+        }
+
         return services;
     }
 
@@ -208,6 +226,41 @@ public static class InfrastructureServiceExtensions
         services.RegisterJobs();
 
         return services;
+    }
+
+    #endregion
+    
+    #region Serilog Configuration
+
+    public static void AddSerilogConfiguration(IConfiguration configuration)
+    {
+        var systemOptions = configuration
+            .GetSection(nameof(SystemServiceOptions))
+            .Get<SystemServiceOptions>() ?? new SystemServiceOptions();
+
+        // Build Serilog: enrichers and levels come from appsettings; sinks are added in code
+        // so WriteToSeq=false will never even attempt a Seq connection.
+        var loggerConfig = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .WriteTo.Console(
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} | {Message:lj}{NewLine}{Exception}"
+            );
+
+        if (systemOptions.WriteToSeq)
+        {
+            var seqUrl = configuration["SeqUrl"] ?? "http://localhost:5341";
+            loggerConfig = loggerConfig.WriteTo.Seq(seqUrl);
+        }
+        else
+        {
+            loggerConfig = loggerConfig.WriteTo.File(
+                path: "logs/log-.txt",
+                rollingInterval: RollingInterval.Day,
+                outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} | {Message:lj}{NewLine}{Exception}"
+            );
+        }
+
+        Log.Logger = loggerConfig.CreateLogger();
     }
 
     #endregion

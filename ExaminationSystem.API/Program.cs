@@ -13,10 +13,7 @@ using System.IO.Compression;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-
-Log.Logger = new LoggerConfiguration()
-    .ReadFrom.Configuration(builder.Configuration)
-    .CreateLogger();
+InfrastructureServiceExtensions.AddSerilogConfiguration(builder.Configuration);
 
 try
 {

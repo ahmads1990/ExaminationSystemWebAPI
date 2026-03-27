@@ -70,5 +70,9 @@
     "UnknownDomainAction": "RejectRequest",
     "DefaultTenantId": 1,
     "ExcludedPaths": [ "/health", "/hangfire" ]
+  },
+  "SystemServiceOptions": {
+    "UseMemoryCache": false,
+    "WriteToSeq": true
   }
 }
