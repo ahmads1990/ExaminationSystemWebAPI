@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ExaminationSystem.API\ExaminationSystem.API.csproj" />
     <ProjectReference Include="..\ExaminationSystem.Domain\ExaminationSystem.Domain.csproj" />
     <ProjectReference Include="..\ExaminationSystem.Infrastructure\ExaminationSystem.Infrastructure.csproj" />
   </ItemGroup>

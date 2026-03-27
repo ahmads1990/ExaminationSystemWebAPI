@@ -23,6 +23,7 @@ public class StudentExamServiceTests
     private readonly Mock<IAuthService> _authServiceMock;
     private readonly Mock<IBackgroundJobClient> _backgroundJobClientMock;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
+    private readonly Mock<ITenantAccessor> _tenantAccessorMock;
     private readonly Mock<ILogger<StudentExamService>> _loggerMock;
     private readonly StudentExamService _service;
 
@@ -36,12 +37,18 @@ public class StudentExamServiceTests
         _authServiceMock = new Mock<IAuthService>();
         _backgroundJobClientMock = new Mock<IBackgroundJobClient>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
+        _tenantAccessorMock = new Mock<ITenantAccessor>();
         _loggerMock = new Mock<ILogger<StudentExamService>>();
+
+        // Default tenant accessor setup
+        _tenantAccessorMock.Setup(x => x.TenantId).Returns(1);
+
         _service = new StudentExamService(
             _examRepoMock.Object, _studentRepoMock.Object,
             _attemptRepoMock.Object, _studentCoursesRepoMock.Object,
             _answersRepoMock.Object, _authServiceMock.Object,
             _backgroundJobClientMock.Object, _currentUserServiceMock.Object,
+            _tenantAccessorMock.Object,
             _loggerMock.Object);
     }
 

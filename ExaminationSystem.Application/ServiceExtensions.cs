@@ -21,6 +21,8 @@ public static class ServiceExtensions
         services.AddScoped<IStudentCourseService, StudentCourseService>();
         services.AddScoped<IStudentExamService, StudentExamService>();
         services.AddScoped<ITenantService, TenantService>();
+        services.AddScoped<ITenantDomainResolver, TenantService>();
+        services.AddSingleton<ITenantAccessor, TenantAccessor>();
 
         return services;
     }

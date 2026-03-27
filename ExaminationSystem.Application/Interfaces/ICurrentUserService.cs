@@ -11,11 +11,6 @@ public interface ICurrentUserService
     int? UserId { get; }
 
     /// <summary>
-    /// Gets the current user's tenant identifier.
-    /// </summary>
-    int? TenantId { get; }
-
-    /// <summary>
     /// Gets a value indicating whether the current user is authenticated.
     /// </summary>
     bool IsAuthenticated { get; }

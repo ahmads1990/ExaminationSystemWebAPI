@@ -8,11 +8,12 @@ using System.Text.Json;
 
 namespace ExaminationSystem.Application.Services;
 
-public class TenantService : ITenantService
+public class TenantService : ITenantService, ITenantDomainResolver
 {
     #region Constants
 
     private const string TenantsCacheKey = "tenants:all_active";
+    private const string TenantDomainCacheKeyPrefix = "tenant:domain:";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
 
     #endregion
@@ -65,6 +66,41 @@ public class TenantService : ITenantService
         _logger.LogInformation("Cached {Count} active tenants", tenants.Count);
 
         return tenants;
+    }
+
+    /// <inheritdoc />
+    public async Task<int?> ResolveTenantIdByDomainAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        // Normalize domain to lowercase
+        var normalizedDomain = domain.ToLowerInvariant();
+        var cacheKey = TenantDomainCacheKeyPrefix + normalizedDomain;
+
+        // Check cache first
+        var cached = await _cachingService.GetAsync(cacheKey, cancellationToken: cancellationToken);
+        if (!string.IsNullOrEmpty(cached))
+        {
+            if (int.TryParse(cached, out var cachedTenantId))
+                return cachedTenantId;
+        }
+
+        // Query DB
+        var tenantId = await _dbContext.Set<TenantDomain>()
+            .Where(td => td.Domain == normalizedDomain && td.Tenant.IsActive)
+            .Select(td => (int?)td.TenantId)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (tenantId.HasValue)
+        {
+            // Cache the resolved tenant ID
+            await _cachingService.AddAsync(cacheKey, tenantId.Value.ToString(), CacheDuration, cancellationToken: cancellationToken);
+            _logger.LogDebug("Resolved domain '{Domain}' to TenantId {TenantId}", normalizedDomain, tenantId.Value);
+        }
+        else
+        {
+            _logger.LogWarning("No tenant found for domain '{Domain}'", normalizedDomain);
+        }
+
+        return tenantId;
     }
 
     #endregion

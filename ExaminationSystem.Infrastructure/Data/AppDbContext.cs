@@ -10,6 +10,7 @@ public class AppDbContext : DbContext
     #region Services
 
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantAccessor _tenantAccessor;
 
     #endregion
 
@@ -26,18 +27,20 @@ public class AppDbContext : DbContext
     public DbSet<ExamAttempt> ExamAttempts { get; set; }
     public DbSet<ExamQuestion> ExamQuestions { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
+    public DbSet<TenantDomain> TenantDomains { get; set; }
 
     #endregion
 
-    public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserService currentUserService) : base(options)
+    public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserService currentUserService, ITenantAccessor tenantAccessor) : base(options)
     {
         _currentUserService = currentUserService;
+        _tenantAccessor = tenantAccessor;
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         int? currentUserId = _currentUserService.UserId;
-        int? currentTenantId = _currentUserService.TenantId;
+        int? currentTenantId = _tenantAccessor.TenantId;
 
         foreach (var entry in ChangeTracker.Entries<BaseModel>())
         {
@@ -65,7 +68,7 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Apply global tenant query filter to all BaseModel entities
-        var currentTenantId = _currentUserService.TenantId;
+        var currentTenantId = _tenantAccessor.TenantId;
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
@@ -78,6 +81,8 @@ public class AppDbContext : DbContext
                 method.Invoke(null, new object[] { modelBuilder, currentTenantId });
             }
         }
+
+        modelBuilder.ApplyConfiguration(new TenantDomainConfiguration());
 
         modelBuilder.ConfigureQuestionChoices();
         modelBuilder.ConfigureStudentCourses();

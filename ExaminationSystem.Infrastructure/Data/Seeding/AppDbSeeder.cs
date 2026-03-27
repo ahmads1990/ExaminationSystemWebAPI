@@ -1,5 +1,6 @@
 using Bogus;
 using ExaminationSystem.Application.InfraInterfaces;
+using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,7 @@ public static class AppDbSeeder
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var passwordHelper = scope.ServiceProvider.GetRequiredService<IPasswordHelper>();
+        var tenantAccessor = scope.ServiceProvider.GetRequiredService<ITenantAccessor>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDbContext>>();
 
         // Pre-check if DB is already seeded
@@ -36,6 +38,19 @@ public static class AppDbSeeder
 
         var defaultTenantId = tenants[0].ID;
         var secondTenantId = tenants[1].ID;
+
+        // 0.1 Seed Tenant Domains
+        var tenantDomains = new List<TenantDomain>
+        {
+            new TenantDomain { TenantId = defaultTenantId, Domain = "localhost", IsPrimary = true },
+            new TenantDomain { TenantId = defaultTenantId, Domain = "defaultuniversity.example.com" },
+            new TenantDomain { TenantId = secondTenantId, Domain = "techacademy.example.com", IsPrimary = true }
+        };
+        await context.TenantDomains.AddRangeAsync(tenantDomains);
+        await context.SaveChangesAsync();
+
+        // Set default tenant for seeding operations so the DbContext auto-assign works
+        tenantAccessor.SetTenantId(defaultTenantId);
 
         // 1. Ensure Fixed Accounts Exist Always
         var fixedPassword = passwordHelper.HashPassword("Password123!");
@@ -291,4 +306,3 @@ public static class AppDbSeeder
         logger.LogInformation("Database seeding completed successfully.");
     }
 }
-

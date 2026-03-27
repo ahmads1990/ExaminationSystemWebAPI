@@ -25,6 +25,7 @@ public class StudentExamService : IStudentExamService
     private readonly IAuthService _authService;
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly ICurrentUserService _currentUserService;
+    private readonly ITenantAccessor _tenantAccessor;
     private readonly ILogger<StudentExamService> _logger;
 
     #endregion
@@ -40,6 +41,7 @@ public class StudentExamService : IStudentExamService
         IAuthService authService,
         IBackgroundJobClient backgroundJobClient,
         ICurrentUserService currentUserService,
+        ITenantAccessor tenantAccessor,
         ILogger<StudentExamService> logger)
     {
         _examRepo = examRepo;
@@ -50,6 +52,7 @@ public class StudentExamService : IStudentExamService
         _authService = authService;
         _backgroundJobClient = backgroundJobClient;
         _currentUserService = currentUserService;
+        _tenantAccessor = tenantAccessor;
         _logger = logger;
     }
 
@@ -64,7 +67,7 @@ public class StudentExamService : IStudentExamService
         if (createResult != StudentExamAttemptResult.Success || examTokenInfoDto is null)
             return (createResult, string.Empty);
 
-        EnqueueAutoCloseJob(examTokenInfoDto, _currentUserService.TenantId);
+        EnqueueAutoCloseJob(examTokenInfoDto, _tenantAccessor.TenantId);
 
         var (tokenResult, accessToken) = await _authService.CreateExamAttemptToken(examTokenInfoDto, cancellationToken);
         if (tokenResult != UserOperationResult.Success)
@@ -185,7 +188,7 @@ public class StudentExamService : IStudentExamService
         if (attemptData?.QuestionCount > Constants.ImmediateExamGradingThreshold)
         {
             _backgroundJobClient.Enqueue<IGradeExamAttemptJob>(
-                job => job.GradeAttemptAsync(attempt.ID, _currentUserService.TenantId, CancellationToken.None));
+                job => job.GradeAttemptAsync(attempt.ID, _tenantAccessor.TenantId, CancellationToken.None));
         }
 
         return StudentExamAttemptResult.Success;

@@ -1,6 +1,6 @@
 namespace ExaminationSystem.Application.DTOs.Users;
 
-public record UserTokenBaseClaims(int Uid, int TenantId, UserRole Role, string Name, string Email)
+public record UserTokenBaseClaims(int Uid, UserRole Role, string Name, string Email)
 {
     /// <summary>
     /// Validates that all claims are not null or empty.
@@ -9,7 +9,6 @@ public record UserTokenBaseClaims(int Uid, int TenantId, UserRole Role, string N
     public bool AreClaimsInValid()
     {
         return Uid <= 0 ||
-               TenantId <= 0 ||
                string.IsNullOrEmpty(Name) ||
                string.IsNullOrEmpty(Email);
     }

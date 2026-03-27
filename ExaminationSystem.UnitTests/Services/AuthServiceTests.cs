@@ -28,6 +28,7 @@ public class AuthServiceTests
     private readonly Mock<IRepository<RefreshToken>> _refreshTokenRepo;
     private readonly Mock<IPasswordHelper> _passwordHelper;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
+    private readonly Mock<ITenantAccessor> _tenantAccessorMock;
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Mock<ILogger<AuthService>> _loggerMock;
     private readonly AuthService _authService;
@@ -43,6 +44,7 @@ public class AuthServiceTests
         _refreshTokenRepo = new Mock<IRepository<RefreshToken>>();
         _passwordHelper = new Mock<IPasswordHelper>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
+        _tenantAccessorMock = new Mock<ITenantAccessor>();
         _configurationMock = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<AuthService>>();
 
@@ -55,6 +57,9 @@ public class AuthServiceTests
         refreshTokenLifeSectionMock.Setup(x => x.Value).Returns("7");
         _configurationMock.Setup(x => x.GetSection("Jwt:RefreshTokenLifeInDays")).Returns(refreshTokenLifeSectionMock.Object);
 
+        // Default tenant accessor setup
+        _tenantAccessorMock.Setup(x => x.TenantId).Returns(1);
+
         _authService = new AuthService(
             _userServiceMock.Object,
             _instructorServiceMock.Object,
@@ -66,7 +71,8 @@ public class AuthServiceTests
             _passwordHelper.Object,
             _currentUserServiceMock.Object,
             _configurationMock.Object,
-            _loggerMock.Object
+            _loggerMock.Object,
+            _tenantAccessorMock.Object
         );
     }
 

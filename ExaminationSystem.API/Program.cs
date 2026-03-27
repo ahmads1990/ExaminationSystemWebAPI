@@ -4,6 +4,7 @@ using ExaminationSystem.API.Middlewares;
 using ExaminationSystem.Application;
 using ExaminationSystem.Application.Common;
 using ExaminationSystem.Infrastructure;
+using ExaminationSystem.Infrastructure.Configs;
 using FluentValidation.AspNetCore;
 using Hangfire;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -48,6 +49,9 @@ try
     // Register DbContext abstraction for TenantService
     builder.Services.AddScoped<Microsoft.EntityFrameworkCore.DbContext>(sp =>
         sp.GetRequiredService<ExaminationSystem.Infrastructure.Data.AppDbContext>());
+
+    // Bind Tenancy configuration
+    builder.Services.Configure<TenancyConfig>(builder.Configuration.GetSection("Tenancy"));
 
     // Add FluentValidation
     builder.Services
@@ -107,6 +111,9 @@ try
 
     app.UseStaticFiles();
     app.UseHangfireDashboard("/hangfire");
+
+    // Tenant resolution must come before authentication
+    app.UseMiddleware<TenantResolutionMiddleware>();
 
     app.UseAuthentication();
     app.UseAuthorization();
