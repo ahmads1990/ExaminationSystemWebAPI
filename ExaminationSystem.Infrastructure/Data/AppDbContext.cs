@@ -90,6 +90,7 @@ public class AppDbContext : DbContext
         modelBuilder.ConfigureAppUserStudent();
         modelBuilder.ConfigureAppUserInstructor();
         modelBuilder.ConfigureExamAttempt();
+        modelBuilder.ConfigureExam(); 
     }
 
     private static void ApplyTenantQueryFilter<T>(ModelBuilder modelBuilder, int? tenantId) where T : BaseModel
