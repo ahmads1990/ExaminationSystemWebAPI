@@ -36,7 +36,8 @@ try
     // Add Infrastructure services registrations
     builder.Services
         .AddInfrastructureServices()
-        .AddInfraStructureConfiguration(builder.Configuration, builder.Environment);
+        .AddInfraStructureConfiguration(builder.Configuration, builder.Environment)
+        .AddJwtBearerEvents();
 
     // Add all services and Mapster configuration
     builder.Services

@@ -18,9 +18,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Diagnostics;
 
@@ -43,7 +43,7 @@ public static class InfrastructureServiceExtensions
     public static IServiceCollection AddInfraStructureConfiguration(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env)
     {
         services.Configure<SMTPConfig>(configuration.GetSection(nameof(SMTPConfig)));
-        services.Configure<JwtConfig>(configuration.GetSection("Jwt"));
+        services.Configure<JwtConfig>(configuration.GetSection(Constants.JwtConfigSectionName));
 
         var systemOptions = configuration
             .GetSection(nameof(SystemServiceOptions))
@@ -51,12 +51,48 @@ public static class InfrastructureServiceExtensions
 
         services.AddDatabaseConfiguration(configuration, env);
         services.AddCacheConfiguration(configuration, systemOptions);
-
-        services.AddSecurityConfiguration(configuration);
         services.AddHangfireConfiguration(configuration);
+        services.AddJwtAuthentication(configuration);
 
         return services;
     }
+
+    #region JWT Authentication
+
+    /// <summary>
+    /// Registers the core JWT Bearer authentication scheme with token validation parameters.
+    /// HTTP-specific challenge/forbidden events should be configured in the API layer.
+    /// </summary>
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        var jwtConfig = configuration.GetSection(Constants.JwtConfigSectionName).Get<JwtConfig>()
+            ?? throw new InvalidOperationException($"Missing required configuration section: '{Constants.JwtConfigSectionName}'.");
+
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = false;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidIssuer = jwtConfig.Issuer,
+                ValidAudience = jwtConfig.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtConfig.Key)),
+            };
+        });
+
+        return services;
+    }
+
+    #endregion
 
     #region Database Configuration
 
@@ -104,106 +140,6 @@ public static class InfrastructureServiceExtensions
             });
             services.AddSingleton<ICachingService, CachingService>();
         }
-
-        return services;
-    }
-
-    #endregion
-
-    #region Security Configuration
-
-    public static IServiceCollection AddSecurityConfiguration(this IServiceCollection services, IConfiguration configuration)
-    {
-        var jwtConfig = configuration.GetSection("Jwt").Get<JwtConfig>()
-            ?? throw new InvalidOperationException("Missing required configuration section: 'Jwt'.");
-
-        // Add Authentication with jwt config
-        services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-        }).AddJwtBearer(o =>
-        {
-            o.RequireHttpsMetadata = false;
-            o.SaveToken = false;
-            o.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuerSigningKey = true,
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidIssuer = jwtConfig.Issuer,
-                ValidAudience = jwtConfig.Audience,
-                IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtConfig.Key)),
-            };
-
-            o.Events = new JwtBearerEvents
-            {
-                OnChallenge = async context =>
-                {
-                    context.HandleResponse();
-                    context.Response.StatusCode = 401;
-                    context.Response.ContentType = "application/json";
-
-                    var isExamEndpoint = context.Request.Path.StartsWithSegments("/api/studentexams");
-                    bool isExpired = context.AuthenticateFailure is SecurityTokenExpiredException;
-
-                    int code = 1007; // Unauthorized
-                    string msg = "You must be logged in to access this resource";
-
-                    if (isExpired)
-                    {
-                        if (isExamEndpoint)
-                        {
-                            code = 1010; // ExamTimeout
-                            msg = "Your exam time has expired";
-                        }
-                        else
-                        {
-                            code = 1006; // ExpiredToken
-                            msg = "Your session has expired. Please login again";
-                        }
-                    }
-                    else if (context.AuthenticateFailure != null)
-                    {
-                        code = 1009; // InvalidToken
-                        msg = "Invalid token";
-                    }
-
-                    var payload = new
-                    {
-                        success = false,
-                        data = (object?)null,
-                        errorCode = code,
-                        message = msg
-                    };
-
-                    var options = new System.Text.Json.JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-                    };
-                    await context.Response.WriteAsJsonAsync(payload, options);
-                },
-                OnForbidden = async context =>
-                {
-                    context.Response.StatusCode = 403;
-                    context.Response.ContentType = "application/json";
-                    var payload = new
-                    {
-                        success = false,
-                        data = (object?)null,
-                        errorCode = 1008, // Forbidden
-                        message = "You don't have permission to access this resource"
-                    };
-                    var options = new System.Text.Json.JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
-                    };
-                    await context.Response.WriteAsJsonAsync(payload, options);
-                }
-            };
-        });
 
         return services;
     }

@@ -1,4 +1,4 @@
-﻿namespace ExaminationSystem.Domain.Common;
+namespace ExaminationSystem.Domain.Common;
 
 public static class Constants
 {
@@ -26,5 +26,6 @@ public static class Constants
 
     // System
     public const string DBConnectionStringName = "DefaultConnection";
+    public const string JwtConfigSectionName = "Jwt";
+    public const string StudentExamsRoutePrefix = "/api/studentexams";
 }
-

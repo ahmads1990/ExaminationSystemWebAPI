@@ -2,12 +2,15 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using ExaminationSystem.API.Common.Configs;
 using ExaminationSystem.API.Models.Responses;
+using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Infrastructure.Data.Seeding;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 namespace ExaminationSystem.API.Extensions;
@@ -137,6 +140,79 @@ public static class ProgramExtensions
 
         return services;
     }
+
+    #region Security Configuration
+
+    /// <summary>
+    /// Configures JWT Bearer challenge events to return consistent API error responses.
+    /// The core JWT authentication scheme is registered in the Infrastructure layer.
+    /// </summary>
+    public static IServiceCollection AddJwtBearerEvents(this IServiceCollection services)
+    {
+        services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+        {
+            options.Events = new JwtBearerEvents
+            {
+                OnChallenge = async context =>
+                {
+                    context.HandleResponse();
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    context.Response.ContentType = "application/json";
+
+                    var isExamEndpoint = context.Request.Path.StartsWithSegments(Constants.StudentExamsRoutePrefix);
+                    bool isExpired = context.AuthenticateFailure is SecurityTokenExpiredException;
+
+                    var errorCode = ApiErrorCode.Unauthorized;
+
+                    if (isExpired)
+                    {
+                        errorCode = isExamEndpoint
+                            ? ApiErrorCode.ExamTimeout
+                            : ApiErrorCode.ExpiredToken;
+                    }
+                    else if (context.AuthenticateFailure != null)
+                    {
+                        errorCode = ApiErrorCode.InvalidToken;
+                    }
+
+                    var payload = new
+                    {
+                        success = false,
+                        data = (object?)null,
+                        errorCode = (int)errorCode,
+                        message = errorCode.GetErrorMessage()
+                    };
+
+                    var jsonOptions = new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                    };
+                    await context.Response.WriteAsJsonAsync(payload, jsonOptions);
+                },
+                OnForbidden = async context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    context.Response.ContentType = "application/json";
+                    var payload = new
+                    {
+                        success = false,
+                        data = (object?)null,
+                        errorCode = (int)ApiErrorCode.Forbidden,
+                        message = ApiErrorCode.Forbidden.GetErrorMessage()
+                    };
+                    var jsonOptions = new System.Text.Json.JsonSerializerOptions
+                    {
+                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                    };
+                    await context.Response.WriteAsJsonAsync(payload, jsonOptions);
+                }
+            };
+        });
+
+        return services;
+    }
+
+    #endregion
 
     public static async Task ApplyDatabaseMigrationsAndSeedAsync(this WebApplication app)
     {
