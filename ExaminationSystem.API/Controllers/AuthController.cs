@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.API.Extensions;
+using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.Auth;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.Auth;
@@ -90,7 +90,7 @@ public class AuthController : BaseController
 
         return loginResult == UserOperationResult.Success
             ? new SuccessResponse<UserTokensDto>(tokens!)
-            : new ErrorResponse<UserTokensDto>(loginResult.ToApiErrorCode());
+            : new ErrorResponse<UserTokensDto>(loginResult.ToApiErrorCode()) { Data = tokens };
     }
 
     /// <summary>

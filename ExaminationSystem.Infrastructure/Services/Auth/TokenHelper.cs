@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using OtpNet;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ExaminationSystem.Infrastructure.Services.Auth;
@@ -86,7 +87,8 @@ public class TokenHelper : ITokenHelper
     /// <inheritdoc />
     public string GenerateRefreshToken()
     {
-        return GenerateOTP(REFRESH_TOKEN_LENGTH);
+        var randomBytes = RandomNumberGenerator.GetBytes(REFRESH_TOKEN_LENGTH);  
+        return Convert.ToBase64String(randomBytes);
     }
 
     /// <inheritdoc />

@@ -1,4 +1,4 @@
-﻿namespace ExaminationSystem.Application.DTOs.Auth;
+namespace ExaminationSystem.Application.DTOs.Auth;
 
 /// <summary>
 /// Represents the JWT and refresh token pair returned after successful authentication.
@@ -14,4 +14,9 @@ public class UserTokensDto
     /// The long-lived refresh token used to obtain new JWT tokens without re-authenticating.
     /// </summary>
     public string RefreshToken { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The user ID (populated on specific states like unverified email).
+    /// </summary>
+    public int? UserId { get; set; }
 }

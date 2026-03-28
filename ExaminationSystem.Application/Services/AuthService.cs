@@ -148,7 +148,13 @@ public class AuthService : IAuthService
         if (result != UserOperationResult.Success)
         {
             _logger.LogWarning("Login failed for email {Email}: {Reason}", userLoginDto.Email, result);
-            return (result, null);
+            
+            // Return the userId in the tokensDto object if the email is not confirmed
+            var errorInfo = result == UserOperationResult.EmailNotConfirmed 
+                ? new UserTokensDto { UserId = userId } 
+                : null;
+                
+            return (result, errorInfo);
         }
 
         var jwtToken = await GenerateUserJWT(userId!.Value, cancellationToken: cancellationToken);

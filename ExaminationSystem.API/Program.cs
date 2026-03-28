@@ -97,7 +97,8 @@ try
 
     app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 
-    if (app.Environment.IsDevelopment())
+    //if (app.Environment.IsDevelopment())
+    if (true)
     {
         app.UseSwagger();
         app.UseSwaggerUI();

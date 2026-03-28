@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.DTOs.Auth;
+using ExaminationSystem.Application.DTOs.Auth;
 using ExaminationSystem.Application.DTOs.Users;
 using ExaminationSystem.Application.InfraInterfaces;
 using ExaminationSystem.Application.Interfaces;
@@ -69,14 +69,20 @@ public class UserService : IUserService
     /// <inheritdoc />
     public async Task<(UserOperationResult Result, int? Id)> VerifyUserPassword(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
     {
-        // Find user by email and hashed password
+        // Find user by email
         var userInfo = await _userRepository.GetByCondition(u => u.Email == userLoginDto.Email)
-                                            .Select(u => new { u.ID, u.Password })
+                                            .Select(u => new { u.ID, u.Password, u.IsEmailConfirmed })
                                             .FirstOrDefaultAsync(cancellationToken);
 
-        return _passwordHelper.VerifyPassword(userInfo?.Password ?? "", userLoginDto.Password)
-          ? (UserOperationResult.Success, userInfo!.ID)
-          : (UserOperationResult.InvalidCredentials, null);
+        // User not found or wrong password — same error to avoid user enumeration
+        if (userInfo == null || !_passwordHelper.VerifyPassword(userInfo.Password ?? "", userLoginDto.Password))
+            return (UserOperationResult.InvalidCredentials, null);
+
+        // Correct credentials but email not yet verified
+        if (!userInfo.IsEmailConfirmed)
+            return (UserOperationResult.EmailNotConfirmed, userInfo.ID);
+
+        return (UserOperationResult.Success, userInfo.ID);
     }
 
     /// <inheritdoc />
