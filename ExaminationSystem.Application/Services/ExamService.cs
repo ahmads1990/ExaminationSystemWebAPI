@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.DTOs;
+using ExaminationSystem.Application.DTOs;
 using ExaminationSystem.Application.DTOs.Exams;
 using ExaminationSystem.Application.DTOs.StudentExams;
 using ExaminationSystem.Application.Interfaces;
@@ -108,6 +108,35 @@ public class ExamService : IExamService
 
         var deletedIds = exams.Select(q => q.ID).ToList();
         return idsToDelete.Except(deletedIds);
+    }
+
+    /// <inheritdoc/>
+    public async Task<ExamOperationResult> DeleteById(int id, CancellationToken cancellationToken = default)
+    {
+        var exam = await _examRepository
+            .GetByCondition(e => e.ID == id)
+            .Select(e => new { e.ID, e.ExamStatus, HasSubmissions = e.ExamAttempts.Any() })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (exam is null)
+            return ExamOperationResult.NotFound;
+
+        if (exam.ExamStatus == ExamStatus.Archived)
+            return ExamOperationResult.ExamArchived;
+
+        if (exam.ExamStatus == ExamStatus.Published)
+            return ExamOperationResult.ExamPublished;
+
+        if (exam.HasSubmissions)
+            return ExamOperationResult.HasSubmissions;
+
+        var examToDelete = new Exam { ID = exam.ID };
+        _examRepository.Delete(examToDelete);
+        await _examRepository.SaveChanges(cancellationToken);
+
+        _logger.LogInformation("Exam {ExamId} deleted", id);
+
+        return ExamOperationResult.Success;
     }
 
     /// <inheritdoc/>
@@ -332,6 +361,21 @@ public class ExamService : IExamService
 
         if (listDto.ExamType is not null)
             query = query.Where(q => q.ExamType == listDto.ExamType);
+
+        if (listDto.ExamStatus is not null)
+            query = query.Where(q => q.ExamStatus == listDto.ExamStatus);
+
+        if (listDto.CourseId is not null)
+            query = query.Where(q => q.CourseID == listDto.CourseId);
+
+        if (listDto.InstructorId is not null)
+            query = query.Where(q => q.Course.InstructorID == listDto.InstructorId);
+
+        if (listDto.DeadlineFrom is not null)
+            query = query.Where(q => q.DeadlineDate >= listDto.DeadlineFrom);
+
+        if (listDto.DeadlineTo is not null)
+            query = query.Where(q => q.DeadlineDate <= listDto.DeadlineTo);
 
         return query;
     }

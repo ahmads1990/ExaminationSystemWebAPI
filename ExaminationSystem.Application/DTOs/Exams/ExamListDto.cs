@@ -1,4 +1,4 @@
-﻿namespace ExaminationSystem.Application.DTOs.Exams;
+namespace ExaminationSystem.Application.DTOs.Exams;
 
 public class ExamListDto
 {
@@ -11,5 +11,5 @@ public class ExamListDto
     public DateTime DeadlineDate { get; set; }
 
     public int CourseID { get; set; }
-    public string Course { get; set; }
+    public string CourseName { get; set; }
 }

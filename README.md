@@ -324,20 +324,21 @@ mindmap
       DELETE /Courses/id
     Exams
       GET /Exams
-      GET /Exams/GetDetails
+      GET /Exams/{id}
       POST /Exams
-      PUT /Exams/id
-      DELETE /Exams/id
-      POST /Exams/id/Publish
-      POST /Exams/id/Unpublish
-      POST /Exams/id/AssignQuestions
-      POST /Exams/id/UnassignQuestions
+      PUT /Exams
+      DELETE /Exams
+      DELETE /Exams/{id}
+      PATCH /Exams/publish
+      PATCH /Exams/{id}/unpublish
+      PATCH /Exams/assign-questions
+      PATCH /Exams/unassign-questions
     Questions
       GET /Questions
-      GET /Questions/GetDetails
+      GET /Questions/{id}
       POST /Questions
-      PUT /Questions/id
-      DELETE /Questions/id
+      PUT /Questions
+      DELETE /Questions
     StudentCourses
       GET /me/enrollments
       GET /id/enrollments
@@ -393,24 +394,25 @@ mindmap
 ### Exams
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `GET` | `/api/v1/Exams` | 🔐 | List exams (paginated, filtered) |
-| `GET` | `/api/v1/Exams/GetDetails` | 🔐 | Get exam with questions |
+| `GET` | `/api/v1/Exams` | 🔐 | List exams (filters: `title`, `examType`, `examStatus`, `courseId`, `instructorId`, `deadlineFrom/To`) |
+| `GET` | `/api/v1/Exams/{id}` | 🔐 | Get exam details |
 | `POST` | `/api/v1/Exams` | 👨‍🏫 | Create exam |
-| `PUT` | `/api/v1/Exams/{id}` | 👨‍🏫 | Update exam |
-| `DELETE` | `/api/v1/Exams/{id}` | 👨‍🏫 | Delete exam |
-| `POST` | `/api/v1/Exams/{id}/Publish` | 👨‍🏫 | Publish exam |
-| `POST` | `/api/v1/Exams/{id}/Unpublish` | 👨‍🏫 | Unpublish exam |
-| `POST` | `/api/v1/Exams/{id}/AssignQuestions` | 👨‍🏫 | Assign questions |
-| `POST` | `/api/v1/Exams/{id}/UnassignQuestions` | 👨‍🏫 | Remove questions |
+| `PUT` | `/api/v1/Exams` | 👨‍🏫 | Update exam |
+| `DELETE` | `/api/v1/Exams` | 👨‍🏫 | Bulk delete exams (takes `List<int>` in body) |
+| `DELETE` | `/api/v1/Exams/{id}` | 👨‍🏫 | Delete single exam |
+| `PATCH` | `/api/v1/Exams/publish` | 👨‍🏫 | Publish exam (takes details in body) |
+| `PATCH` | `/api/v1/Exams/{id}/unpublish` | 👨‍🏫 | Unpublish exam |
+| `PATCH` | `/api/v1/Exams/assign-questions` | 👨‍🏫 | Assign questions to exam |
+| `PATCH` | `/api/v1/Exams/unassign-questions` | 👨‍🏫 | Remove questions from exam |
 
 ### Questions
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `GET` | `/api/v1/Questions` | 🔐 | List questions (paginated) |
-| `GET` | `/api/v1/Questions/GetDetails` | 🔐 | Get question with choices |
+| `GET` | `/api/v1/Questions/{id}` | 🔐 | Get question details |
 | `POST` | `/api/v1/Questions` | 👨‍🏫 | Create question |
-| `PUT` | `/api/v1/Questions/{id}` | 👨‍🏫 | Update question |
-| `DELETE` | `/api/v1/Questions/{id}` | 👨‍🏫 | Delete question |
+| `PUT` | `/api/v1/Questions` | 👨‍🏫 | Update question |
+| `DELETE` | `/api/v1/Questions` | 👨‍🏫 | Bulk delete questions (takes `List<int>` in body) |
 
 ### Student Courses
 | Method | Route | Auth | Description |

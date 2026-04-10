@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.DTOs;
+using ExaminationSystem.Application.DTOs;
 using ExaminationSystem.Application.DTOs.Exams;
 using ExaminationSystem.Application.DTOs.StudentExams;
 
@@ -51,6 +51,15 @@ public interface IExamService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>A collection of IDs that could not be deleted.</returns>
     Task<IEnumerable<int>> Delete(List<int> idsToDelete, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes a single exam by its identifier.
+    /// Deletion is blocked when the exam is published or has student submissions.
+    /// </summary>
+    /// <param name="id">The exam identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An <see cref="ExamOperationResult"/> indicating success or the reason for failure.</returns>
+    Task<ExamOperationResult> DeleteById(int id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Persists changes made in the service to the underlying data store.

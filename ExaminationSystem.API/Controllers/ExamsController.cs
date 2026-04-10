@@ -131,6 +131,26 @@ public class ExamsController : BaseController
     }
 
     /// <summary>
+    /// Deletes a single exam by its ID.
+    /// Deletion is blocked when the exam is published or has student submissions.
+    /// </summary>
+    /// <param name="id">The exam identifier.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A success response, or an error response with the reason for failure.</returns>
+    [HttpDelete("{id:int}")]
+    [ProducesResponseType(typeof(SuccessResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ErrorResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<ApiResponse<string>> DeleteById(int id, CancellationToken cancellationToken = default)
+    {
+        var result = await _examService.DeleteById(id, cancellationToken);
+
+        return result == ExamOperationResult.Success
+            ? new SuccessResponse<string>(string.Empty)
+            : new ErrorResponse<string>(result.ToApiErrorCode());
+    }
+
+    /// <summary>
     /// Publishes an exam, making it visible and available to students.
     /// If no publish date is provided, it defaults to now.
     /// </summary>
