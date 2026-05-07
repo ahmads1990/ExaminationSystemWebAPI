@@ -11,15 +11,14 @@ using ExaminationSystem.Infrastructure.Services.Cache;
 using ExaminationSystem.Infrastructure.Services.Email;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Diagnostics;
@@ -165,7 +164,7 @@ public static class InfrastructureServiceExtensions
     }
 
     #endregion
-    
+
     #region Serilog Configuration
 
     public static void AddSerilogConfiguration(IConfiguration configuration)

@@ -61,8 +61,8 @@ namespace ExaminationSystem.Infrastructure.Services.Email
                 try
                 {
                     await client.ConnectAsync(_smtpConfig.Host, _smtpConfig.Port, _smtpConfig.EnableSsl, cancellationToken);
-
-                    if (string.IsNullOrEmpty(_smtpConfig.Username) && string.IsNullOrEmpty(_smtpConfig.Password))
+         
+                    if (!string.IsNullOrEmpty(_smtpConfig.Username) && !string.IsNullOrEmpty(_smtpConfig.Password))
                     {
                         await client.AuthenticateAsync(_smtpConfig.Username, _smtpConfig.Password, cancellationToken);
                     }
