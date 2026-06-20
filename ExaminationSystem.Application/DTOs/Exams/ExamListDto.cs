@@ -2,6 +2,7 @@ namespace ExaminationSystem.Application.DTOs.Exams;
 
 public class ExamListDto
 {
+    public int ID { get; set; }
     public ExamType ExamType { get; set; }
     public string Title { get; set; } = string.Empty;
     public int MaxDurationInMinutes { get; set; }

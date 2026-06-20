@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.DTOs.Questions;
+using ExaminationSystem.Application.DTOs.Questions;
 
 namespace ExaminationSystem.Application.DTOs.Exams;
 
@@ -7,6 +7,11 @@ namespace ExaminationSystem.Application.DTOs.Exams;
 /// </summary>
 public class ExamDto
 {
+    /// <summary>
+    /// The unique identifier of the exam.
+    /// </summary>
+    public int ID { get; set; }
+
     /// <summary>
     /// The type of exam (e.g., Quiz, Midterm, Final).
     /// </summary>
