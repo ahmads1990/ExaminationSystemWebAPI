@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.API.Common;
+using ExaminationSystem.API.Common;
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.Courses;
 using ExaminationSystem.API.Models.Responses;

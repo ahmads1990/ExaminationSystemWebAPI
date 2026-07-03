@@ -68,8 +68,6 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Apply global tenant query filter to all BaseModel entities
-        var currentTenantId = _tenantAccessor.TenantId;
-
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             if (typeof(BaseModel).IsAssignableFrom(entityType.ClrType))
@@ -78,7 +76,7 @@ public class AppDbContext : DbContext
                     .GetMethod(nameof(ApplyTenantQueryFilter), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!
                     .MakeGenericMethod(entityType.ClrType);
 
-                method.Invoke(null, new object[] { modelBuilder, currentTenantId });
+                method.Invoke(null, new object[] { modelBuilder, _tenantAccessor });
             }
         }
 
@@ -93,8 +91,8 @@ public class AppDbContext : DbContext
         modelBuilder.ConfigureExam(); 
     }
 
-    private static void ApplyTenantQueryFilter<T>(ModelBuilder modelBuilder, int? tenantId) where T : BaseModel
+    private static void ApplyTenantQueryFilter<T>(ModelBuilder modelBuilder, ITenantAccessor tenantAccessor) where T : BaseModel
     {
-        modelBuilder.Entity<T>().HasQueryFilter(e => !tenantId.HasValue || e.TenantId == tenantId.Value);
+        modelBuilder.Entity<T>().HasQueryFilter(e => !tenantAccessor.TenantId.HasValue || e.TenantId == tenantAccessor.TenantId.Value);
     }
 }

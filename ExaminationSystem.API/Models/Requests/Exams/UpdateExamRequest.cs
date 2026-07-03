@@ -1,4 +1,4 @@
-﻿namespace ExaminationSystem.API.Models.Requests.Exams;
+namespace ExaminationSystem.API.Models.Requests.Exams;
 
 /// <summary>
 /// Model for updating an existing exam.
@@ -34,11 +34,6 @@ public class UpdateExamRequest
     /// Whether to shuffle the order of questions for each student.
     /// </summary>
     public bool ShuffleQuestions { get; set; }
-
-    /// <summary>
-    /// Whether to show the results to the student immediately after submission.
-    /// </summary>
-    public bool ShowResultsImmediately { get; set; }
 
     /// <summary>
     /// The deadline date for taking the exam.

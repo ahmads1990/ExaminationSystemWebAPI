@@ -1,7 +1,8 @@
-﻿namespace ExaminationSystem.Application.DTOs.Exams;
+namespace ExaminationSystem.Application.DTOs.Exams;
 
 public class AddExamDto
 {
+    public string Title { get; set; } = string.Empty;
     public ExamType ExamType { get; set; }
     public int MaxDurationInMinutes { get; set; }
     public int TotalGrade { get; set; }
@@ -9,6 +10,5 @@ public class AddExamDto
     public int MaxAttempts { get; set; }
     public bool ShuffleQuestions { get; set; }
     public DateTime DeadlineDate { get; set; }
-
     public int CourseID { get; set; }
 }

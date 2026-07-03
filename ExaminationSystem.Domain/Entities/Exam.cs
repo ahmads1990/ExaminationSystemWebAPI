@@ -1,4 +1,4 @@
-﻿namespace ExaminationSystem.Domain.Entities;
+namespace ExaminationSystem.Domain.Entities;
 
 public class Exam : BaseModel
 {

@@ -1,10 +1,15 @@
-﻿namespace ExaminationSystem.API.Models.Requests.Exams;
+namespace ExaminationSystem.API.Models.Requests.Exams;
 
 /// <summary>
 /// Model for adding a new exam.
 /// </summary>
 public class AddExamRequest
 {
+    /// <summary>
+    /// The title of the exam.
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
+
     /// <summary>
     /// The type of exam (e.g., Quiz, Midterm, Final).
     /// </summary>
@@ -34,11 +39,6 @@ public class AddExamRequest
     /// Whether to shuffle the order of questions for each student.
     /// </summary>
     public bool ShuffleQuestions { get; set; }
-
-    /// <summary>
-    /// Whether to show the results to the student immediately after submission.
-    /// </summary>
-    public bool ShowResultsImmediately { get; set; }
 
     /// <summary>
     /// The deadline date for taking the exam.
