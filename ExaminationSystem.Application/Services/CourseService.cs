@@ -1,8 +1,10 @@
-﻿using ExaminationSystem.Application.DTOs.Courses;
+using ExaminationSystem.Application.DTOs.Courses;
+using ExaminationSystem.Application.DTOs.Instructor;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Linq.Expressions;
@@ -126,9 +128,9 @@ public class CourseService : ICourseService
     }
 
     /// <inheritdoc/>
-    public async Task<List<CourseStatsDto>> GetInstructorCoursesStats(int instructorId, CancellationToken cancellationToken = default)
+    public async Task<(IEnumerable<CourseStatsDto> Data, int TotalCount)> GetInstructorCoursesStats(int instructorId, ListInstructorCoursesDto listDto, CancellationToken cancellationToken = default)
     {
-        var stats = await _courseRepository.GetAll()
+        var query = _courseRepository.GetAll()
             .Where(c => c.InstructorID == instructorId)
             .Select(c => new CourseStatsDto
             {
@@ -136,10 +138,32 @@ public class CourseService : ICourseService
                 CourseName = c.Title ?? string.Empty,
                 StudentCount = c.StudentCourses.Count,
                 ExamsCount = c.Exams.Count
-            })
-            .ToListAsync(cancellationToken);
+            });
 
-        return stats;
+        if (!string.IsNullOrEmpty(listDto.CourseName))
+        {
+            query = query.Where(c => c.CourseName.Contains(listDto.CourseName));
+        }
+
+        Expression<Func<CourseStatsDto, object>> sortingExpression = listDto.OrderBy switch
+        {
+            nameof(CourseStatsDto.CourseName) => q => q.CourseName,
+            nameof(CourseStatsDto.StudentCount) => q => q.StudentCount,
+            nameof(CourseStatsDto.ExamsCount) => q => q.ExamsCount,
+            _ => q => q.CourseId
+        };
+
+        query = listDto.SortDirection == SortingDirection.Ascending
+            ? query.OrderBy(sortingExpression)
+            : query.OrderByDescending(sortingExpression);
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var data = await query.Skip(listDto.PageIndex * listDto.PageSize)
+                             .Take(listDto.PageSize)
+                             .ToListAsync(cancellationToken);
+
+        return (data, totalCount);
     }
 
     #endregion

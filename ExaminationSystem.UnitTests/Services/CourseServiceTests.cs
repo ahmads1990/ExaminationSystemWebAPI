@@ -1,4 +1,5 @@
 using ExaminationSystem.Application.DTOs.Courses;
+using ExaminationSystem.Application.DTOs.Instructor;
 using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
@@ -402,9 +403,11 @@ public class CourseServiceTests
             .Returns(courses.AsQueryable().BuildMock());
 
         // Act
-        var result = await _service.GetInstructorCoursesStats(instructorId);
+        var listDto = new ListInstructorCoursesDto { PageIndex = 0, PageSize = 10 };
+        var (result, totalCount) = await _service.GetInstructorCoursesStats(instructorId, listDto);
 
         // Assert
+        totalCount.Should().Be(2);
         result.Should().HaveCount(2);
 
         var courseAStats = result.First(c => c.CourseId == 1);

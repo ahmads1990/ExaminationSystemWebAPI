@@ -17,10 +17,10 @@ public class ExamMapper : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<Exam, ExamDto>()
-            .Map(dest => dest.Course, src => src.Course.Title);
+            .Map(dest => dest.Course, src => src.Course != null ? src.Course.Title : string.Empty);
 
         config.NewConfig<Exam, ExamListDto>()
-            .Map(dest => dest.CourseName, src => src.Course.Title);
+            .Map(dest => dest.CourseName, src => src.Course != null ? src.Course.Title : string.Empty);
     }
 
     #endregion

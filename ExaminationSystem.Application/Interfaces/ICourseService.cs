@@ -1,4 +1,5 @@
-﻿using ExaminationSystem.Application.DTOs.Courses;
+using ExaminationSystem.Application.DTOs.Courses;
+using ExaminationSystem.Application.DTOs.Instructor;
 
 namespace ExaminationSystem.Application.Interfaces;
 
@@ -40,10 +41,11 @@ public interface ICourseService
     Task<CourseOperationResult> Delete(DeleteCourseDto courseDto, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets course statistics for an instructor dashboard.
+    /// Gets course statistics for an instructor dashboard with search filters and pagination.
     /// </summary>
     /// <param name="instructorId">The instructor identifier.</param>
+    /// <param name="listDto">The pagination and filter DTO.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A list of course statistics.</returns>
-    Task<List<CourseStatsDto>> GetInstructorCoursesStats(int instructorId, CancellationToken cancellationToken = default);
+    /// <returns>A tuple containing a list of course statistics and the total count.</returns>
+    Task<(IEnumerable<CourseStatsDto> Data, int TotalCount)> GetInstructorCoursesStats(int instructorId, ListInstructorCoursesDto listDto, CancellationToken cancellationToken = default);
 }

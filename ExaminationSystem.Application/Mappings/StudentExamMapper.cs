@@ -11,6 +11,8 @@ public class StudentExamMapper : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<ExamAttempt, AttemptSummaryDto>()
+            .Map(dest => dest.StudentId, src => src.StudentId)
+            .Map(dest => dest.StudentName, src => src.Student != null && src.Student.AppUser != null ? src.Student.AppUser.Name : string.Empty)
             .Map(dest => dest.CourseName, src => src.Exam != null && src.Exam.Course != null ? src.Exam.Course.Title : string.Empty)
             .Map(dest => dest.ExamTitle, src => src.Exam != null ? src.Exam.Title : string.Empty)
             .Map(dest => dest.ExamType, src => src.Exam != null ? src.Exam.ExamType : ExamType.Quiz)

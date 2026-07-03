@@ -1,6 +1,7 @@
 using ExaminationSystem.Application.DTOs;
 using ExaminationSystem.Application.DTOs.Exams;
 using ExaminationSystem.Application.DTOs.StudentExams;
+using ExaminationSystem.Application.DTOs.Instructor;
 
 namespace ExaminationSystem.Application.Interfaces;
 
@@ -110,12 +111,13 @@ public interface IExamService
     Task<(ExamOperationResult Result, IEnumerable<RejectedEntityDto> Rejected)> UnassignQuestions(AssignQuestionsDto dto, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Retrieves all student submissions for a specific exam.
+    /// Retrieves a paginated, sorted, and filtered list of student submissions for a specific exam.
     /// </summary>
     /// <param name="examId">The exam identifier.</param>
     /// <param name="instructorId">The instructor identifier.</param>
+    /// <param name="listDto">The pagination and search filters.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>A tuple of the exam operation result and the list of attempt summaries.</returns>
-    Task<(ExamOperationResult Result, List<AttemptSummaryDto>? Submissions)> GetExamSubmissions(int examId, int instructorId, CancellationToken cancellationToken = default);
+    /// <returns>A tuple containing the operation result, the list of attempt summaries, and the total count.</returns>
+    Task<(ExamOperationResult Result, List<AttemptSummaryDto>? Submissions, int TotalCount)> GetExamSubmissions(int examId, int instructorId, ListExamSubmissionsDto listDto, CancellationToken cancellationToken = default);
 }
 

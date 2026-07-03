@@ -1,8 +1,10 @@
 using ExaminationSystem.Application.DTOs.Exams;
+using ExaminationSystem.Application.DTOs.Instructor;
 using ExaminationSystem.Application.Services;
 using ExaminationSystem.Domain.Entities;
 using ExaminationSystem.Domain.Interfaces;
 using FluentAssertions;
+using Mapster;
 using Microsoft.Extensions.Logging;
 using MockQueryable;
 using Moq;
@@ -15,16 +17,26 @@ public class ExamServiceTests
     private readonly Mock<IRepository<Exam>> _examRepoMock;
     private readonly Mock<IRepository<ExamQuestion>> _examQuestionRepoMock;
     private readonly Mock<IRepository<Question>> _questionRepoMock;
+    private readonly Mock<IRepository<ExamAttempt>> _examAttemptRepoMock;
     private readonly Mock<ILogger<ExamService>> _loggerMock;
     private readonly ExamService _service;
 
     public ExamServiceTests()
     {
+        // Initialize Mapster configurations for tests
+        TypeAdapterConfig.GlobalSettings.Scan(typeof(ExamService).Assembly);
+
         _examRepoMock = new Mock<IRepository<Exam>>();
         _examQuestionRepoMock = new Mock<IRepository<ExamQuestion>>();
         _questionRepoMock = new Mock<IRepository<Question>>();
+        _examAttemptRepoMock = new Mock<IRepository<ExamAttempt>>();
         _loggerMock = new Mock<ILogger<ExamService>>();
-        _service = new ExamService(_examRepoMock.Object, _examQuestionRepoMock.Object, _questionRepoMock.Object, _loggerMock.Object);
+        _service = new ExamService(
+            _examRepoMock.Object, 
+            _examQuestionRepoMock.Object, 
+            _questionRepoMock.Object, 
+            _examAttemptRepoMock.Object, 
+            _loggerMock.Object);
     }
 
     #region GetAll Tests
@@ -130,16 +142,19 @@ public class ExamServiceTests
         {
             ID = examId,
             Title = "Test Exam",
-            Course = new Course { InstructorID = instructorId, Title = "Test Course" },
-            ExamAttempts = new List<ExamAttempt>
+            Course = new Course { InstructorID = instructorId, Title = "Test Course" }
+        };
+
+        var attemptsList = new List<ExamAttempt>
+        {
+            new ExamAttempt
             {
-                new ExamAttempt
-                {
-                    ID = 1,
-                    StudentId = 100,
-                    Score = 90,
-                    ExamAttemptStatus = ExamAttemptStatus.Completed
-                }
+                ID = 1,
+                ExamId = examId,
+                StudentId = 100,
+                Score = 90,
+                ExamAttemptStatus = ExamAttemptStatus.Completed,
+                Student = new Student { ID = 100, AppUser = new AppUser { Name = "John Doe" } }
             }
         };
 
@@ -147,13 +162,20 @@ public class ExamServiceTests
             .Setup(x => x.GetByCondition(It.IsAny<Expression<Func<Exam, bool>>>()))
             .Returns(new List<Exam> { exam }.AsQueryable().BuildMock());
 
+        _examAttemptRepoMock
+            .Setup(x => x.GetAll())
+            .Returns(attemptsList.AsQueryable().BuildMock());
+
         // Act
-        var (result, attempts) = await _service.GetExamSubmissions(examId, instructorId);
+        var listDto = new ListExamSubmissionsDto { PageIndex = 0, PageSize = 10 };
+        var (result, attempts, totalCount) = await _service.GetExamSubmissions(examId, instructorId, listDto);
 
         // Assert
         result.Should().Be(ExamOperationResult.Success);
         attempts.Should().HaveCount(1);
         attempts!.First().ExamTitle.Should().Be("Test Exam");
+        attempts!.First().StudentName.Should().Be("John Doe");
+        totalCount.Should().Be(1);
     }
 
     [Fact]
@@ -166,11 +188,13 @@ public class ExamServiceTests
             .Returns(new List<Exam>().AsQueryable().BuildMock());
 
         // Act
-        var (result, attempts) = await _service.GetExamSubmissions(999, 5);
+        var listDto = new ListExamSubmissionsDto { PageIndex = 0, PageSize = 10 };
+        var (result, attempts, totalCount) = await _service.GetExamSubmissions(999, 5, listDto);
 
         // Assert
         result.Should().Be(ExamOperationResult.NotFound);
         attempts.Should().BeNull();
+        totalCount.Should().Be(0);
     }
 
     [Fact]
@@ -191,11 +215,13 @@ public class ExamServiceTests
             .Returns(new List<Exam> { exam }.AsQueryable().BuildMock());
 
         // Act
-        var (result, attempts) = await _service.GetExamSubmissions(examId, wrongInstructorId);
+        var listDto = new ListExamSubmissionsDto { PageIndex = 0, PageSize = 10 };
+        var (result, attempts, totalCount) = await _service.GetExamSubmissions(examId, wrongInstructorId, listDto);
 
         // Assert
         result.Should().Be(ExamOperationResult.NotOwner);
         attempts.Should().BeNull();
+        totalCount.Should().Be(0);
     }
 
     #endregion
