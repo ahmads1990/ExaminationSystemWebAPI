@@ -87,7 +87,7 @@ public static class AppDbSeeder
         await context.Students.AddAsync(fixedStudent);
         await context.SaveChangesAsync();
 
-        // 2. Generate Random Extra Instructors (~3)
+        // 2. Generate Random Extra Instructors (~6)
         var userFaker = new Faker<AppUser>()
             .RuleFor(u => u.Name, f => f.Name.FullName())
             .RuleFor(u => u.Username, (f, u) => f.Internet.UserName(u.Name))
@@ -98,7 +98,7 @@ public static class AppDbSeeder
         var randomInstructorsUsers = userFaker.Clone()
             .RuleFor(u => u.Role, f => UserRole.Instructor)
             .RuleFor(u => u.TenantId, f => f.PickRandom(defaultTenantId, secondTenantId))
-            .Generate(3);
+            .Generate(6);
         await context.AppUsers.AddRangeAsync(randomInstructorsUsers);
         await context.SaveChangesAsync();
 
@@ -106,11 +106,11 @@ public static class AppDbSeeder
         await context.Instructors.AddRangeAsync(randomInstructors);
         await context.SaveChangesAsync();
 
-        // 3. Generate Random Extra Students (~10)
+        // 3. Generate Random Extra Students (~30)
         var randomStudentUsers = userFaker.Clone()
             .RuleFor(u => u.Role, f => UserRole.Student)
             .RuleFor(u => u.TenantId, f => f.PickRandom(defaultTenantId, secondTenantId))
-            .Generate(10);
+            .Generate(30);
         await context.AppUsers.AddRangeAsync(randomStudentUsers);
         await context.SaveChangesAsync();
 
@@ -122,9 +122,30 @@ public static class AppDbSeeder
         var allInstructors = new List<Instructor> { adminInstructor }.Concat(randomInstructors).ToList();
         var allStudents = new List<Student> { fixedStudent }.Concat(randomStudents).ToList();
 
-        // 4. Generate Courses (4-5) across the mapping of instructors
+        // 4. Generate Courses (10) across the mapping of instructors
+        var courseNames = new List<string>
+        {
+            "Introduction to Computer Science",
+            "Data Structures & Algorithms",
+            "Database Systems",
+            "Software Engineering",
+            "Calculus I",
+            "Calculus II",
+            "Linear Algebra",
+            "General Chemistry",
+            "Introduction to Physics",
+            "Artificial Intelligence",
+            "Machine Learning",
+            "Computer Networks",
+            "Operating Systems",
+            "Cybersecurity Fundamentals",
+            "Web Development"
+        };
+        var shuffledCourseNames = new Faker().Random.Shuffle(courseNames).ToList();
+        int courseIndex = 0;
+
         var courseFaker = new Faker<Course>()
-            .RuleFor(c => c.Title, f => f.Company.CatchPhrase())
+            .RuleFor(c => c.Title, f => shuffledCourseNames[courseIndex++ % shuffledCourseNames.Count])
             .RuleFor(c => c.Description, f => f.Lorem.Paragraph())
             .RuleFor(c => c.CreditHours, f => f.Random.Int(1, 4))
             .RuleFor(c => c.InstructorID, (f, c) => f.PickRandom(allInstructors).ID)
@@ -134,7 +155,7 @@ public static class AppDbSeeder
                 return instructor.TenantId;
             });
 
-        var courses = courseFaker.Generate(5);
+        var courses = courseFaker.Generate(10);
         await context.Courses.AddRangeAsync(courses);
         await context.SaveChangesAsync();
 
@@ -169,7 +190,7 @@ public static class AppDbSeeder
 
         foreach (var course in courses)
         {
-            var courseExamCount = new Faker().Random.Int(1, 2);
+            var courseExamCount = new Faker().Random.Int(3, 4);
             for (int e = 0; e < courseExamCount; e++)
             {
                 var exam = new Exam
@@ -240,11 +261,11 @@ public static class AppDbSeeder
         await context.ExamQuestions.AddRangeAsync(examQuestions);
         await context.SaveChangesAsync();
 
-        // 7. Simulate Past Exam Attempts (~15-20)
+        // 7. Simulate Past Exam Attempts (~60-80)
         var pastAttempts = new List<ExamAttempt>();
         var studentExamAnswers = new List<StudentExamsAnswers>();
 
-        var attemptCount = new Faker().Random.Int(15, 25);
+        var attemptCount = new Faker().Random.Int(60, 80);
         for (int i = 0; i < attemptCount; i++)
         {
             var student = new Faker().PickRandom(allStudents);
