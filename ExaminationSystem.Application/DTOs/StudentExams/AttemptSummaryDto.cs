@@ -6,6 +6,11 @@ namespace ExaminationSystem.Application.DTOs.StudentExams;
 public class AttemptSummaryDto
 {
     /// <summary>
+    /// Gets or sets the exam attempt's unique identifier.
+    /// </summary>
+    public int AttemptId { get; set; }
+
+    /// <summary>
     /// Gets or sets the student's unique identifier.
     /// </summary>
     public int StudentId { get; set; }
@@ -44,6 +49,11 @@ public class AttemptSummaryDto
     /// Gets or sets the status of the exam attempt.
     /// </summary>
     public ExamAttemptStatus Status { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the exam was passed.
+    /// </summary>
+    public bool IsPassed { get; set; }
 
     /// <summary>
     /// Gets or sets the formatted completion time of the exam attempt.

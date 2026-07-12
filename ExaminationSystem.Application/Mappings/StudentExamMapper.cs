@@ -11,6 +11,7 @@ public class StudentExamMapper : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<ExamAttempt, AttemptSummaryDto>()
+            .Map(dest => dest.AttemptId, src => src.ID)
             .Map(dest => dest.StudentId, src => src.StudentId)
             .Map(dest => dest.StudentName, src => src.Student != null && src.Student.AppUser != null ? src.Student.AppUser.Name : string.Empty)
             .Map(dest => dest.CourseName, src => src.Exam != null && src.Exam.Course != null ? src.Exam.Course.Title : string.Empty)
@@ -19,6 +20,7 @@ public class StudentExamMapper : IRegister
             .Map(dest => dest.Grade, src => src.Score ?? 0)
             .Map(dest => dest.MaxGrade, src => src.Exam != null ? src.Exam.TotalGrade : 0)
             .Map(dest => dest.Status, src => src.ExamAttemptStatus)
+            .Map(dest => dest.IsPassed, src => src.Exam != null && src.Score >= (double)src.Exam.PassingScore)
             .Map(dest => dest.CompletionTime, src => src.EndTime > src.StartTime
                 ? $"{(src.EndTime - src.StartTime).TotalMinutes:F1} min"
                 : "-")
@@ -27,6 +29,7 @@ public class StudentExamMapper : IRegister
         config.NewConfig<ExamAttempt, AttemptResultDto>()
             .Map(dest => dest.CurrentGrade, src => src.Score ?? 0)
             .Map(dest => dest.MaxGrade, src => src.Exam != null ? src.Exam.TotalGrade : 0)
+            .Map(dest => dest.IsPassed, src => src.Exam != null && src.Score >= (double)src.Exam.PassingScore)
             .Map(dest => dest.CompletionTime, src => src.EndTime > src.StartTime
                 ? $"{(src.EndTime - src.StartTime).TotalMinutes:F1} minutes"
                 : "0 minutes");

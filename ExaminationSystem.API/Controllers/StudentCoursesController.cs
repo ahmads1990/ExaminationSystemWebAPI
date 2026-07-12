@@ -1,8 +1,10 @@
 using ExaminationSystem.API.Common;
 using ExaminationSystem.API.Extensions;
 using ExaminationSystem.API.Models.Requests.StudentCourses;
+using ExaminationSystem.API.Models.Requests.Courses;
 using ExaminationSystem.API.Models.Responses;
 using ExaminationSystem.Application.DTOs.StudentCourses;
+using ExaminationSystem.Application.DTOs.Courses;
 using ExaminationSystem.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +23,7 @@ public class StudentCoursesController : BaseController
     #region Fields
 
     private readonly IStudentCourseService _studentCourseService;
+    private readonly ICourseService _courseService;
 
     #endregion
 
@@ -30,14 +33,34 @@ public class StudentCoursesController : BaseController
     /// Initializes a new instance of the <see cref="StudentCoursesController"/> class.
     /// </summary>
     /// <param name="studentCourseService">The student course service.</param>
-    public StudentCoursesController(IStudentCourseService studentCourseService)
+    /// <param name="courseService">The course service.</param>
+    public StudentCoursesController(IStudentCourseService studentCourseService, ICourseService courseService)
     {
         _studentCourseService = studentCourseService;
+        _courseService = courseService;
     }
 
     #endregion
 
     #region Public Methods
+
+    /// <summary>
+    /// Lists all courses available for student browsing and enrollment.
+    /// </summary>
+    /// <param name="request">The listing and filtering request.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>A paginated list of courses.</returns>
+    [Authorize(Roles = Constants.StudentRoleName)]
+    [HttpGet]
+    [ProducesResponseType(typeof(PaginatedResponse<CourseDto>), StatusCodes.Status200OK)]
+    public async Task<PaginatedResponse<CourseDto>> ListAvailableCourses([FromQuery] ListCoursesRequest request, CancellationToken cancellationToken = default)
+    {
+        var listDto = request.Adapt<ListCoursesDto>();
+
+        var (courses, totalCount) = await _courseService.GetAll(listDto, cancellationToken);
+
+        return new PaginatedResponse<CourseDto>(courses, totalCount);
+    }
 
     /// <summary>
     /// Returns the authenticated student's enrolled courses.
