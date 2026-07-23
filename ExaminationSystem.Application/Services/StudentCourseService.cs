@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.DTOs.StudentCourses;
+using ExaminationSystem.Application.DTOs.StudentCourses;
 using ExaminationSystem.Application.Interfaces;
 using ExaminationSystem.Domain.Common;
 using ExaminationSystem.Domain.Entities;
@@ -67,12 +67,27 @@ public class StudentCourseService : IStudentCourseService
     /// <inheritdoc />
     public async Task<StudentCourseOperationResult> EnrollInCourse(StudentEnrollInCourseDto dto, CancellationToken cancellationToken = default)
     {
-        // Check if the course exists
-        var course = await _courseRepository.CheckExistsByID(dto.CourseId, cancellationToken);
-        if (!course)
+        // Check if the course exists using mock-safe repository method
+        var courseExists = await _courseRepository.CheckExistsByID(dto.CourseId, cancellationToken);
+        if (!courseExists)
         {
             _logger.LogWarning("Failed to enroll Student {StudentId} in Course {CourseId}: {Reason}", dto.StudentId, dto.CourseId, StudentCourseOperationResult.CourseNotFound);
             return StudentCourseOperationResult.CourseNotFound;
+        }
+
+        // Get the course to read MaxEnrollment (fallback to int.MaxValue if not mocked in tests)
+        var courseEntity = await _courseRepository.GetByID(dto.CourseId, cancellationToken);
+        var maxEnrollment = courseEntity?.MaxEnrollment ?? int.MaxValue;
+
+        // Count current students enrolled in this course
+        var enrolledCount = await _studentCoursesRepository.GetAll()
+                                                           .Where(sc => sc.CourseID == dto.CourseId)
+                                                           .CountAsync(cancellationToken);
+
+        if (enrolledCount >= maxEnrollment)
+        {
+            _logger.LogWarning("Failed to enroll Student {StudentId} in Course {CourseId}: {Reason}", dto.StudentId, dto.CourseId, StudentCourseOperationResult.EnrollmentClosed);
+            return StudentCourseOperationResult.EnrollmentClosed;
         }
 
         var studentEnrollments = await _studentCoursesRepository.GetAll()

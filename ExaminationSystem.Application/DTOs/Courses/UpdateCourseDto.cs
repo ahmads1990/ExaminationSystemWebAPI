@@ -1,4 +1,4 @@
-﻿namespace ExaminationSystem.Application.DTOs.Courses;
+namespace ExaminationSystem.Application.DTOs.Courses;
 
 public class UpdateCourseDto
 {
@@ -6,4 +6,5 @@ public class UpdateCourseDto
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public int CreditHours { get; set; }
+    public int MaxEnrollment { get; set; }
 }

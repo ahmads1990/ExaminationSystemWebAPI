@@ -9,4 +9,5 @@ public class CourseStatsDto
     public string CourseName { get; set; } = string.Empty;
     public int StudentCount { get; set; }
     public int ExamsCount { get; set; }
+    public int MaxEnrollment { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿namespace ExaminationSystem.Application.DTOs.Courses;
+namespace ExaminationSystem.Application.DTOs.Courses;
 
 /// <summary>
 /// Data transfer object for course details.
@@ -39,4 +39,9 @@ public class CourseDto
     /// The UTC date and time when the course was created.
     /// </summary>
     public DateTime CreatedDate { get; set; }
+
+    /// <summary>
+    /// The maximum number of students allowed to enroll in this course.
+    /// </summary>
+    public int MaxEnrollment { get; set; }
 }

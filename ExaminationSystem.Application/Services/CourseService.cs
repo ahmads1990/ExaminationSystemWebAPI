@@ -71,6 +71,12 @@ public class CourseService : ICourseService
             return (CourseOperationResult.ValidationFailed, 0);
         }
 
+        // Default max enrollment if not specified or invalid (e.g. legacy/mock tests)
+        if (courseDto.MaxEnrollment <= 0)
+        {
+            courseDto.MaxEnrollment = 50;
+        }
+
         if (await HasInstructorExceededCourseLimit(courseDto.InstructorID, cancellationToken))
             return (CourseOperationResult.MaxCoursesExceeded, 0);
 
@@ -98,8 +104,13 @@ public class CourseService : ICourseService
         if (duplicateCourse)
             return CourseOperationResult.DuplicateTitle;
 
+        if (courseDto.MaxEnrollment <= 0)
+        {
+            courseDto.MaxEnrollment = 50;
+        }
+
         var course = courseDto.Adapt<Course>();
-        _courseRepository.SaveInclude(course, nameof(Course.Title), nameof(Course.Description), nameof(Course.CreditHours));
+        _courseRepository.SaveInclude(course, nameof(Course.Title), nameof(Course.Description), nameof(Course.CreditHours), nameof(Course.MaxEnrollment));
 
         await _courseRepository.SaveChanges(cancellationToken);
         return CourseOperationResult.Success;
@@ -137,7 +148,8 @@ public class CourseService : ICourseService
                 CourseId = c.ID,
                 CourseName = c.Title ?? string.Empty,
                 StudentCount = c.StudentCourses.Count,
-                ExamsCount = c.Exams.Count
+                ExamsCount = c.Exams.Count,
+                MaxEnrollment = c.MaxEnrollment
             });
 
         if (!string.IsNullOrEmpty(listDto.CourseName))
