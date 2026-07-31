@@ -148,6 +148,7 @@ public static class AppDbSeeder
             .RuleFor(c => c.Title, f => shuffledCourseNames[courseIndex++ % shuffledCourseNames.Count])
             .RuleFor(c => c.Description, f => f.Lorem.Paragraph())
             .RuleFor(c => c.CreditHours, f => f.Random.Int(1, 4))
+            .RuleFor(c => c.MaxEnrollment, f => f.Random.Int(3, 10) * 10)
             .RuleFor(c => c.InstructorID, (f, c) => f.PickRandom(allInstructors).ID)
             .RuleFor(c => c.TenantId, (f, c) =>
             {
@@ -214,17 +215,26 @@ public static class AppDbSeeder
         await context.Exams.AddRangeAsync(exams);
         await context.SaveChangesAsync();
 
-        // Generate Questions for exams
+        // Generate Questions for exams using realistic course-matched questions
         foreach (var exam in exams)
         {
-            var examQuestionCount = new Faker().Random.Int(5, 10);
+            var course = courses.FirstOrDefault(c => c.ID == exam.CourseID);
+            var courseTitle = course?.Title ?? "";
+
+            // Find matching bank or fallback to Computer Science questions
+            List<SampleQuestion> questionBank = CourseQuestionBank.FirstOrDefault(kvp => courseTitle.Contains(kvp.Key, StringComparison.OrdinalIgnoreCase)).Value
+                ?? CourseQuestionBank["Data Structures & Algorithms"];
+
+            var shuffledBank = new Faker().Random.Shuffle(questionBank).ToList();
+            var examQuestionCount = Math.Min(shuffledBank.Count, new Faker().Random.Int(4, 6));
             var pointsPerQuestion = exam.TotalGrade / examQuestionCount;
 
             for (int q = 0; q < examQuestionCount; q++)
             {
+                var sampleQ = shuffledBank[q];
                 var question = new Question
                 {
-                    Body = new Faker().Lorem.Sentence() + "?",
+                    Body = sampleQ.Body,
                     Score = pointsPerQuestion,
                     QuestionLevel = new Faker().PickRandom<QuestionLevel>(),
                     TenantId = exam.TenantId
@@ -233,19 +243,17 @@ public static class AppDbSeeder
                 await context.Questions.AddAsync(question);
                 await context.SaveChangesAsync(); // Need ID for choices
 
-                // Generate Choices (4 choices, 1 correct)
-                var correctIndex = new Faker().Random.Int(0, 3);
-                for (int c = 0; c < 4; c++)
+                // Generate Choices (shuffled choices with accurate correct flag)
+                var choicesList = sampleQ.Choices.Select((body, idx) => new Choice
                 {
-                    var choice = new Choice
-                    {
-                        QuestionId = question.ID,
-                        Body = new Faker().Lorem.Word(),
-                        IsCorrect = c == correctIndex,
-                        TenantId = exam.TenantId
-                    };
-                    choices.Add(choice);
-                }
+                    QuestionId = question.ID,
+                    Body = body,
+                    IsCorrect = idx == sampleQ.CorrectIndex,
+                    TenantId = exam.TenantId
+                }).ToList();
+
+                var shuffledChoices = new Faker().Random.Shuffle(choicesList).ToList();
+                choices.AddRange(shuffledChoices);
 
                 examQuestions.Add(new ExamQuestion
                 {
@@ -326,4 +334,66 @@ public static class AppDbSeeder
 
         logger.LogInformation("Database seeding completed successfully.");
     }
+
+    private record SampleQuestion(string Body, string[] Choices, int CorrectIndex);
+
+    private static readonly Dictionary<string, List<SampleQuestion>> CourseQuestionBank = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Database Systems"] = new()
+        {
+            new("Which SQL clause is used to filter records after aggregation?", new[] { "HAVING", "WHERE", "GROUP BY", "ORDER BY" }, 0),
+            new("What property of ACID guarantees that a transaction will be completed fully or not at all?", new[] { "Atomicity", "Consistency", "Isolation", "Durability" }, 0),
+            new("Which normal form eliminates partial functional dependencies?", new[] { "Second Normal Form (2NF)", "First Normal Form (1NF)", "Third Normal Form (3NF)", "Boyce-Codd Normal Form" }, 0),
+            new("Which database index structure is most commonly optimized for range queries?", new[] { "B+ Tree", "Hash Table", "Binary Search Tree", "Inverted Index" }, 0),
+            new("What type of JOIN returns all records when there is a match in either left or right table?", new[] { "FULL OUTER JOIN", "INNER JOIN", "LEFT JOIN", "CROSS JOIN" }, 0),
+            new("What keyword is used to eliminate duplicate records from a SQL query result?", new[] { "DISTINCT", "UNIQUE", "GROUP BY", "SINGLE" }, 0)
+        },
+        ["Data Structures & Algorithms"] = new()
+        {
+            new("What is the worst-case time complexity of Quick Sort?", new[] { "O(n²)", "O(n log n)", "O(n)", "O(log n)" }, 0),
+            new("Which data structure operates on a Last-In, First-Out (LIFO) basis?", new[] { "Stack", "Queue", "Min Heap", "Linked List" }, 0),
+            new("What algorithm finds the shortest path in a graph with non-negative edge weights?", new[] { "Dijkstra's Algorithm", "Bellman-Ford Algorithm", "Kruskal's Algorithm", "Depth-First Search" }, 0),
+            new("What is the average time complexity for searching a key in a Hash Table?", new[] { "O(1)", "O(log n)", "O(n)", "O(n log n)" }, 0),
+            new("Which traversal technique visits the root node first, then left subtree, then right subtree?", new[] { "Pre-order Traversal", "In-order Traversal", "Post-order Traversal", "Level-order Traversal" }, 0)
+        },
+        ["Software Engineering"] = new()
+        {
+            new("Which design pattern ensures a class has only one instance and provides a global access point?", new[] { "Singleton Pattern", "Factory Method Pattern", "Observer Pattern", "Strategy Pattern" }, 0),
+            new("In Agile methodology, what is a fixed time period in which specific work must be completed?", new[] { "Sprint", "Backlog", "Milestone", "Roadmap" }, 0),
+            new("Which testing phase verifies that individual software components or units work as intended?", new[] { "Unit Testing", "Integration Testing", "System Testing", "Acceptance Testing" }, 0),
+            new("What principle states that software entities should be open for extension but closed for modification?", new[] { "Open-Closed Principle (OCP)", "Single Responsibility Principle (SRP)", "Liskov Substitution Principle (LSP)", "Dependency Inversion Principle (DIP)" }, 0)
+        },
+        ["Web Development"] = new()
+        {
+            new("Which HTTP method is idempotent and intended to completely update or replace a target resource?", new[] { "PUT", "POST", "PATCH", "DELETE" }, 0),
+            new("Which security header helps prevent Cross-Site Scripting (XSS) attacks in modern web applications?", new[] { "Content-Security-Policy", "Access-Control-Allow-Origin", "Strict-Transport-Security", "X-Frame-Options" }, 0),
+            new("What client-side technology allows asynchronous web communication without reloading the page?", new[] { "Fetch API / AJAX", "Cookies", "WebSockets", "Local Storage" }, 0),
+            new("Which CSS layout model provides a one-dimensional layout method for aligning items in rows or columns?", new[] { "Flexbox", "CSS Grid", "Absolute Positioning", "Float" }, 0)
+        },
+        ["Computer Networks"] = new()
+        {
+            new("Which layer of the OSI model is responsible for routing packets across interconnected networks?", new[] { "Network Layer (Layer 3)", "Data Link Layer (Layer 2)", "Transport Layer (Layer 4)", "Application Layer (Layer 7)" }, 0),
+            new("Which protocol translates human-readable domain names into IP addresses?", new[] { "DNS", "DHCP", "ARP", "NAT" }, 0),
+            new("What reliable transport protocol guarantees ordered, error-checked delivery of stream data?", new[] { "TCP", "UDP", "ICMP", "IP" }, 0),
+            new("Which port is the standard default for secure HTTP traffic (HTTPS)?", new[] { "443", "80", "22", "8080" }, 0)
+        },
+        ["Operating Systems"] = new()
+        {
+            new("Which CPU scheduling algorithm assigns fixed time slices to processes in cyclic order?", new[] { "Round Robin", "First-Come, First-Served", "Shortest Job First", "Priority Scheduling" }, 0),
+            new("What condition occurs when two or more processes are permanently blocked waiting for resources held by each other?", new[] { "Deadlock", "Starvation", "Race Condition", "Thrashing" }, 0),
+            new("What memory management technique allows an execution process to exceed physical memory limits?", new[] { "Virtual Memory", "Paging", "Segmentation", "Cache Memory" }, 0)
+        },
+        ["Artificial Intelligence"] = new()
+        {
+            new("Which machine learning paradigm trains models using labeled training data?", new[] { "Supervised Learning", "Unsupervised Learning", "Reinforcement Learning", "Self-Supervised Learning" }, 0),
+            new("What activation function outputs values in the range (0, 1) and is commonly used for binary classification?", new[] { "Sigmoid", "ReLU", "Softmax", "Tanh" }, 0),
+            new("What algorithm is widely used to calculate gradients and update weights in neural network training?", new[] { "Backpropagation", "Gradient Ascent", "K-Means Clustering", "Principal Component Analysis" }, 0)
+        },
+        ["Calculus I"] = new()
+        {
+            new("What is the derivative of f(x) = sin(x) with respect to x?", new[] { "cos(x)", "-cos(x)", "-sin(x)", "tan(x)" }, 0),
+            new("What is the integral of 1/x dx for x > 0?", new[] { "ln(x) + C", "e^x + C", "-1/x² + C", "x² / 2 + C" }, 0),
+            new("What theorem states that if a function is continuous on [a,b] and differentiable on (a,b), there exists c in (a,b) where f'(c) equals average rate of change?", new[] { "Mean Value Theorem", "Fundamental Theorem of Calculus", "Rolle's Theorem", "Intermediate Value Theorem" }, 0)
+        }
+    };
 }

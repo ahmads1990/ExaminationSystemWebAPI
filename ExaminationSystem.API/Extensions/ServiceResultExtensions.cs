@@ -70,8 +70,8 @@ public static class ServiceResultExtensions
             StudentCourseOperationResult.Success => ApiErrorCode.None,
             StudentCourseOperationResult.CourseNotFound => ApiErrorCode.CourseNotFound,
             StudentCourseOperationResult.AlreadyEnrolled => ApiErrorCode.AlreadyEnrolled,
-            StudentCourseOperationResult.EnrollmentClosed => ApiErrorCode.ExamDeadlinePassed,
-            StudentCourseOperationResult.MaxEnrollmentsExceeded => ApiErrorCode.InsufficientPermissions,
+            StudentCourseOperationResult.EnrollmentClosed => ApiErrorCode.CourseMaxEnrollmentReached,
+            StudentCourseOperationResult.MaxEnrollmentsExceeded => ApiErrorCode.StudentMaxCoursesExceeded,
             StudentCourseOperationResult.ValidationFailed => ApiErrorCode.ValidationFailed,
             _ => ApiErrorCode.InternalServerError
         };

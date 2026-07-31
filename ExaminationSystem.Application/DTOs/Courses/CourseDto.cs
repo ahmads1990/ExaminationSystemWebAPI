@@ -44,4 +44,9 @@ public class CourseDto
     /// The maximum number of students allowed to enroll in this course.
     /// </summary>
     public int MaxEnrollment { get; set; }
+
+    /// <summary>
+    /// The current number of students enrolled in this course.
+    /// </summary>
+    public int EnrolledCount { get; set; }
 }

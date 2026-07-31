@@ -75,9 +75,10 @@ public class StudentCourseService : IStudentCourseService
             return StudentCourseOperationResult.CourseNotFound;
         }
 
-        // Get the course to read MaxEnrollment (fallback to int.MaxValue if not mocked in tests)
+        // Get the course to read MaxEnrollment (fallback to 50 if <= 0 or unconfigured)
         var courseEntity = await _courseRepository.GetByID(dto.CourseId, cancellationToken);
-        var maxEnrollment = courseEntity?.MaxEnrollment ?? int.MaxValue;
+        var rawMax = courseEntity?.MaxEnrollment ?? 0;
+        var maxEnrollment = rawMax > 0 ? rawMax : 50;
 
         // Count current students enrolled in this course
         var enrolledCount = await _studentCoursesRepository.GetAll()

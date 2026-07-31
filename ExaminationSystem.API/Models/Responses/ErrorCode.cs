@@ -1,4 +1,4 @@
-﻿using ExaminationSystem.Application.Common.Attributes;
+using ExaminationSystem.Application.Common.Attributes;
 
 namespace ExaminationSystem.API.Models.Responses;
 
@@ -125,6 +125,12 @@ public enum ApiErrorCode
 
     [ErrorMessage("Grading is still in progress for this exam attempt. Please check back later")]
     GradingInProgress = 4021,
+
+    [ErrorMessage("This course has reached its maximum enrollment capacity")]
+    CourseMaxEnrollmentReached = 4022,
+
+    [ErrorMessage("You have reached the maximum allowed number of enrolled courses")]
+    StudentMaxCoursesExceeded = 4023,
 
     // Server Errors (5000-5999)
     [ErrorMessage("An internal server error occurred")]
