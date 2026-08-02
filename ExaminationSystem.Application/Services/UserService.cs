@@ -69,9 +69,10 @@ public class UserService : IUserService
     /// <inheritdoc />
     public async Task<(UserOperationResult Result, int? Id)> VerifyUserPassword(UserLoginDto userLoginDto, CancellationToken cancellationToken = default)
     {
-        // Find user by email
+        // Find user by email across all tenants for login
         var userInfo = await _userRepository.GetByCondition(u => u.Email == userLoginDto.Email)
-                                            .Select(u => new { u.ID, u.Password, u.IsEmailConfirmed })
+                                            .IgnoreQueryFilters()
+                                            .Select(u => new { u.ID, u.Password, u.IsEmailConfirmed, u.TenantId })
                                             .FirstOrDefaultAsync(cancellationToken);
 
         // User not found or wrong password — same error to avoid user enumeration
@@ -89,8 +90,9 @@ public class UserService : IUserService
     public async Task<UserBasicInfoDto?> GetUserBasicInfoById(int userId, CancellationToken cancellationToken = default)
     {
         return await _userRepository.GetByCondition(u => u.ID == userId)
+                                              .IgnoreQueryFilters()
                                               .ProjectToType<UserBasicInfoDto>()
-                                              .FirstOrDefaultAsync();
+                                              .FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <inheritdoc />

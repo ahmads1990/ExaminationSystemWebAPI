@@ -29,8 +29,10 @@ public class AuthServiceTests
     private readonly Mock<IPasswordHelper> _passwordHelper;
     private readonly Mock<ICurrentUserService> _currentUserServiceMock;
     private readonly Mock<ITenantAccessor> _tenantAccessorMock;
+    private readonly Mock<ITenantService> _tenantServiceMock;
     private readonly Mock<IConfiguration> _configurationMock;
     private readonly Mock<ILogger<AuthService>> _loggerMock;
+
     private readonly AuthService _authService;
 
     public AuthServiceTests()
@@ -45,6 +47,7 @@ public class AuthServiceTests
         _passwordHelper = new Mock<IPasswordHelper>();
         _currentUserServiceMock = new Mock<ICurrentUserService>();
         _tenantAccessorMock = new Mock<ITenantAccessor>();
+        _tenantServiceMock = new Mock<ITenantService>();
         _configurationMock = new Mock<IConfiguration>();
         _loggerMock = new Mock<ILogger<AuthService>>();
 
@@ -72,7 +75,8 @@ public class AuthServiceTests
             _currentUserServiceMock.Object,
             _configurationMock.Object,
             _loggerMock.Object,
-            _tenantAccessorMock.Object
+            _tenantAccessorMock.Object,
+            _tenantServiceMock.Object
         );
     }
 

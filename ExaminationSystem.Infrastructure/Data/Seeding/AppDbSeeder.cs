@@ -52,7 +52,7 @@ public static class AppDbSeeder
         // Set default tenant for seeding operations so the DbContext auto-assign works
         tenantAccessor.SetTenantId(defaultTenantId);
 
-        // 1. Ensure Fixed Accounts Exist Always
+        // 1. Ensure Fixed Accounts Exist Always (Tenant 1 & Tenant 2)
         var fixedPassword = passwordHelper.HashPassword("Password123!");
 
         var adminUser = new AppUser
@@ -77,14 +77,38 @@ public static class AppDbSeeder
             TenantId = defaultTenantId
         };
 
-        await context.AppUsers.AddRangeAsync(adminUser, fixedStudentUser);
+        var admin2User = new AppUser
+        {
+            Name = "Tech Academy Admin",
+            Username = "admin2",
+            Email = "admin2@exam.com",
+            Password = fixedPassword,
+            Role = UserRole.Instructor,
+            IsEmailConfirmed = true,
+            TenantId = secondTenantId
+        };
+
+        var fixedStudent2User = new AppUser
+        {
+            Name = "Tech Academy Student",
+            Username = "student2",
+            Email = "student2@exam.com",
+            Password = fixedPassword,
+            Role = UserRole.Student,
+            IsEmailConfirmed = true,
+            TenantId = secondTenantId
+        };
+
+        await context.AppUsers.AddRangeAsync(adminUser, fixedStudentUser, admin2User, fixedStudent2User);
         await context.SaveChangesAsync(); // Get IDs
 
         var adminInstructor = new Instructor { AppUser = adminUser, TenantId = defaultTenantId };
         var fixedStudent = new Student { AppUser = fixedStudentUser, TenantId = defaultTenantId };
+        var admin2Instructor = new Instructor { AppUser = admin2User, TenantId = secondTenantId };
+        var fixedStudent2 = new Student { AppUser = fixedStudent2User, TenantId = secondTenantId };
 
-        await context.Instructors.AddAsync(adminInstructor);
-        await context.Students.AddAsync(fixedStudent);
+        await context.Instructors.AddRangeAsync(adminInstructor, admin2Instructor);
+        await context.Students.AddRangeAsync(fixedStudent, fixedStudent2);
         await context.SaveChangesAsync();
 
         // 2. Generate Random Extra Instructors (~6)

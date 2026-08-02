@@ -30,4 +30,33 @@ public class TenantsController : BaseController
         var tenants = await _tenantService.GetAllTenantsAsync(cancellationToken);
         return Ok(new SuccessResponse<List<TenantLookupDto>>(tenants));
     }
+
+    /// <summary>
+    /// Gets currently resolved tenant context.
+    /// </summary>
+    [HttpGet("current")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(SuccessResponse<TenantLookupDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCurrent([FromServices] ITenantAccessor tenantAccessor, CancellationToken cancellationToken)
+    {
+        int currentTenantId = tenantAccessor.TenantId ?? 1;
+        var tenant = await _tenantService.GetTenantByIdAsync(currentTenantId, cancellationToken);
+        return Ok(new SuccessResponse<TenantLookupDto>(tenant ?? new TenantLookupDto { ID = currentTenantId, Name = "Default University" }));
+    }
+
+    /// <summary>
+    /// Gets a tenant by ID.
+    /// </summary>
+    [HttpGet("{id:int}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(SuccessResponse<TenantLookupDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ErrorResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken cancellationToken)
+    {
+        var tenant = await _tenantService.GetTenantByIdAsync(id, cancellationToken);
+        if (tenant == null)
+            return NotFound(new ErrorResponse<object>(ApiErrorCode.ResourceNotFound));
+
+        return Ok(new SuccessResponse<TenantLookupDto>(tenant));
+    }
 }

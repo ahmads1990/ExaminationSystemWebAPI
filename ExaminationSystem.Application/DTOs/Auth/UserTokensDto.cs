@@ -19,4 +19,14 @@ public class UserTokensDto
     /// The user ID (populated on specific states like unverified email).
     /// </summary>
     public int? UserId { get; set; }
+
+    /// <summary>
+    /// The tenant ID associated with the user account.
+    /// </summary>
+    public int? TenantId { get; set; }
+
+    /// <summary>
+    /// The tenant name associated with the user account.
+    /// </summary>
+    public string? TenantName { get; set; }
 }

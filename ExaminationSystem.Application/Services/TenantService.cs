@@ -69,6 +69,13 @@ public class TenantService : ITenantService, ITenantDomainResolver
     }
 
     /// <inheritdoc />
+    public async Task<TenantLookupDto?> GetTenantByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var tenants = await GetAllTenantsAsync(cancellationToken);
+        return tenants.FirstOrDefault(t => t.ID == id);
+    }
+
+    /// <inheritdoc />
     public async Task<int?> ResolveTenantIdByDomainAsync(string domain, CancellationToken cancellationToken = default)
     {
         // Normalize domain to lowercase

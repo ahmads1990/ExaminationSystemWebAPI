@@ -36,6 +36,7 @@ public class AuthService : IAuthService
     private readonly IRepository<RefreshToken> _refreshTokenRepo;
     private readonly ICurrentUserService _currentUserService;
     private readonly ITenantAccessor _tenantAccessor;
+    private readonly ITenantService _tenantService;
     private readonly ILogger<AuthService> _logger;
 
     private readonly string BackendBaseUrl;
@@ -48,7 +49,7 @@ public class AuthService : IAuthService
     public AuthService(IUserService userService, IInstructorService instructorService, IStudentService studentService,
         ITokenHelper tokenHelper, IBackgroundJobClient backgroundJobClient, ICachingService cachingService,
         IRepository<RefreshToken> refreshTokenRepo, IPasswordHelper passwordHelper, ICurrentUserService currentUserService,
-        IConfiguration configuration, ILogger<AuthService> logger, ITenantAccessor tenantAccessor)
+        IConfiguration configuration, ILogger<AuthService> logger, ITenantAccessor tenantAccessor, ITenantService tenantService)
     {
         _userService = userService;
         _instructorService = instructorService;
@@ -60,6 +61,7 @@ public class AuthService : IAuthService
         _passwordHelper = passwordHelper;
         _currentUserService = currentUserService;
         _tenantAccessor = tenantAccessor;
+        _tenantService = tenantService;
         _logger = logger;
 
         BackendBaseUrl = configuration.GetSection("BackendBaseUrl").Value
@@ -163,8 +165,18 @@ public class AuthService : IAuthService
 
         var newRefreshToken = await GenerateRefreshToken(userId!.Value, cancellationToken: cancellationToken);
 
-        _logger.LogInformation("User {UserId} logged in successfully", userId.Value);
-        return (UserOperationResult.Success, new UserTokensDto { JwtToken = jwtToken, RefreshToken = newRefreshToken });
+        var userInfo = await _userService.GetUserBasicInfoById(userId.Value, cancellationToken);
+        var tenant = userInfo != null ? await _tenantService.GetTenantByIdAsync(userInfo.TenantId, cancellationToken) : null;
+
+        _logger.LogInformation("User {UserId} logged in successfully for Tenant {TenantId}", userId.Value, userInfo?.TenantId);
+        return (UserOperationResult.Success, new UserTokensDto 
+        { 
+            JwtToken = jwtToken, 
+            RefreshToken = newRefreshToken,
+            UserId = userId.Value,
+            TenantId = userInfo?.TenantId,
+            TenantName = tenant?.Name
+        });
     }
 
     /// <inheritdoc />

@@ -37,6 +37,26 @@ public class TenantResolutionMiddleware
             return;
         }
 
+        // 1. Try resolving tenant from X-Tenant-Id HTTP Header
+        if (context.Request.Headers.TryGetValue("X-Tenant-Id", out var headerVal) &&
+            int.TryParse(headerVal.FirstOrDefault(), out var headerTenantId))
+        {
+            tenantAccessor.SetTenantId(headerTenantId);
+            await _next(context);
+            return;
+        }
+
+        // 2. Try resolving tenant from query string (?tenantId=2 or ?tenant=2)
+        if ((context.Request.Query.TryGetValue("tenantId", out var queryVal) ||
+             context.Request.Query.TryGetValue("tenant", out queryVal)) &&
+            int.TryParse(queryVal.FirstOrDefault(), out var queryTenantId))
+        {
+            tenantAccessor.SetTenantId(queryTenantId);
+            await _next(context);
+            return;
+        }
+
+        // 3. Fallback to domain lookup
         var host = context.Request.Host.Host.ToLowerInvariant();
         var tenantId = await tenantDomainResolver.ResolveTenantIdByDomainAsync(host, context.RequestAborted);
 
@@ -47,36 +67,9 @@ public class TenantResolutionMiddleware
             return;
         }
 
-        // Domain not found — apply configured action
-        switch (_tenancyConfig.UnknownDomainAction)
-        {
-            case UnknownDomainAction.UseDefaultTenant:
-                _logger.LogWarning("Unknown domain '{Domain}', falling back to default tenant {DefaultTenantId}", host, _tenancyConfig.DefaultTenantId);
-                tenantAccessor.SetTenantId(_tenancyConfig.DefaultTenantId);
-                await _next(context);
-                return;
-
-            case UnknownDomainAction.RejectRequest:
-            default:
-                _logger.LogWarning("Request rejected — no tenant mapped for domain '{Domain}'", host);
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                context.Response.ContentType = "application/json";
-
-                var payload = new
-                {
-                    success = false,
-                    data = (object?)null,
-                    errorCode = 1011,
-                    message = $"No tenant is configured for domain '{host}'"
-                };
-
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                await context.Response.WriteAsJsonAsync(payload, options);
-                return;
-        }
+        // 4. Default tenant fallback
+        _logger.LogInformation("Domain '{Domain}' not mapped, using default tenant {DefaultTenantId}", host, _tenancyConfig.DefaultTenantId);
+        tenantAccessor.SetTenantId(_tenancyConfig.DefaultTenantId);
+        await _next(context);
     }
 }

@@ -11,4 +11,9 @@ public interface ITenantService
     /// Gets all active tenants for lookup dropdowns 
     /// </summary>
     Task<List<TenantLookupDto>> GetAllTenantsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets a tenant by ID.
+    /// </summary>
+    Task<TenantLookupDto?> GetTenantByIdAsync(int id, CancellationToken cancellationToken = default);
 }
