@@ -21,6 +21,8 @@
 
 **ExamSys** is a comprehensive backend API for managing academic examinations across multiple institutions. Built with **.NET 8** and **Clean Architecture**, it supports the full exam lifecycle — from course enrollment and exam creation, through timed exam-taking with a scoped JWT, to automatic grading via background jobs.
 
+💻 **Frontend Project**: The React repository for this application is available at https://github.com/ahmads1990/ExaminationSystemReact.
+
 ### 🎯 Key Highlights
 
 - 🏗️ **Clean Architecture** — Four-layer separation with strict dependency rules
@@ -304,42 +306,44 @@ mindmap
   root((API v1))
     Tenants
       GET /Tenants
+      GET /Tenants/current
+      GET /Tenants/id
     Auth
-      POST /RegisterInstructor
-      POST /RegisterStudent
-      POST /Login
-      POST /VerifyEmail
-      POST /ResendVerificationEmail
-      POST /ForgotPassword
-      POST /ResetPassword
+      POST /register/instructor
+      POST /register/student
+      POST /login
+      POST /verify-email
+      POST /resend-verification
+      POST /forgot-password
+      POST /reset-password
       POST /refresh-token
       POST /logout
     Users
-      PUT /me/password
+      PUT /me/change-password
     Courses
       GET /Courses
-      GET /Courses/id
       POST /Courses
-      PUT /Courses/id
-      DELETE /Courses/id
+      PUT /Courses
+      DELETE /Courses/courseId
     Exams
       GET /Exams
-      GET /Exams/{id}
+      GET /Exams/id
       POST /Exams
       PUT /Exams
       DELETE /Exams
-      DELETE /Exams/{id}
+      DELETE /Exams/id
       PATCH /Exams/publish
-      PATCH /Exams/{id}/unpublish
+      PATCH /Exams/id/unpublish
       PATCH /Exams/assign-questions
       PATCH /Exams/unassign-questions
     Questions
       GET /Questions
-      GET /Questions/{id}
+      GET /Questions/id
       POST /Questions
       PUT /Questions
       DELETE /Questions
     StudentCourses
+      GET /StudentCourses
       GET /me/enrollments
       GET /id/enrollments
       POST /enroll
@@ -350,7 +354,7 @@ mindmap
       GET /questions
       POST /answer
       POST /answers
-      POST /submit
+      POST /submit-attempt
       GET /result
     Instructor
       GET /courses
@@ -363,33 +367,34 @@ mindmap
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | `GET` | `/api/v1/Tenants` | 🔓 | List active tenants (for registration dropdown) |
+| `GET` | `/api/v1/Tenants/current` | 🔐 | Get current tenant information |
+| `GET` | `/api/v1/Tenants/{id}` | 🔓 | Get tenant details by ID |
 
 ### Auth
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `POST` | `/api/v1/Auth/RegisterInstructor` | 🔓 | Register instructor |
-| `POST` | `/api/v1/Auth/RegisterStudent` | 🔓 | Register student |
-| `POST` | `/api/v1/Auth/Login` | 🔓 | Login → `{ jwtToken, refreshToken }` |
-| `POST` | `/api/v1/Auth/VerifyEmail` | 🔓 | Confirm email with OTP |
-| `POST` | `/api/v1/Auth/ResendVerificationEmail` | 🔓 | Resend OTP |
-| `POST` | `/api/v1/Auth/ForgotPassword` | 🔓 | Send password reset OTP |
-| `POST` | `/api/v1/Auth/ResetPassword` | 🔓 | Reset password with OTP |
+| `POST` | `/api/v1/Auth/register/instructor` | 🔓 | Register instructor |
+| `POST` | `/api/v1/Auth/register/student` | 🔓 | Register student |
+| `POST` | `/api/v1/Auth/login` | 🔓 | Login → `{ jwtToken, refreshToken }` |
+| `POST` | `/api/v1/Auth/verify-email` | 🔓 | Confirm email with OTP |
+| `POST` | `/api/v1/Auth/resend-verification` | 🔓 | Resend OTP |
+| `POST` | `/api/v1/Auth/forgot-password` | 🔓 | Send password reset OTP |
+| `POST` | `/api/v1/Auth/reset-password` | 🔓 | Reset password with OTP |
 | `POST` | `/api/v1/Auth/refresh-token` | 🔓 | Rotate refresh token |
 | `POST` | `/api/v1/Auth/logout` | 🔐 | Revoke tokens, blacklist JTI in Redis |
 
 ### Users
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `PUT` | `/api/v1/Users/me/password` | 🔐 | Change own password |
+| `PUT` | `/api/v1/Users/me/change-password` | 🔐 | Change own password |
 
 ### Courses
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `GET` | `/api/v1/Courses` | 🔐 | List courses (paginated) |
-| `GET` | `/api/v1/Courses/{id}` | 🔐 | Get course |
+| `GET` | `/api/v1/Courses` | 👨‍🏫 | List courses (paginated) |
 | `POST` | `/api/v1/Courses` | 👨‍🏫 | Create course |
-| `PUT` | `/api/v1/Courses/{id}` | 👨‍🏫 | Update course |
-| `DELETE` | `/api/v1/Courses/{id}` | 👨‍🏫 | Delete course |
+| `PUT` | `/api/v1/Courses` | 👨‍🏫 | Update course |
+| `DELETE` | `/api/v1/Courses/{courseId}` | 👨‍🏫 | Delete course |
 
 ### Exams
 | Method | Route | Auth | Description |
@@ -408,8 +413,8 @@ mindmap
 ### Questions
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
-| `GET` | `/api/v1/Questions` | 🔐 | List questions (paginated) |
-| `GET` | `/api/v1/Questions/{id}` | 🔐 | Get question details |
+| `GET` | `/api/v1/Questions` | 👨‍🏫 | List questions (paginated) |
+| `GET` | `/api/v1/Questions/{id}` | 👨‍🏫 | Get question details |
 | `POST` | `/api/v1/Questions` | 👨‍🏫 | Create question |
 | `PUT` | `/api/v1/Questions` | 👨‍🏫 | Update question |
 | `DELETE` | `/api/v1/Questions` | 👨‍🏫 | Bulk delete questions (takes `List<int>` in body) |
@@ -417,8 +422,9 @@ mindmap
 ### Student Courses
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
+| `GET` | `/api/v1/StudentCourses` | 👨‍🏫 | List student course enrollments |
 | `GET` | `/api/v1/StudentCourses/me/enrollments` | 🎓 | My enrollments |
-| `GET` | `/api/v1/StudentCourses/{id}/enrollments` | 👨‍🏫 | Student enrollments |
+| `GET` | `/api/v1/StudentCourses/{studentId}/enrollments` | 👨‍🏫 | Student enrollments |
 | `POST` | `/api/v1/StudentCourses/enroll` | 🎓 | Enroll in course |
 
 ### Student Exams
@@ -430,7 +436,7 @@ mindmap
 | `GET` | `/api/v1/StudentExams/questions` | 🎫 | Get exam questions |
 | `POST` | `/api/v1/StudentExams/answer` | 🎫 | Submit single answer |
 | `POST` | `/api/v1/StudentExams/answers` | 🎫 | Submit all answers (batch) |
-| `POST` | `/api/v1/StudentExams/submit` | 🎫 | Submit attempt |
+| `POST` | `/api/v1/StudentExams/submit-attempt` | 🎫 | Submit attempt |
 | `GET` | `/api/v1/StudentExams/result` | 🎓 | Get attempt result |
 
 ### Instructor
